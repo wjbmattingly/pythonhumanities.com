@@ -1,0 +1,103 @@
+---
+import SiteLayout from "../components/SiteLayout.astro";
+---
+
+<SiteLayout
+  title="About"
+  description="About Python for Digital Humanities and its creator, Dr. William Mattingly."
+>
+  <article class="page">
+    <div class="container">
+      <p class="eyebrow">About</p>
+      <h1>How this project began.</h1>
+
+      <div class="prose">
+        <p class="lede">
+          Dr. William Mattingly started PythonHumanities.com in 2018 while researching
+          Carolingian exegesis and medieval commentary networks — work that led him to
+          programming almost by accident.
+        </p>
+
+        <p>
+          Around 2015 there were few places to turn if you were a humanist who wanted to
+          learn Python. Most tutorials assumed a computer-science foundation, and most
+          digital humanities resources skipped past the language itself. He began writing
+          down what he wished someone had written for him: lessons that treat programming
+          as a craft you can pick up without first spending a semester on algorithms.
+        </p>
+
+        <p>
+          Today the site hosts a full introductory course, four free textbooks
+          (on Python, Named Entity Recognition, spaCy, and BookNLP), and a growing set
+          of video playlists. It's used by humanists, sociologists, data scientists, and
+          a long tail of researchers in more than fifty countries.
+        </p>
+
+        <h2>Learning philosophy</h2>
+        <p>
+          You learn to program by programming. Mattingly's own first social-network
+          analysis script took a month of trial and error — and that month, he argues, is
+          the whole point. The lessons here are built around small, specific problems:
+          read a text file, search an Excel workbook, scrape a page of HTML. Each one
+          is short enough to finish in a sitting and concrete enough to remember.
+        </p>
+
+        <h2>Who it's for</h2>
+        <p>
+          People in the position Mattingly was in around 2015: you have a project in mind,
+          you suspect Python would help, and you don't want to sit through a generic
+          "learn to code" course to find out. If that's you, the
+          <a href="/course/">Python for DH course</a> is the best starting point;
+          the <a href="/textbooks/">textbooks</a> go deeper on specific tools.
+        </p>
+
+        <h2>Support the project</h2>
+        <p>
+          Everything here is and will remain free. If you'd like to support the work,
+          the best ways are to subscribe on
+          <a href="https://www.youtube.com/@python-programming">YouTube</a>,
+          become a
+          <a href="https://www.patreon.com/WJBMattingly">Patreon member</a>, or share
+          a lesson with someone it might help. Donations go toward audio and video
+          equipment and server costs for hosting the textbooks.
+        </p>
+
+        <hr class="ornament" />
+
+        <p class="colophon-line">
+          <em>Questions, tutorial requests, or a project you'd like to share? Reach out on
+          <a href="https://twitter.com/wjb_mattingly">Twitter</a>.</em>
+        </p>
+      </div>
+    </div>
+  </article>
+</SiteLayout>
+
+<style>
+  .page {
+    padding-block: var(--space-8) var(--space-7);
+  }
+
+  .page h1 {
+    max-width: 18ch;
+    margin-bottom: var(--space-5);
+  }
+
+  .lede {
+    font-size: 1.25rem;
+    color: var(--ink-soft);
+    line-height: 1.5;
+    margin-bottom: var(--space-6);
+    max-width: 58ch;
+  }
+
+  .page h2 {
+    margin-top: var(--space-7);
+  }
+
+  .colophon-line {
+    color: var(--ink-muted);
+    text-align: center;
+    max-width: 100%;
+  }
+</style>

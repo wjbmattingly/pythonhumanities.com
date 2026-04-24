@@ -1,0 +1,182 @@
+---
+import SiteLayout from "../../components/SiteLayout.astro";
+import { getCollection } from "astro:content";
+
+const lessons = (await getCollection("course"))
+  .sort((a, b) => a.data.lessonNumber - b.data.lessonNumber);
+
+const parts: Array<{ number: number; title: string; lessons: typeof lessons }> = [];
+for (const lesson of lessons) {
+  let part = parts.find((p) => p.number === lesson.data.part);
+  if (!part) {
+    part = { number: lesson.data.part, title: lesson.data.partTitle, lessons: [] };
+    parts.push(part);
+  }
+  part.lessons.push(lesson);
+}
+parts.sort((a, b) => a.number - b.number);
+---
+
+<SiteLayout
+  title="Python for DH Course"
+  description="The full Python for Digital Humanities course — seven parts, twenty-four lessons, from first variables to scraping and storing data."
+>
+  <section class="header">
+    <div class="container">
+      <p class="eyebrow">The Course</p>
+      <h1>Python for<br/><em>Digital Humanities.</em></h1>
+      <p class="lede">
+        Twenty-four lessons in seven parts. It assumes no prior programming
+        knowledge and moves from first variables to scraping and storing data.
+      </p>
+    </div>
+  </section>
+
+  {parts.length === 0 && (
+    <section class="container empty">
+      <p class="eyebrow">Note</p>
+      <p>
+        The lesson pages are being migrated from the old site. In the meantime, you
+        can find the original course index
+        <a href="https://pythonhumanities.com/python-for-dh-course/">here</a>.
+      </p>
+    </section>
+  )}
+
+  {parts.length > 0 && (
+    <section class="syllabus">
+      <div class="container">
+        {parts.map((part) => (
+          <section class="part">
+            <div class="part-label">
+              <p class="part-number">Part {String(part.number).padStart(2, "0")}</p>
+              <h2 class="part-title">{part.title}</h2>
+            </div>
+            <ol class="lessons">
+              {part.lessons.map((lesson) => (
+                <li>
+                  <a href={`/course/${lesson.id}/`}>
+                    <span class="lesson-num">
+                      Lesson {String(lesson.data.lessonNumber).padStart(2, "0")}
+                    </span>
+                    <span class="lesson-title">{lesson.data.title}</span>
+                    {lesson.data.description && (
+                      <span class="lesson-desc">{lesson.data.description}</span>
+                    )}
+                  </a>
+                </li>
+              ))}
+            </ol>
+          </section>
+        ))}
+      </div>
+    </section>
+  )}
+</SiteLayout>
+
+<style>
+  .header {
+    padding-block: var(--space-8) var(--space-6);
+    border-bottom: 1px solid var(--rule);
+  }
+  .header h1 em { color: var(--oxblood); font-style: italic; }
+  .lede {
+    font-size: 1.2rem;
+    color: var(--ink-soft);
+    max-width: 58ch;
+    line-height: 1.55;
+    margin-top: var(--space-4);
+  }
+
+  .empty {
+    padding-block: var(--space-7);
+  }
+
+  .syllabus { padding-block: var(--space-7); }
+
+  .part {
+    display: grid;
+    grid-template-columns: 16rem 1fr;
+    gap: var(--space-6);
+    padding: var(--space-6) 0;
+    border-top: 1px solid var(--rule);
+  }
+
+  .part:last-child {
+    border-bottom: 1px solid var(--rule);
+  }
+
+  @media (max-width: 720px) {
+    .part { grid-template-columns: 1fr; gap: var(--space-3); }
+  }
+
+  .part-label { position: sticky; top: 5rem; align-self: start; }
+
+  .part-number {
+    font-family: var(--font-display);
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--gold-dark);
+    margin: 0 0 var(--space-2);
+    font-weight: 500;
+  }
+
+  .part-title {
+    font-family: var(--font-display);
+    font-size: 1.45rem;
+    margin: 0;
+    font-weight: 500;
+    font-variation-settings: "opsz" 72;
+  }
+
+  .lessons {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .lessons li { margin: 0; border-top: 1px solid var(--rule-soft); }
+  .lessons li:first-child { border-top: none; }
+
+  .lessons a {
+    display: grid;
+    grid-template-columns: 7rem 1fr;
+    gap: var(--space-4);
+    padding: var(--space-3) 0;
+    text-decoration: none;
+    color: var(--ink);
+    align-items: baseline;
+  }
+
+  .lessons a:hover .lesson-title { color: var(--oxblood); }
+
+  .lesson-num {
+    font-family: var(--font-sans);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-muted);
+    padding-top: 0.18rem;
+  }
+
+  .lesson-title {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 500;
+    transition: color 0.15s ease;
+  }
+
+  .lesson-desc {
+    grid-column: 2;
+    color: var(--ink-muted);
+    font-size: 0.92rem;
+    margin-top: var(--space-1);
+  }
+
+  @media (max-width: 620px) {
+    .lessons a { grid-template-columns: 1fr; gap: 0; }
+    .lesson-title, .lesson-desc { grid-column: 1; }
+    .lesson-num { padding-top: 0; }
+  }
+</style>

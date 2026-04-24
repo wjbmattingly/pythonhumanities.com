@@ -1,0 +1,101 @@
+---
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="container footer-inner">
+    <div class="footer-col">
+      <p class="eyebrow">Python for Digital Humanities</p>
+      <p class="footer-blurb">
+        Free textbooks, videos, and a full course teaching Python to humanists,
+        sociologists, and other researchers — started in 2018.
+      </p>
+    </div>
+    <div class="footer-col">
+      <p class="eyebrow">Resources</p>
+      <ul>
+        <li><a href="/textbooks/">Free Textbooks</a></li>
+        <li><a href="/videos/">Video Playlists</a></li>
+        <li><a href="/course/">Python for DH Course</a></li>
+        <li><a href="/blog/">Blog</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <p class="eyebrow">Elsewhere</p>
+      <ul>
+        <li><a href="https://www.youtube.com/@python-programming" rel="me">YouTube</a></li>
+        <li><a href="https://twitter.com/wjb_mattingly" rel="me">Twitter / X</a></li>
+        <li><a href="https://www.patreon.com/WJBMattingly" rel="me">Patreon</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="container footer-base">
+    <p class="colophon">
+      <span>© 2018–{year} William J. B. Mattingly.</span>
+      <span>Set in Fraunces and Source Serif. Built with Astro.</span>
+    </p>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    border-top: 1px solid var(--rule);
+    background: var(--parchment-light);
+    padding-block: var(--space-7) var(--space-5);
+    margin-top: var(--space-9);
+  }
+
+  .footer-inner {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1fr;
+    gap: var(--space-6);
+    padding-bottom: var(--space-6);
+  }
+
+  @media (max-width: 720px) {
+    .footer-inner { grid-template-columns: 1fr; gap: var(--space-5); }
+  }
+
+  .footer-col ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .footer-col li {
+    margin-bottom: var(--space-1);
+  }
+
+  .footer-col a {
+    color: var(--ink-soft);
+    text-decoration: none;
+    font-family: var(--font-sans);
+    font-size: 0.92rem;
+  }
+
+  .footer-col a:hover {
+    color: var(--oxblood);
+    text-decoration: underline;
+  }
+
+  .footer-blurb {
+    font-size: 0.95rem;
+    color: var(--ink-soft);
+    max-width: 38ch;
+  }
+
+  .footer-base {
+    border-top: 1px solid var(--rule);
+    padding-top: var(--space-4);
+  }
+
+  .colophon {
+    font-family: var(--font-sans);
+    font-size: 0.82rem;
+    color: var(--ink-muted);
+    display: flex;
+    gap: var(--space-5);
+    flex-wrap: wrap;
+    margin: 0;
+  }
+</style>

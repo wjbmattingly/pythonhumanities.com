@@ -1,0 +1,29 @@
+---
+import SiteLayout from "../components/SiteLayout.astro";
+---
+
+<SiteLayout title="Page not found" description="The page you're looking for doesn't exist.">
+  <section class="notfound container">
+    <p class="eyebrow">404</p>
+    <h1>Not found.</h1>
+    <p class="lede">
+      The page you're looking for isn't here. It may have moved during the migration
+      from the old WordPress site.
+    </p>
+    <p>
+      Try the <a href="/course/">course index</a>, the
+      <a href="/textbooks/">textbooks</a>, or the <a href="/">homepage</a>.
+    </p>
+  </section>
+</SiteLayout>
+
+<style>
+  .notfound {
+    padding-block: var(--space-9);
+    max-width: 60ch;
+  }
+  .lede {
+    font-size: 1.2rem;
+    color: var(--ink-soft);
+  }
+</style>

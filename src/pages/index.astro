@@ -1,0 +1,437 @@
+---
+import SiteLayout from "../components/SiteLayout.astro";
+import { getCollection } from "astro:content";
+
+const posts = (await getCollection("blog"))
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
+  .slice(0, 3);
+
+const textbooks = [
+  {
+    title: "Python for Humanists",
+    description: "A gentle, book-length introduction to Python written for those with no programming background.",
+    href: "http://python-textbook.pythonhumanities.com/intro.html",
+  },
+  {
+    title: "Named Entity Recognition",
+    description: "How to extract people, places, and organizations from unstructured text using spaCy and rule-based methods.",
+    href: "http://ner.pythonhumanities.com/intro.html",
+  },
+  {
+    title: "spaCy",
+    description: "Based on the popular freeCodeCamp course. A practical tour of spaCy's pipelines and linguistic features.",
+    href: "https://spacy.pythonhumanities.com/intro.html",
+  },
+  {
+    title: "BookNLP",
+    description: "Working with BookNLP to perform literary-scale NLP: characters, quotations, supersense tagging, and more.",
+    href: "https://booknlp.pythonhumanities.com/intro.html",
+  },
+];
+
+const playlists = [
+  {
+    title: "Introduction to Python",
+    description: "A beginner's playlist walking through Python basics with humanities examples.",
+    href: "https://www.youtube.com/playlist?list=PL2VXyKi-KpYtcluInhPJItpNBKIF3LO2k",
+  },
+  {
+    title: "spaCy",
+    description: "Videos on working with spaCy pipelines, matchers, and custom components.",
+    href: "https://www.youtube.com/playlist?list=PL2VXyKi-KpYvuOdPwXR-FZfmZ0hjoNSUo",
+  },
+  {
+    title: "Social Network Analysis",
+    description: "Building and analyzing networks with NetworkX for historical and literary data.",
+    href: "https://www.youtube.com/playlist?list=PL2VXyKi-KpYsjoY2rx9NiWJyfmmD79H97",
+  },
+  {
+    title: "PyVis Visualizations",
+    description: "Interactive browser-based network graphs with PyVis.",
+    href: "https://www.youtube.com/playlist?list=PL2VXyKi-KpYu7djT-8bDxtylvxznz3WLR",
+  },
+];
+---
+
+<SiteLayout>
+  <section class="hero">
+    <div class="container">
+      <p class="eyebrow">Digital Humanities · est. 2018</p>
+      <h1 class="hero-title">
+        Python,<br/>
+        <em>for humanists.</em>
+      </h1>
+      <p class="hero-lede">
+        A home for free textbooks, video lessons, and a full course teaching
+        Python to humanists, sociologists, and researchers new to programming.
+        Used in more than 50 countries.
+      </p>
+      <div class="hero-actions">
+        <a href="/course/" class="btn btn-primary">Start the course</a>
+        <a href="/textbooks/" class="btn btn-ghost">Browse the textbooks</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <header class="section-head">
+        <p class="eyebrow">Free Textbooks</p>
+        <h2>Book-length guides to the tools of computational humanities.</h2>
+        <p class="section-lede">
+          Built with JupyterBook, kept free, and hosted on their own sites so you can
+          read them end-to-end or dip into a chapter.
+        </p>
+      </header>
+      <div class="grid grid-2">
+        {textbooks.map((book) => (
+          <a href={book.href} class="card">
+            <p class="card-kicker">Textbook</p>
+            <h3 class="card-title">{book.title}</h3>
+            <p class="card-body">{book.description}</p>
+            <p class="card-cta">Read <span aria-hidden="true">→</span></p>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <hr class="ornament" />
+
+  <section class="section">
+    <div class="container">
+      <header class="section-head">
+        <p class="eyebrow">Video Lessons</p>
+        <h2>Four YouTube playlists — watch along at your own pace.</h2>
+      </header>
+      <div class="grid grid-2">
+        {playlists.map((p) => (
+          <a href={p.href} class="card card-muted">
+            <p class="card-kicker">Playlist</p>
+            <h3 class="card-title">{p.title}</h3>
+            <p class="card-body">{p.description}</p>
+            <p class="card-cta">Watch on YouTube <span aria-hidden="true">→</span></p>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <hr class="ornament" />
+
+  <section class="section">
+    <div class="container course-cta">
+      <div>
+        <p class="eyebrow">The Course</p>
+        <h2>Python for Digital Humanities</h2>
+        <p>
+          Twenty-four lessons in seven parts. Starts with variables and integers,
+          ends with scraping websites and storing data in XML.
+          No programming background assumed.
+        </p>
+        <p><a href="/course/" class="link-arrow">See the full syllabus →</a></p>
+      </div>
+      <div class="stats">
+        <div><strong>24</strong><span>lessons</span></div>
+        <div><strong>7</strong><span>parts</span></div>
+        <div><strong>50+</strong><span>countries</span></div>
+      </div>
+    </div>
+  </section>
+
+  {posts.length > 0 && (
+    <>
+      <hr class="ornament" />
+      <section class="section">
+        <div class="container">
+          <header class="section-head">
+            <p class="eyebrow">From the Blog</p>
+            <h2>Recent writing</h2>
+          </header>
+          <ul class="post-list">
+            {posts.map((p) => (
+              <li>
+                <a href={`/blog/${p.id}/`}>
+                  <span class="post-date">
+                    {p.data.date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+                  </span>
+                  <span class="post-title">{p.data.title}</span>
+                  {p.data.description && <span class="post-desc">{p.data.description}</span>}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+    </>
+  )}
+</SiteLayout>
+
+<style>
+  .hero {
+    padding-block: var(--space-9) var(--space-8);
+    border-bottom: 1px solid var(--rule);
+    background:
+      radial-gradient(ellipse at top left, var(--parchment-light), transparent 60%),
+      var(--parchment);
+  }
+
+  .hero-title {
+    font-size: clamp(3rem, 7vw, 5.5rem);
+    font-weight: 300;
+    line-height: 1.02;
+    margin: 0 0 var(--space-5);
+    letter-spacing: -0.03em;
+    font-variation-settings: "opsz" 144, "SOFT" 30;
+  }
+
+  .hero-title em {
+    font-style: italic;
+    color: var(--oxblood);
+    font-weight: 400;
+  }
+
+  .hero-lede {
+    font-size: 1.25rem;
+    color: var(--ink-soft);
+    max-width: 56ch;
+    line-height: 1.55;
+    margin-bottom: var(--space-6);
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    font-family: var(--font-sans);
+    font-size: 0.95rem;
+    font-weight: 500;
+    padding: 0.75rem 1.5rem;
+    border-radius: 2px;
+    text-decoration: none;
+    transition: all 0.15s ease;
+    border: 1.5px solid transparent;
+    letter-spacing: 0.01em;
+  }
+
+  .btn-primary {
+    background: var(--oxblood);
+    color: var(--parchment-light);
+    border-color: var(--oxblood);
+  }
+  .btn-primary:hover {
+    background: var(--oxblood-dark);
+    border-color: var(--oxblood-dark);
+    color: var(--parchment-light);
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--ink);
+    border-color: var(--ink);
+  }
+  .btn-ghost:hover {
+    background: var(--ink);
+    color: var(--parchment-light);
+  }
+
+  .section {
+    padding-block: var(--space-8);
+  }
+
+  .section-head {
+    max-width: 60ch;
+    margin-bottom: var(--space-6);
+  }
+
+  .section-head h2 {
+    margin-top: 0;
+    margin-bottom: var(--space-3);
+  }
+
+  .section-lede {
+    color: var(--ink-soft);
+    font-size: 1.1rem;
+    max-width: 52ch;
+  }
+
+  .grid {
+    display: grid;
+    gap: var(--space-5);
+  }
+
+  .grid-2 {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  }
+
+  .card {
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-5) var(--space-5) var(--space-4);
+    background: var(--parchment-light);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    text-decoration: none;
+    color: var(--ink);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+
+  .card:hover {
+    transform: translateY(-2px);
+    border-color: var(--gold);
+    box-shadow: 0 8px 20px -12px rgba(28, 24, 20, 0.25);
+    color: var(--ink);
+  }
+
+  .card-muted {
+    background: var(--parchment);
+  }
+
+  .card-kicker {
+    font-family: var(--font-display);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--gold-dark);
+    margin: 0 0 var(--space-2);
+    font-weight: 500;
+  }
+
+  .card-title {
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    margin: 0 0 var(--space-2);
+    font-weight: 500;
+    font-variation-settings: "opsz" 72;
+  }
+
+  .card-body {
+    color: var(--ink-soft);
+    font-size: 0.98rem;
+    line-height: 1.55;
+    margin: 0 0 var(--space-4);
+    flex: 1;
+  }
+
+  .card-cta {
+    font-family: var(--font-sans);
+    font-size: 0.88rem;
+    color: var(--oxblood);
+    margin: 0;
+    font-weight: 500;
+  }
+
+  .course-cta {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: var(--space-7);
+    align-items: center;
+  }
+
+  @media (max-width: 720px) {
+    .course-cta { grid-template-columns: 1fr; }
+  }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-4);
+    text-align: center;
+    border-left: 1px solid var(--rule);
+    padding-left: var(--space-6);
+  }
+
+  @media (max-width: 720px) {
+    .stats { border-left: none; padding-left: 0; border-top: 1px solid var(--rule); padding-top: var(--space-5); }
+  }
+
+  .stats div {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .stats strong {
+    font-family: var(--font-display);
+    font-size: 2.5rem;
+    font-weight: 400;
+    color: var(--oxblood);
+    line-height: 1;
+    font-variation-settings: "opsz" 144;
+  }
+
+  .stats span {
+    font-family: var(--font-sans);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-muted);
+    margin-top: var(--space-2);
+  }
+
+  .link-arrow {
+    font-family: var(--font-sans);
+    font-size: 0.95rem;
+    font-weight: 500;
+  }
+
+  .post-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-width: var(--measure-wide);
+  }
+
+  .post-list li {
+    border-top: 1px solid var(--rule);
+    margin: 0;
+  }
+
+  .post-list li:last-child {
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .post-list a {
+    display: grid;
+    grid-template-columns: 10rem 1fr;
+    gap: var(--space-5);
+    padding: var(--space-4) 0;
+    text-decoration: none;
+    color: var(--ink);
+    align-items: baseline;
+  }
+
+  .post-list a:hover .post-title {
+    color: var(--oxblood);
+  }
+
+  .post-date {
+    font-family: var(--font-sans);
+    font-size: 0.82rem;
+    color: var(--ink-muted);
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+
+  .post-title {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    font-weight: 500;
+    grid-column: 2;
+    font-variation-settings: "opsz" 72;
+  }
+
+  .post-desc {
+    grid-column: 2;
+    color: var(--ink-muted);
+    font-size: 0.95rem;
+    margin-top: var(--space-1);
+  }
+
+  @media (max-width: 620px) {
+    .post-list a { grid-template-columns: 1fr; gap: var(--space-1); }
+    .post-title, .post-desc { grid-column: 1; }
+  }
+</style>

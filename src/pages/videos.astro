@@ -1,0 +1,181 @@
+---
+import SiteLayout from "../components/SiteLayout.astro";
+
+const playlists = [
+  {
+    title: "Introduction to Python",
+    description:
+      "A beginner's playlist that walks through Python basics — variables, strings, lists, loops, functions — using humanities examples throughout.",
+    href: "https://www.youtube.com/playlist?list=PL2VXyKi-KpYtcluInhPJItpNBKIF3LO2k",
+  },
+  {
+    title: "spaCy",
+    description:
+      "Videos on working with spaCy's pipelines, the Matcher, rule-based entity recognition, and building custom components.",
+    href: "https://www.youtube.com/playlist?list=PL2VXyKi-KpYvuOdPwXR-FZfmZ0hjoNSUo",
+  },
+  {
+    title: "Social Network Analysis",
+    description:
+      "Building and analyzing networks with NetworkX. Loading data, calculating centralities, and looking for structure in historical and literary graphs.",
+    href: "https://www.youtube.com/playlist?list=PL2VXyKi-KpYsjoY2rx9NiWJyfmmD79H97",
+  },
+  {
+    title: "PyVis Visualizations",
+    description:
+      "Interactive browser-based network graphs with PyVis. How to take your NetworkX output and turn it into something you can click around in.",
+    href: "https://www.youtube.com/playlist?list=PL2VXyKi-KpYu7djT-8bDxtylvxznz3WLR",
+  },
+];
+---
+
+<SiteLayout
+  title="Video Lessons"
+  description="Four YouTube playlists: Python basics, spaCy, Social Network Analysis, and PyVis visualizations."
+>
+  <section class="header">
+    <div class="container">
+      <p class="eyebrow">Video Lessons</p>
+      <h1>Watch along<br/><em>on YouTube.</em></h1>
+      <p class="lede">
+        Four playlists covering Python basics and three applied tracks —
+        spaCy, social network analysis, and interactive visualization with PyVis.
+      </p>
+      <p class="subscribe">
+        <a href="https://www.youtube.com/@python-programming" class="link-arrow">
+          Subscribe to @python-programming →
+        </a>
+      </p>
+    </div>
+  </section>
+
+  <section class="playlists">
+    <div class="container">
+      <div class="grid">
+        {playlists.map((p) => (
+          <a href={p.href} class="playlist-card">
+            <div class="playlist-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
+                <path d="M8 5.14v13.72L19 12 8 5.14z" />
+              </svg>
+            </div>
+            <div>
+              <p class="card-kicker">Playlist</p>
+              <h2 class="card-title">{p.title}</h2>
+              <p class="card-body">{p.description}</p>
+              <p class="card-cta">Watch on YouTube <span aria-hidden="true">→</span></p>
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+</SiteLayout>
+
+<style>
+  .header {
+    padding-block: var(--space-8) var(--space-6);
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .header h1 em {
+    color: var(--oxblood);
+    font-style: italic;
+  }
+
+  .lede {
+    font-size: 1.2rem;
+    color: var(--ink-soft);
+    max-width: 58ch;
+    line-height: 1.55;
+    margin-top: var(--space-4);
+  }
+
+  .subscribe {
+    margin-top: var(--space-4);
+  }
+
+  .link-arrow {
+    font-family: var(--font-sans);
+    font-weight: 500;
+  }
+
+  .playlists {
+    padding-block: var(--space-7);
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+    gap: var(--space-5);
+  }
+
+  .playlist-card {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--space-4);
+    padding: var(--space-5);
+    background: var(--parchment-light);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    text-decoration: none;
+    color: var(--ink);
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .playlist-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--gold);
+    box-shadow: 0 8px 20px -12px rgba(28, 24, 20, 0.25);
+    color: var(--ink);
+  }
+
+  .playlist-icon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    background: var(--oxblood);
+    color: var(--parchment-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .playlist-icon svg {
+    margin-left: 0.15rem;
+  }
+
+  .card-kicker {
+    font-family: var(--font-display);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--gold-dark);
+    margin: 0 0 var(--space-1);
+    font-weight: 500;
+  }
+
+  .card-title {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    margin: 0 0 var(--space-2);
+    font-weight: 500;
+    font-variation-settings: "opsz" 72;
+  }
+
+  .card-body {
+    color: var(--ink-soft);
+    font-size: 0.98rem;
+    line-height: 1.55;
+    margin: 0 0 var(--space-3);
+  }
+
+  .card-cta {
+    font-family: var(--font-sans);
+    font-size: 0.88rem;
+    color: var(--oxblood);
+    margin: 0;
+    font-weight: 500;
+  }
+</style>

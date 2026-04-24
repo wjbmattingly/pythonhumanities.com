@@ -1,0 +1,194 @@
+---
+import SiteLayout from "../components/SiteLayout.astro";
+
+const textbooks = [
+  {
+    title: "Python for Humanists",
+    kicker: "Volume I",
+    description:
+      "A book-length, ground-up introduction to Python — written for those with no programming background. Covers variables, data structures, loops, functions, files, and libraries through humanities-flavored examples.",
+    href: "http://python-textbook.pythonhumanities.com/intro.html",
+    subdomain: "python-textbook.pythonhumanities.com",
+  },
+  {
+    title: "Named Entity Recognition",
+    kicker: "Volume II",
+    description:
+      "How to extract people, places, and organizations from unstructured text. Builds from rule-based approaches through statistical models with spaCy, with working code at every step.",
+    href: "http://ner.pythonhumanities.com/intro.html",
+    subdomain: "ner.pythonhumanities.com",
+  },
+  {
+    title: "spaCy",
+    kicker: "Volume III",
+    description:
+      "The written companion to the freeCodeCamp course. A practical tour of spaCy's pipeline components, the Matcher, rule-based entity recognition, and training custom models.",
+    href: "https://spacy.pythonhumanities.com/intro.html",
+    subdomain: "spacy.pythonhumanities.com",
+  },
+  {
+    title: "BookNLP",
+    kicker: "Volume IV",
+    description:
+      "Using BookNLP to perform book-scale natural language processing: character detection, quotation attribution, supersense tagging, and event extraction for literary texts.",
+    href: "https://booknlp.pythonhumanities.com/intro.html",
+    subdomain: "booknlp.pythonhumanities.com",
+  },
+];
+---
+
+<SiteLayout
+  title="Free Textbooks"
+  description="Four free, book-length guides: Python for Humanists, Named Entity Recognition, spaCy, and BookNLP."
+>
+  <section class="header">
+    <div class="container">
+      <p class="eyebrow">Free Textbooks</p>
+      <h1>Four books. All free.<br/><em>Host your own copy.</em></h1>
+      <p class="lede">
+        Each textbook is built with JupyterBook and lives on its own subdomain,
+        so every code cell is runnable and every page is indexable.
+      </p>
+    </div>
+  </section>
+
+  <section class="books">
+    <div class="container">
+      <ol class="book-list">
+        {textbooks.map((book, i) => (
+          <li class="book">
+            <div class="book-index" aria-hidden="true">{String(i + 1).padStart(2, "0")}</div>
+            <div class="book-body">
+              <p class="book-kicker">{book.kicker}</p>
+              <h2 class="book-title">
+                <a href={book.href}>{book.title}</a>
+              </h2>
+              <p class="book-desc">{book.description}</p>
+              <p class="book-meta">
+                <span class="small-caps">Read at</span>
+                <a href={book.href}><code>{book.subdomain}</code></a>
+              </p>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+</SiteLayout>
+
+<style>
+  .header {
+    padding-block: var(--space-8) var(--space-6);
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .header h1 {
+    max-width: 22ch;
+  }
+
+  .header h1 em {
+    color: var(--oxblood);
+    font-style: italic;
+  }
+
+  .lede {
+    font-size: 1.2rem;
+    color: var(--ink-soft);
+    max-width: 58ch;
+    line-height: 1.55;
+    margin-top: var(--space-4);
+  }
+
+  .books { padding-block: var(--space-7); }
+
+  .book-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-width: 100%;
+  }
+
+  .book {
+    display: grid;
+    grid-template-columns: 6rem 1fr;
+    gap: var(--space-6);
+    padding: var(--space-6) 0;
+    border-top: 1px solid var(--rule);
+    align-items: start;
+  }
+
+  .book:last-child {
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .book-index {
+    font-family: var(--font-display);
+    font-size: 3rem;
+    color: var(--gold);
+    font-weight: 300;
+    line-height: 1;
+    font-variation-settings: "opsz" 144;
+    padding-top: 0.25rem;
+  }
+
+  .book-kicker {
+    font-family: var(--font-display);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--ink-muted);
+    margin: 0 0 var(--space-2);
+    font-weight: 500;
+  }
+
+  .book-title {
+    font-size: clamp(1.7rem, 3vw, 2.3rem);
+    margin: 0 0 var(--space-3);
+    font-weight: 500;
+    font-variation-settings: "opsz" 72;
+  }
+
+  .book-title a {
+    color: var(--ink);
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .book-title a:hover {
+    color: var(--oxblood);
+    border-bottom-color: var(--gold);
+  }
+
+  .book-desc {
+    font-size: 1.05rem;
+    color: var(--ink-soft);
+    line-height: 1.65;
+    max-width: 62ch;
+    margin-bottom: var(--space-4);
+  }
+
+  .book-meta {
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    color: var(--ink-muted);
+    margin: 0;
+  }
+
+  .book-meta .small-caps {
+    margin-right: var(--space-2);
+  }
+
+  .book-meta code {
+    background: transparent;
+    border: none;
+    padding: 0;
+    color: var(--oxblood);
+    font-size: 0.95em;
+  }
+
+  @media (max-width: 620px) {
+    .book { grid-template-columns: 1fr; gap: var(--space-2); }
+    .book-index { font-size: 2.2rem; }
+  }
+</style>

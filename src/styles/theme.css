@@ -1,0 +1,63 @@
+/* Warm academic theme — parchment, ink, oxblood.
+   Inspired by letterpress books: serif display, generous leading, muted palette. */
+
+:root {
+  /* Color palette */
+  --parchment: #f5efe3;
+  --parchment-light: #fbf6ea;
+  --parchment-dark: #ece4d2;
+  --ink: #1c1814;
+  --ink-soft: #3d3428;
+  --ink-muted: #6b5f4e;
+  --rule: #d9cfbe;
+  --rule-soft: #e6dcc8;
+  --oxblood: #8b2e1a;
+  --oxblood-dark: #6b2012;
+  --gold: #b8874a;
+  --gold-dark: #8a6434;
+  --highlight: #f0e4c4;
+  --code-bg: #f9f3e4;
+  --code-border: #e0d4ba;
+
+  /* Type */
+  --font-display: "Fraunces", "Iowan Old Style", "Palatino", Georgia, serif;
+  --font-serif: "Source Serif 4", "Source Serif Pro", "Iowan Old Style", Georgia, serif;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  /* Spacing */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+  --space-9: 6rem;
+
+  /* Layout */
+  --measure: 68ch;
+  --measure-wide: 82ch;
+  --container: 1200px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --parchment: #1a1612;
+    --parchment-light: #221d16;
+    --parchment-dark: #13100c;
+    --ink: #efe6d2;
+    --ink-soft: #d9cdb3;
+    --ink-muted: #9e9178;
+    --rule: #3a3227;
+    --rule-soft: #2a2319;
+    --oxblood: #d87a62;
+    --oxblood-dark: #eb8a72;
+    --gold: #d4a968;
+    --gold-dark: #e6bd82;
+    --highlight: #3a321f;
+    --code-bg: #201b14;
+    --code-border: #3a3227;
+  }
+}

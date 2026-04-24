@@ -1,0 +1,121 @@
+---
+import SiteLayout from "../../components/SiteLayout.astro";
+import { getCollection } from "astro:content";
+
+const posts = (await getCollection("blog")).sort(
+  (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
+);
+---
+
+<SiteLayout
+  title="Blog"
+  description="Tutorials, project write-ups, and notes from Python for Digital Humanities."
+>
+  <section class="header">
+    <div class="container">
+      <p class="eyebrow">Blog</p>
+      <h1>Tutorials, notes,<br/><em>project write-ups.</em></h1>
+    </div>
+  </section>
+
+  <section class="posts">
+    <div class="container">
+      {posts.length === 0 ? (
+        <p>No posts yet.</p>
+      ) : (
+        <ul class="post-list">
+          {posts.map((p) => (
+            <li>
+              <a href={`/blog/${p.id}/`}>
+                <span class="post-date">
+                  {p.data.date.toLocaleDateString("en-US", {
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                </span>
+                <span class="post-content">
+                  <span class="post-title">{p.data.title}</span>
+                  {p.data.description && (
+                    <span class="post-desc">{p.data.description}</span>
+                  )}
+                  {p.data.category && (
+                    <span class="post-category">{p.data.category}</span>
+                  )}
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  </section>
+</SiteLayout>
+
+<style>
+  .header {
+    padding-block: var(--space-8) var(--space-6);
+    border-bottom: 1px solid var(--rule);
+  }
+  .header h1 em { color: var(--oxblood); font-style: italic; }
+
+  .posts { padding-block: var(--space-7); }
+
+  .post-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .post-list li { border-top: 1px solid var(--rule); margin: 0; }
+  .post-list li:last-child { border-bottom: 1px solid var(--rule); }
+
+  .post-list a {
+    display: grid;
+    grid-template-columns: 10rem 1fr;
+    gap: var(--space-5);
+    padding: var(--space-5) 0;
+    text-decoration: none;
+    color: var(--ink);
+    align-items: baseline;
+  }
+
+  .post-list a:hover .post-title { color: var(--oxblood); }
+
+  .post-date {
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    color: var(--ink-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+
+  .post-content { display: flex; flex-direction: column; gap: var(--space-1); }
+
+  .post-title {
+    font-family: var(--font-display);
+    font-size: 1.45rem;
+    font-weight: 500;
+    font-variation-settings: "opsz" 72;
+    transition: color 0.15s ease;
+  }
+
+  .post-desc {
+    color: var(--ink-muted);
+    font-size: 1rem;
+    max-width: 60ch;
+  }
+
+  .post-category {
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--gold-dark);
+    margin-top: var(--space-2);
+  }
+
+  @media (max-width: 620px) {
+    .post-list a { grid-template-columns: 1fr; gap: var(--space-1); }
+  }
+</style>
