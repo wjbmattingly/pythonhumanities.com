@@ -1,5 +1,6 @@
 ---
 import SiteLayout from "../components/SiteLayout.astro";
+import { url } from "../lib/url";
 ---
 
 <SiteLayout title="Page not found" description="The page you're looking for doesn't exist.">
@@ -11,8 +12,8 @@ import SiteLayout from "../components/SiteLayout.astro";
       from the old WordPress site.
     </p>
     <p>
-      Try the <a href="/course/">course index</a>, the
-      <a href="/textbooks/">textbooks</a>, or the <a href="/">homepage</a>.
+      Try the <a href={url("/course/")}>course index</a>, the
+      <a href={url("/textbooks/")}>textbooks</a>, or the <a href={url("/")}>homepage</a>.
     </p>
   </section>
 </SiteLayout>

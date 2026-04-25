@@ -1,5 +1,6 @@
 ---
 import SiteLayout from "../components/SiteLayout.astro";
+import { url } from "../lib/url";
 ---
 
 <SiteLayout
@@ -47,8 +48,8 @@ import SiteLayout from "../components/SiteLayout.astro";
           People in the position Mattingly was in around 2015: you have a project in mind,
           you suspect Python would help, and you don't want to sit through a generic
           "learn to code" course to find out. If that's you, the
-          <a href="/course/">Python for DH course</a> is the best starting point;
-          the <a href="/textbooks/">textbooks</a> go deeper on specific tools.
+          <a href={url("/course/")}>Python for DH course</a> is the best starting point;
+          the <a href={url("/textbooks/")}>textbooks</a> go deeper on specific tools.
         </p>
 
         <h2>Support the project</h2>

@@ -1,6 +1,7 @@
 ---
 import SiteLayout from "../components/SiteLayout.astro";
 import { getCollection } from "astro:content";
+import { url } from "../lib/url";
 
 const posts = (await getCollection("blog"))
   .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
@@ -56,10 +57,9 @@ const playlists = [
 <SiteLayout>
   <section class="hero">
     <div class="container">
-      <p class="eyebrow">Digital Humanities · est. 2018</p>
       <h1 class="hero-title">
         Python,<br/>
-        <em>for humanists.</em>
+        <em>for Humanists.</em>
       </h1>
       <p class="hero-lede">
         A home for free textbooks, video lessons, and a full course teaching
@@ -67,8 +67,8 @@ const playlists = [
         Used in more than 50 countries.
       </p>
       <div class="hero-actions">
-        <a href="/course/" class="btn btn-primary">Start the course</a>
-        <a href="/textbooks/" class="btn btn-ghost">Browse the textbooks</a>
+        <a href={url("/course/")} class="btn btn-primary">Start the course</a>
+        <a href={url("/textbooks/")} class="btn btn-ghost">Browse the textbooks</a>
       </div>
     </div>
   </section>
@@ -129,7 +129,7 @@ const playlists = [
           ends with scraping websites and storing data in XML.
           No programming background assumed.
         </p>
-        <p><a href="/course/" class="link-arrow">See the full syllabus →</a></p>
+        <p><a href={url("/course/")} class="link-arrow">See the full syllabus →</a></p>
       </div>
       <div class="stats">
         <div><strong>24</strong><span>lessons</span></div>
@@ -151,7 +151,7 @@ const playlists = [
           <ul class="post-list">
             {posts.map((p) => (
               <li>
-                <a href={`/blog/${p.id}/`}>
+                <a href={url(`/blog/${p.id}/`)}>
                   <span class="post-date">
                     {p.data.date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" })}
                   </span>

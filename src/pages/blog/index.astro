@@ -1,6 +1,7 @@
 ---
 import SiteLayout from "../../components/SiteLayout.astro";
 import { getCollection } from "astro:content";
+import { url } from "../../lib/url";
 
 const posts = (await getCollection("blog")).sort(
   (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
@@ -26,7 +27,7 @@ const posts = (await getCollection("blog")).sort(
         <ul class="post-list">
           {posts.map((p) => (
             <li>
-              <a href={`/blog/${p.id}/`}>
+              <a href={url(`/blog/${p.id}/`)}>
                 <span class="post-date">
                   {p.data.date.toLocaleDateString("en-US", {
                     month: "long",

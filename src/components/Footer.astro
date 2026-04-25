@@ -1,4 +1,5 @@
 ---
+import { url } from "../lib/url";
 const year = new Date().getFullYear();
 ---
 
@@ -14,10 +15,10 @@ const year = new Date().getFullYear();
     <div class="footer-col">
       <p class="eyebrow">Resources</p>
       <ul>
-        <li><a href="/textbooks/">Free Textbooks</a></li>
-        <li><a href="/videos/">Video Playlists</a></li>
-        <li><a href="/course/">Python for DH Course</a></li>
-        <li><a href="/blog/">Blog</a></li>
+        <li><a href={url("/textbooks/")}>Free Textbooks</a></li>
+        <li><a href={url("/videos/")}>Video Playlists</a></li>
+        <li><a href={url("/course/")}>Python for DH Course</a></li>
+        <li><a href={url("/blog/")}>Blog</a></li>
       </ul>
     </div>
     <div class="footer-col">

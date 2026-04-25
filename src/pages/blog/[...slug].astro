@@ -1,6 +1,7 @@
 ---
 import SiteLayout from "../../components/SiteLayout.astro";
 import { getCollection, render } from "astro:content";
+import { url } from "../../lib/url";
 
 export async function getStaticPaths() {
   const posts = await getCollection("blog");
@@ -18,7 +19,7 @@ const { Content } = await render(post);
   <article class="post">
     <header class="post-header container">
       <p class="breadcrumb">
-        <a href="/blog/">Blog</a>
+        <a href={url("/blog/")}>Blog</a>
         {post.data.category && <span> · {post.data.category}</span>}
       </p>
       <h1>{post.data.title}</h1>
