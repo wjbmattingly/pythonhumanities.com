@@ -1,88 +1,162 @@
 ---
-title: "Python and Storing Data in XML Files"
+title: "Storing Data in XML Files"
 lessonNumber: 24
 part: 7
 partTitle: "Storing Data"
-description: "Write structured data to XML files using Python's standard library."
+description: "Write and read structured data in XML using Python's standard library — and know when XML is actually the right format."
 sourceUrl: "https://pythonhumanities.com/lesson-24-python-and-storing-data-in-xml-files/"
 videoId: "ZFyjpg_I_Rs"
 ---
 
-Plain text files are fine for unstructured prose, but for structured data — anything with nested fields, attributes, or relationships — XML is often a better fit. This lesson covers writing data to XML files from Python using the standard library, with no third-party packages required.
+XML still matters in the humanities. The TEI Guidelines, EAD finding aids, EpiDoc inscriptions, METS/MODS, plenty of museum and library standards — they're all XML. If your data has to interoperate with any of those traditions, you need to know how to read and write XML cleanly from Python. This lesson covers the basics with Python's standard `xml.etree.ElementTree` module, then notes when to reach for the more powerful third-party `lxml`.
+
+For brand-new data with no XML obligations, JSON is usually a better fit (Lesson 22). XML earns its keep when you need attributes, mixed content (text and tags interleaved), namespaces, or compatibility with an existing schema.
 
 ## The library
 
-Python ships with `xml.etree.ElementTree`, usually imported as `ET`:
+Python ships with `xml.etree.ElementTree`, conventionally imported as `ET`:
 
 ```python
 import xml.etree.ElementTree as ET
 ```
 
-The model is straightforward: build a tree of `Element` objects, then serialize the tree to disk.
+The model is straightforward: build a tree of `Element` objects, then serialize it. Reading reverses the process — parse the tree, then walk it.
 
-## Building a tree
+## Writing — building a tree
 
-Every XML document has a single **root** element. Create it with `ET.Element`:
+Every XML document has a single **root** element. Create it, then add children:
 
 ```python
 root = ET.Element("biographies")
-```
 
-Add child elements with `ET.SubElement(parent, tag)`:
-
-```python
-person = ET.SubElement(root, "person")
+person = ET.SubElement(root, "person", attrib={"id": "theuderic-iv"})
 ET.SubElement(person, "name").text = "Theuderic IV"
-ET.SubElement(person, "reign_start").text = "721"
-ET.SubElement(person, "reign_end").text = "737"
+ET.SubElement(person, "reign", attrib={"start": "721", "end": "737"})
 ```
 
-Setting `.text` on an element gives it a text body. Setting attributes works through `.set` (or by passing a dict to `SubElement`):
+Two important moves there:
 
-```python
-person.set("id", "theuderic-iv")
-```
+- **`.text`** sets the textual content of an element (`<name>Theuderic IV</name>`).
+- **`attrib={...}`** sets attributes (`<reign start="721" end="737"/>`).
 
-## A complete example from a list
+You can also set attributes after creation: `person.set("id", "theuderic-iv")`.
 
-If you've already got Python data — say a list of dictionaries from a scrape — building the tree is a loop:
+## Building from a list of dictionaries
+
+Most often, you've already got Python data — a list of dictionaries from a scrape or a CSV — and you want to serialize it:
 
 ```python
 import xml.etree.ElementTree as ET
 
 people = [
-    {"name": "Theuderic IV", "reign_start": "721", "reign_end": "737"},
-    {"name": "Childeric III", "reign_start": "743", "reign_end": "751"},
+    {"id": "theuderic-iv",  "name": "Theuderic IV",  "start": "721", "end": "737"},
+    {"id": "childeric-iii", "name": "Childeric III", "start": "743", "end": "751"},
 ]
 
 root = ET.Element("biographies")
 
 for p in people:
-    person = ET.SubElement(root, "person")
-    for field, value in p.items():
-        ET.SubElement(person, field).text = value
+    person = ET.SubElement(root, "person", attrib={"id": p["id"]})
+    ET.SubElement(person, "name").text = p["name"]
+    ET.SubElement(person, "reign", attrib={"start": p["start"], "end": p["end"]})
 ```
 
-## Saving to disk
+## Saving to disk — pretty-printed
 
-Wrap the root in an `ElementTree` and call `write`:
+Wrap the root in an `ElementTree`, indent it (Python 3.9+), and write:
 
 ```python
 tree = ET.ElementTree(root)
-tree.write("biographies.xml", encoding="utf-8", xml_declaration=True)
-```
-
-`xml_declaration=True` writes the `<?xml version="1.0" ?>` header at the top of the file.
-
-## Pretty-printing
-
-`ElementTree.write` produces compact output on a single line. To make the file human-readable, call `ET.indent` (Python 3.9+) before writing:
-
-```python
 ET.indent(tree, space="  ")
 tree.write("biographies.xml", encoding="utf-8", xml_declaration=True)
 ```
 
+The result:
+
+```xml
+<?xml version='1.0' encoding='utf-8'?>
+<biographies>
+  <person id="theuderic-iv">
+    <name>Theuderic IV</name>
+    <reign start="721" end="737" />
+  </person>
+  <person id="childeric-iii">
+    <name>Childeric III</name>
+    <reign start="743" end="751" />
+  </person>
+</biographies>
+```
+
+`xml_declaration=True` writes the `<?xml version='1.0' ?>` header. `ET.indent` is what turns the default single-line blob into something a human can read.
+
+## Reading XML
+
+Reverse direction — parse a file, then walk the tree:
+
+```python
+tree = ET.parse("biographies.xml")
+root = tree.getroot()
+
+for person in root.findall("person"):
+    pid = person.get("id")
+    name = person.findtext("name")
+    reign = person.find("reign")
+    start, end = reign.get("start"), reign.get("end")
+    print(pid, name, start, end)
+```
+
+The four most useful methods on an `Element`:
+
+| Method | Returns |
+| --- | --- |
+| `el.find(path)` | the first matching child element (or `None`) |
+| `el.findall(path)` | a list of matching children |
+| `el.findtext(path)` | the `.text` of the first match (or `None`) |
+| `el.get(name)` | the value of an attribute (or `None`) |
+
+`path` can be a tag name, or a more elaborate XPath-ish expression — `"person/name"`, `"person[@id='theuderic-iv']"`. ElementTree supports a useful subset; for full XPath you'll want `lxml`.
+
+## Namespaces — the gotcha
+
+Real-world XML usually has namespaces, and that changes how you query it. A TEI document looks like:
+
+```xml
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>...</teiHeader>
+</TEI>
+```
+
+In ElementTree, you have to qualify your queries with the namespace URI:
+
+```python
+ns = {"tei": "http://www.tei-c.org/ns/1.0"}
+
+tree = ET.parse("tei-doc.xml")
+for div in tree.findall(".//tei:div", ns):
+    print(div.get("type"))
+```
+
+Forgetting the namespace is the most common reason a query returns nothing. If `findall` is mysteriously empty, check whether the document declares a namespace.
+
+## When to use `lxml` instead
+
+`xml.etree.ElementTree` is good enough for most jobs. Reach for the third-party `lxml` package when you need:
+
+- Full XPath 1.0 (and 2.0 via extensions).
+- XSLT transformations.
+- Schema validation (XSD, DTD, RELAX NG).
+- Faster parsing of very large documents.
+- Round-tripping with comments and processing instructions preserved.
+
+The `lxml` API is mostly compatible with ElementTree (most ElementTree code works under `from lxml import etree as ET`), so it's a small switch when the time comes.
+
+```bash
+uv add lxml
+```
+
 ## Where to next
 
-This is the final lesson in the introductory course. From here you'll likely want to look at the [free textbooks](/textbooks/) for deeper dives: spaCy, BookNLP, named entity recognition, and a full Python-for-DH textbook with worked examples.
+This is the last numbered lesson in the introductory course. From here, two natural next steps:
+
+- **The [free textbooks](/textbooks/)** — deeper guides on Python for DH, named entity recognition, spaCy, and BookNLP. Each builds on the foundations from this course.
+- **A real project.** A small, finishable one. Pick something you'd otherwise do by hand — count names in a corpus, scrape a finding aid, transform a folder of texts — and write the script. Everything you learn next, you'll learn faster than what you've learned so far.

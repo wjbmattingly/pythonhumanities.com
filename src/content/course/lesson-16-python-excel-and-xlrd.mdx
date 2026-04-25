@@ -1,71 +1,127 @@
 ---
-title: "Python, Excel, and XLRD"
+title: "Reading Excel Files with Python"
 lessonNumber: 16
 part: 5
 partTitle: "Working with Excel Data"
-description: "Open .xls spreadsheets from Python and pull values out of them cell by cell."
+description: "Open spreadsheets from Python and pull values out of them — using openpyxl for modern .xlsx files, with notes on xlrd for legacy .xls."
 sourceUrl: "https://pythonhumanities.com/lesson-16-python-excel-and-xlrd/"
 videoId: "OCAksWSEJPY"
 ---
 
-A great deal of humanities data lives in spreadsheets. This lesson introduces **`xlrd`**, a Python library for reading older `.xls` Excel files. We'll open a workbook, pick a sheet, and read individual cells.
+A great deal of humanities data lives in spreadsheets. This lesson covers how to read one from Python — open a workbook, pick a sheet, walk the cells. The video uses `xlrd`; the version below uses `openpyxl`, which is the right tool for modern `.xlsx` files. I'll cover both.
 
-> **A note on file formats.** `xlrd` only supports the legacy `.xls` format. For modern `.xlsx` files, use `openpyxl` or `pandas.read_excel(...)`. The mechanics below are similar — open the workbook, choose a sheet, address cells by row and column.
+## A note on file formats
 
-## Installing the library
+There are two Excel formats you'll encounter:
 
-Add `xlrd` to your project:
+- **`.xlsx`** — the modern format (Excel 2007 and later). Use **`openpyxl`** to read and write it. This is what you'll use 95% of the time.
+- **`.xls`** — the legacy format (Excel 97–2003). Use **`xlrd`** to read it. (Modern `xlrd` only reads, and only `.xls`. Writing `.xls` is essentially obsolete.)
+
+If you have a choice, save as `.xlsx`. If you're inheriting old data, fine — read it with `xlrd`, save it as `.xlsx` with `openpyxl`, and use the modern format from there.
+
+There's also **pandas** (`pd.read_excel("data.xlsx")`) and **polars** (`pl.read_excel("data.xlsx")`), which both load a spreadsheet directly into a tabular data frame. For straight data analysis these are wonderful. For learning what the data actually contains and walking it cell by cell, `openpyxl` is more direct, which is why we start there.
+
+## Installing
 
 ```bash
+uv add openpyxl
+# and, if you also need to read .xls files:
 uv add xlrd
 ```
 
-## Opening a workbook
+## Reading an `.xlsx` workbook with openpyxl
 
-Point `xlrd` at the path to your `.xls` file:
+```python
+from openpyxl import load_workbook
+
+wb = load_workbook("data.xlsx", data_only=True)
+print(wb.sheetnames)              # ['Sheet1', 'Letters', 'Notes']
+
+sheet = wb["Letters"]             # by name
+sheet = wb.active                 # or the currently active sheet
+sheet = wb.worksheets[0]          # or by index
+```
+
+`data_only=True` is worth knowing about. By default, `openpyxl` returns **formulas** for cells that contain them (e.g. `=SUM(A1:A10)`). With `data_only=True`, it returns the **last computed value** Excel saved. For research data you almost always want the values, not the formulas.
+
+## Reading individual cells
+
+Two ways:
+
+```python
+sheet["A1"].value           # by Excel-style address
+sheet.cell(row=1, column=1).value   # by 1-based row/column numbers
+```
+
+Note: `openpyxl` is **1-indexed** — the first row is row `1`, not row `0`. (xlrd, which we'll see in a moment, is 0-indexed. Watch for this.)
+
+Sheet dimensions:
+
+```python
+sheet.max_row
+sheet.max_column
+```
+
+## Walking every row
+
+The most natural pattern — `iter_rows` yields each row as a tuple of cells:
+
+```python
+for row in sheet.iter_rows(min_row=2, values_only=True):
+    sender, recipient, year = row
+    print(sender, recipient, year)
+```
+
+Three things to know:
+
+- `min_row=2` skips the header row.
+- `values_only=True` gives you the raw values (strings, numbers, dates) instead of cell objects. Almost always what you want.
+- The `for` unpacking (`sender, recipient, year = row`) only works when every row has the same number of columns. For variable-width sheets, capture the whole tuple as `row` and index into it.
+
+## Header row → list of dictionaries
+
+The most useful shape for further work — turn each row into a dictionary keyed by the header:
+
+```python
+rows = list(sheet.iter_rows(values_only=True))
+header, *body = rows
+
+records = [dict(zip(header, r)) for r in body]
+print(records[0])
+# {'sender': 'Voltaire', 'recipient': 'Émilie', 'year': 1735}
+```
+
+From here every later operation — search, sort, filter, count — is just a list-of-dicts operation, which we covered in Lesson 07.
+
+## Reading a legacy `.xls` workbook with xlrd
+
+For files that are still in the old format:
 
 ```python
 import xlrd
 
 book = xlrd.open_workbook("data.xls")
 print(book.sheet_names())
-```
 
-`open_workbook` returns a workbook object. `sheet_names()` lists every sheet inside it as a list of strings.
-
-## Selecting a sheet
-
-You can grab a sheet by index or by name:
-
-```python
 sheet = book.sheet_by_index(0)
-sheet = book.sheet_by_name("Sheet1")
-```
+print(sheet.nrows, sheet.ncols)
 
-Each sheet exposes its dimensions:
-
-```python
-print(sheet.nrows)
-print(sheet.ncols)
-```
-
-## Reading cells
-
-Cells are addressed by `(row, column)`, both starting at 0:
-
-```python
-value = sheet.cell_value(0, 0)
-print(value)
-```
-
-To walk the whole sheet, nest two `range` loops:
-
-```python
 for r in range(sheet.nrows):
     for c in range(sheet.ncols):
         print(r, c, sheet.cell_value(r, c))
 ```
 
-## Where this fits
+xlrd is **0-indexed** — the first row is row `0`, the first column is column `0`. The mental model is the same as openpyxl, but the offsets are different.
 
-`xlrd` is read-only. To **write** Excel files we'll use a different library, `xlsxwriter`, in [Lesson 18](/course/lesson-18-python-and-creating-excel-files-with-xlsxwriter/). To **search** through what we've read, see [Lesson 17](/course/lesson-17-python-and-searching-excel-data/).
+## Don't forget dates
+
+Dates in Excel are stored as a number (days since 1899/12/30, more or less). Both libraries can decode them, but the details differ:
+
+- **openpyxl** with `data_only=True` and `values_only=True` gives you Python `datetime.datetime` objects directly.
+- **xlrd** gives you the raw number; convert with `xlrd.xldate.xldate_as_datetime(value, book.datemode)`.
+
+If a year is showing up as `42835` instead of `2017`, you're looking at a serial date that hasn't been converted.
+
+## Where this leads
+
+In [Lesson 17](/course/lesson-17-python-and-searching-excel-data/) we walk every cell looking for matches; in [Lesson 18](/course/lesson-18-python-and-creating-excel-files-with-xlsxwriter/) we go the other direction and write a fresh `.xlsx` file from a Python list.

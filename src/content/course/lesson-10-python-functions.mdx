@@ -3,54 +3,177 @@ title: "Python Functions"
 lessonNumber: 10
 part: 3
 partTitle: "Interacting with Data Structures"
-description: "Functions in Python are ways of storing blocks of code that you call throughout your script multiple times."
+description: "Functions package a block of code under a name so you can reuse it — the foundation of clean, readable scripts."
 sourceUrl: "https://pythonhumanities.com/lesson-10-python-functions/"
 videoId: "6TS5NUZ0RMo"
 ---
 
-Functions in Python are ways of storing blocks of code that you call throughout your script multiple times. A good rule for good code is tight code. By this I mean, code that is as short as possible. Another good rule is easily understood code. Functions allow for both of these things.
+A **function** is a named block of code you define once and call as many times as you need. You've been calling functions since Lesson 03 — `print`, `len`, `str`, `split`, `replace`, `sorted`. This lesson is about writing your own.
 
-Throughout this series, we've worked with functions multiple times. Any time we interacted with data, we did so by calling functions and passing arguments through them. Any time you see something in python that looks like this: `my_function()`, this is a function. It has an open and a close parentheses.
+Two principles to keep in mind:
 
-Within the parentheses, we pass arguments. Some functions take a specific number of functions, such as the split function. Split took a single argument. Other functions take two functions, such as the replace function. More advanced functions allow you to pass multiple arguments.
+1. **Don't repeat yourself.** If you find yourself copy-pasting three lines and changing one number, those lines belong inside a function.
+2. **Name what code does.** A well-named function turns five mysterious lines into one readable line — `clean_filename(name)` is more useful than the five lines that strip spaces, punctuation, and case.
 
-In the example below, we have a string called `a_string` and we call the split function to split it at the "," (which is our argument). If you remember, this will return a list consisting of two things, "Hello" and "I'm Billy."
+## Defining a function
 
-**Example of split function:**
+The keyword is `def`, followed by the name, parentheses with any **parameters**, a colon, and an indented block.
 
 ```python
-a_string = "Hello, I'm Billy."
-a_string.split(",")
+def double(a):
+    return a * 2
 ```
 
-But in Python we are not limited to the functions that come with Python. We can actually create our own! In the example below, I have created a function called `my_function()`. I created it by using the operator `def`. This is how we define a function so that we can call it later in our script. The function has a single argument, "a". This means that when I call the function, I must pass 1 argument. The function will then create an object called x and it will be equal to a multiplied by two. To determine what the function will return, we have to declare a return value. Note, you can only return a single object. If you have multiple objects, they will be returned as a tuple, which you must then index. In this case, I am returning the value of x, so I am essentially returning whatever the result is of the argument multiplied by 2.
+`a` is a parameter — a placeholder for whatever value the caller passes in. Inside the function, `a` behaves like any other variable. The function ends either at the first un-indented line or at a `return` statement.
 
-Below the function, I have called it and passed the argument of 3. This will result in 3*2.
+## Calling it
 
-**Example of a created function:**
+Use the name plus parentheses and the **arguments** that fill in the parameters:
 
 ```python
-def my_function(a):
-    x = a*2
+double(3)            # 6
+result = double(7)
+print(result)        # 14
+```
+
+You can call a function inside a loop — exactly the use case that makes them earn their keep:
+
+```python
+for n in [1, 2, 3]:
+    print(double(n))
+```
+
+## Returning values
+
+`return` is what hands a value back to the caller. A function that doesn't `return` anything implicitly returns `None`:
+
+```python
+def shout(text):
+    print(text.upper())          # prints, but returns nothing
+
+x = shout("hello")
+print(x)                          # None
+```
+
+Compare with a function that *does* return:
+
+```python
+def shouting(text):
+    return text.upper()
+
+x = shouting("hello")
+print(x)                          # 'HELLO'
+```
+
+Both versions are valid; they're just answering different questions. `print` displays. `return` hands a value to whoever called you. Most useful functions return.
+
+A function can return more than one value at once, separated by commas. The result is a tuple:
+
+```python
+def name_parts(full):
+    first, last = full.split(maxsplit=1)
+    return first, last
+
+f, l = name_parts("Ada Lovelace")
+print(f, l)                       # Ada Lovelace
+```
+
+## Parameters with defaults
+
+A parameter can have a default value, used when the caller doesn't supply one:
+
+```python
+def greet(name, greeting="Hello"):
+    return f"{greeting}, {name}."
+
+greet("Ada")                       # 'Hello, Ada.'
+greet("Ada", greeting="Bonjour")   # 'Bonjour, Ada.'
+```
+
+Defaults make a function easy to use for the common case without locking out the unusual one.
+
+## Keyword arguments — call by name
+
+You can pass arguments by position (in the order the parameters were defined) or by name:
+
+```python
+def slice_text(text, start, end):
+    return text[start:end]
+
+slice_text("digital humanities", 0, 7)               # by position
+slice_text(text="digital humanities", start=0, end=7)  # by name
+```
+
+For a function with two or three obvious parameters, positional is fine. As soon as a function has four or more, naming arguments makes calls vastly more readable — you can tell what `slice_text(text, 0, 7)` is doing at a glance.
+
+## Type hints — recommended once you're comfortable
+
+Modern Python code annotates parameters and return types. The annotations don't change what the code does — Python is still dynamic — but they make the function self-documenting and catch real bugs when used with a checker like `mypy` or `pyright`.
+
+```python
+def double(a: int) -> int:
+    return a * 2
+
+def greet(name: str, greeting: str = "Hello") -> str:
+    return f"{greeting}, {name}."
+```
+
+You don't have to use type hints to write Python well. But once you start, you'll find your own functions easier to come back to in three months.
+
+## Docstrings — describe what the function does
+
+A string at the top of a function body becomes its **docstring** — visible in editors, tools, and `help()`. Triple quotes, one line for short ones, multiple lines if a function deserves explanation:
+
+```python
+def slice_text(text: str, start: int, end: int) -> str:
+    """Return text[start:end]. Indexes follow Python's half-open slice rule."""
+    return text[start:end]
+```
+
+For a one-liner you'd otherwise comment, this is strictly better — the documentation lives with the code and shows up where it's useful.
+
+## Empty functions — `pass`
+
+Python won't accept an empty block. When you're sketching out a script and want a function you'll fill in later, use `pass`:
+
+```python
+def parse_letter(text):
+    pass    # TODO: extract sender, date, body
+```
+
+`pass` is also useful in `if` and `while` blocks where you need a placeholder but no action.
+
+## Scope — what a function can see
+
+A variable defined inside a function is **local** to that function. It doesn't exist outside, and it doesn't leak into other functions:
+
+```python
+def f():
+    x = 10
     return x
 
-num = my_function(3)
-print (num)
-
-my_list = [1, 2, 3]
-for i in my_list:
-    my_function(i)
+f()
+print(x)    # NameError: name 'x' is not defined
 ```
 
-So, why is this useful? Look at the example above once again. Notice that I created a list called `my_list`. I can then iterate across that list in a for loop and pass each of the items (the variable i) into the function `my_function`.
+A function *can* read variables defined in the enclosing module, but it should be rare and deliberate. The cleaner pattern is to pass everything a function needs in as parameters and return what it produces. Functions that depend on hidden global state are hard to test and harder to reuse.
 
-It is important to note that you cannot have an empty function in Python. Often when I am designing a script for a DH project, I create a bunch of functions that I know I will need, but I don't want to write the actual scripts. To do this, I create my function and simply write `pass` on the first line of code inside the function block. (See example below.)
+## A worked example — cleaning text
 
-**Example of pass operator in function:**
+A small function that does something real: strip punctuation and lowercase a string, the kind of preprocessing you'll do constantly in text analysis.
 
 ```python
-def my_function():
-    pass
+import string
+
+def normalize(text: str) -> str:
+    """Lowercase the text and strip ASCII punctuation."""
+    no_punct = text.translate(str.maketrans("", "", string.punctuation))
+    return no_punct.lower()
+
+normalize("The quality of mercy, is not strain'd.")
+# 'the quality of mercy is not straind'
 ```
 
-Spend some time with functions, then continue to [Lesson 11: Python Classes](/course/lesson-11-python-classes/).
+That's three lines of work behind one descriptive name. From here on, anywhere you'd otherwise repeat the punctuation-stripping logic, you call `normalize(text)` instead. That's the whole game.
+
+When you can write functions comfortably, move on to [Lesson 11: Python Classes](/course/lesson-11-python-classes/).

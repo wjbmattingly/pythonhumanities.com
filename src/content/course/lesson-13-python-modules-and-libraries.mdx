@@ -8,53 +8,114 @@ sourceUrl: "https://pythonhumanities.com/lesson-13-python-modules-and-libraries/
 videoId: "QWBron1k5HA"
 ---
 
-Most of the interesting work in a digital humanities project happens not in the code you write yourself but in the **libraries** you pull in: regex, `requests`, BeautifulSoup, spaCy, pandas, and so on. Using these is not plagiarism and it is not cheating. They are open source, free to use, and the entire ecosystem expects you to use them.
+Most of the interesting work in a DH project doesn't happen in code you write yourself — it happens in **libraries** you pull in. Regex, `requests`, BeautifulSoup, spaCy, pandas, polars, lxml, scikit-learn, every major NLP toolkit. Using these is not cheating; it's the whole reason Python is the lingua franca of computational research. The ecosystem is open source, expects you to use it, and is built on the assumption that you will.
 
-## What is a module?
+This lesson covers the vocabulary you need: what a module is, how to install one, how to import what you've installed, and the standard-library modules every Python script benefits from knowing.
 
-A **module** (also called a **package** or **library**) is a block of code written by someone else — sometimes a single developer, sometimes a research lab at MIT, Stanford, or an institute like AllenAI. Modules let you bring complex behavior into your script with a single import. Most modules have good documentation on their main website; if you Google the module name, you'll usually land on it within the first two results.
+## Module, package, library — what's the difference?
 
-## Installing a module
+The terms are used loosely, but technically:
 
-In modern Python (and throughout this course), we install dependencies with [`uv`](/course/lesson-01-introduction-to-python-for-dh/). Inside your project folder:
+- A **module** is a single `.py` file containing functions, classes, and constants.
+- A **package** is a directory of modules — a coherent collection.
+- A **library** is informal usage; people use it interchangeably with "package."
 
-```bash
-uv add <module-name>
-```
+You'll hear all three. Don't worry about the distinction. The important fact is: someone wrote it, you can install it, and you can `import` it.
 
-For example, to install the regex library we're about to use:
+## Installing with `uv`
+
+Throughout this course we install dependencies with [`uv`](/course/lesson-01-introduction-to-python-for-dh/), Astral's modern Python project manager. From inside your project folder:
 
 ```bash
 uv add regex
 ```
 
-(Python ships with a built-in regex module called `re`, so for `re` you don't actually need `uv add`. But for almost any *third-party* library — `requests`, `beautifulsoup4`, `spacy`, `pandas` — you do.)
+`uv add` does three things at once: it installs the library into your project's virtual environment, records the dependency in your `pyproject.toml`, and pins an exact version in `uv.lock`. That last part is what makes the project reproducible — anyone who clones your repo can run `uv sync` and get the same versions you used.
 
-You may see older tutorials use `pip install <module>`. That still works, but `uv add` writes the dependency into your `pyproject.toml` so the project is reproducible.
+To install several at once:
 
-## Importing a module
+```bash
+uv add requests beautifulsoup4 lxml
+```
 
-Once installed, bring the module into your script with `import`:
+To remove one:
+
+```bash
+uv remove regex
+```
+
+You may see older tutorials use `pip install <module>`. That still works, but it doesn't update your `pyproject.toml`, so it's harder to reproduce later. Stick with `uv add` for project dependencies.
+
+A handful of modules ship with Python itself — they're part of the **standard library** and need no installation. `re`, `csv`, `json`, `pathlib`, `collections`, `datetime`, `os`, `random`, `math`, `urllib` are all standard library. For these, skip the install step and go straight to `import`.
+
+## Importing
+
+Once installed (or built-in), bring the module into your script with `import`:
 
 ```python
 import re
+import json
+from pathlib import Path
 ```
 
-Most coders put all their imports at the top of a script. (Machine-learning notebooks sometimes scatter imports next to where they're used, but for the purposes of this series, keep them at the top.)
-
-You can also rename a module on import — common for libraries with long names:
+There are four import shapes you'll see:
 
 ```python
-import pandas as pd
-import numpy as np
+import re                          # use as: re.findall(...)
+import pandas as pd                # rename on import: pd.DataFrame(...)
+from collections import Counter    # bring one name into scope: Counter(...)
+from collections import Counter, defaultdict   # several names at once
 ```
 
-Or import just one piece of a module:
+Conventions:
+
+- **Long names get aliased.** `import pandas as pd`, `import numpy as np`, `import polars as pl` — the aliases are universal and using them makes your code instantly recognizable.
+- **Specific names come in via `from`.** `from pathlib import Path` is more readable than `pathlib.Path` everywhere in the file.
+- **Don't `from x import *`.** It pulls every name from the module into your namespace and makes it impossible to tell where anything came from.
+
+By convention, all imports go at the top of a file. Notebooks are looser, but for scripts, keep them grouped at the top.
+
+## Standard-library modules every script benefits from
+
+Before you reach for a third-party library, check if Python already does the job. The most useful for DH:
 
 ```python
-from bs4 import BeautifulSoup
+import csv                # read and write CSV files
+import json               # parse and emit JSON
+import re                 # regular expressions
+import sqlite3            # an embedded SQL database, no setup
+import urllib.request     # download a URL (the simple way)
+from pathlib import Path  # filesystem paths
+from datetime import date, datetime, timedelta
+from collections import Counter, defaultdict, OrderedDict
+import random
+import textwrap
+import unicodedata        # normalize accents, classify characters
+import itertools          # cartesian products, groupby, etc.
+import statistics         # mean, median, stdev, quantiles
 ```
 
-## Where this leads
+Each of these covers a real problem cleanly. `Counter` for frequency counts. `defaultdict` for "create the value if the key isn't there yet." `unicodedata.normalize` for stripping accents to make text comparable. `itertools.groupby` for grouping consecutive items.
 
-In [Lesson 14: Python and Regex (Part 01)](/course/lesson-14-python-and-regex-part-01/), we put modules to work — importing `re` and using it to extract dates out of messy text. You'll get more comfortable with modules as you progress through the rest of this series; nearly every remaining lesson uses one.
+## Third-party libraries you'll meet in this course
+
+These all need `uv add`:
+
+- **`regex`** — a more powerful regex engine than the built-in `re`, with Unicode property support.
+- **`requests`** — the canonical HTTP client. We use it in Lesson 20.
+- **`beautifulsoup4`** — HTML parsing. Lesson 21.
+- **`openpyxl`** — read and write modern `.xlsx` files. Lessons 16–18.
+- **`lxml`** — fast XML and HTML processing. Lesson 24.
+
+And ones that are worth knowing about even though we don't cover them in this course: **`pandas`** and **`polars`** for tabular data, **`spacy`** and **`stanza`** for NLP, **`scikit-learn`** for machine learning, **`matplotlib`** and **`seaborn`** for plotting, **`httpx`** as a modern alternative to `requests`.
+
+## Reading the docs
+
+Every reputable library has its documentation as the first hit when you search the name. Bookmark them. The docs for `re`, `requests`, and `beautifulsoup4` will answer 90% of the questions you have while doing the next several lessons.
+
+Two reading habits that pay off:
+
+1. **Find the "quickstart" or "getting started" page first.** Spend ten minutes there before anything else.
+2. **When you hit a question, search "site:docs.example.com your-question."** It's faster than scrolling.
+
+In [Lesson 14: Python and Regex (Part 01)](/course/lesson-14-python-and-regex-part-01/), we put modules to work — importing `re` and using it to extract dates out of messy text. Nearly every remaining lesson uses one or more libraries, so the pattern from this lesson — install, import, read the docs — is one you'll repeat constantly.

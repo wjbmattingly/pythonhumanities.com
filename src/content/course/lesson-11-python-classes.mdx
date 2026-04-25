@@ -3,109 +3,168 @@ title: "Python Classes"
 lessonNumber: 11
 part: 3
 partTitle: "Interacting with Data Structures"
-description: "Classes are the mark of sophisticated code — a way of bundling data and the functions that operate on it."
+description: "Classes bundle data with the functions that operate on it — the move from collections of values to objects that know what they are."
 sourceUrl: "https://pythonhumanities.com/lesson-11-python-classes/"
 videoId: "nqDxOUdQmSI"
 ---
 
-Classes are the mark of sophisticated code. They are something you do not have to use, but they make your code much cleaner because they reduce duplicated logic, much like functions do. A **class** is a template that bundles together some data (the things it knows) and some functions (the things it can do).
+A **class** is a template for an object — a bundle of data ("attributes") and the functions that operate on that data ("methods"). You can write Python for a long time without defining one. Many short scripts in this course do exactly that. But once a project gets past a hundred lines or so, classes start to pay off: they let you say "this thing knows what it is, and here is how to do things to it" in one place, instead of scattering that logic across the script.
 
-Throughout this lesson we'll work with the same example used in the video: a `Emperor` class for representing rulers from history.
+Throughout this lesson we'll work with the same example as the video: an `Emperor` class for representing rulers from history.
 
 ## Defining a class
 
-We define a class with the `class` keyword followed by the class name. Then, just like functions, we use a colon and indent the body:
+The keyword is `class`, followed by the name (conventionally PascalCase), a colon, and an indented body.
 
 ```python
 class Emperor:
-    def __init__(self, name, birth, coron, death):
+    def __init__(self, name, birth, coronation, death):
         self.name = name
         self.birth = birth
-        self.coron = coron
+        self.coronation = coronation
         self.death = death
 ```
 
-The first method, `__init__`, is special. It is the **initializer** — it runs whenever you create a new `Emperor`. The first argument is always `self`, which refers to the instance being built. The remaining arguments are whatever you want to capture about each emperor: name, birth year, coronation year, year of death.
+The first method, `__init__`, is special. It's the **initializer** — Python calls it automatically whenever you create a new `Emperor`. The first parameter is always `self`, which refers to the instance being built. The remaining parameters are whatever you want to capture: name, birth year, coronation year, year of death.
 
-Inside `__init__`, we attach those arguments to `self` so that they stick around as attributes of the object.
+Inside `__init__`, we attach those values to `self` so they stick around as **attributes** of the object.
 
 ## Creating an instance
 
-To make a specific emperor, call the class as if it were a function:
+To create a specific emperor, call the class as if it were a function:
 
 ```python
-p1 = Emperor("Charlemagne", 742, 800, 814)
+charlemagne = Emperor("Charlemagne", 742, 800, 814)
 ```
 
-`p1` is now an **instance** of `Emperor`. If you print it directly, you'll see something like:
+`charlemagne` is now an **instance** of `Emperor`. Each instance is independent — different birth years, different names — but every one of them has the structure that `__init__` defined.
 
-```
-<__main__.Emperor object at 0x7f9b49a4ae80>
-```
-
-That looks like gibberish to us, but Python is just telling us "this is an Emperor object stored at this memory address." To inspect the actual data, convert it to a dictionary:
+If you print the instance directly, you get something Python-flavored:
 
 ```python
-print(p1.__dict__)
+print(charlemagne)
+# <__main__.Emperor object at 0x7f9b49a4ae80>
 ```
 
-Or, more idiomatic since Python 3.5:
+That's just Python telling you "this is an Emperor object at this memory address." To see the actual fields, use `vars`:
 
 ```python
-print(vars(p1))
+print(vars(charlemagne))
+# {'name': 'Charlemagne', 'birth': 742, 'coronation': 800, 'death': 814}
 ```
 
-Both yield the same result — a dictionary of the attributes you stored.
-
-## Accessing a single attribute
-
-You don't always need the whole dictionary. You can ask for any one attribute by name:
+You can also ask for one attribute by name with dot syntax:
 
 ```python
-print(p1.birth)
+charlemagne.name        # 'Charlemagne'
+charlemagne.birth       # 742
 ```
-
-This returns `742`.
 
 ## Adding methods
 
-The real power of a class is that it can carry **methods** — functions that operate on `self`. Here we add three: one to compute lifespan, one to render a short bio, and one to compare two emperors.
+A method is a function defined inside the class. The first parameter is `self`, which gives the method access to the instance's data. Here we add three: lifespan, a short bio, and a comparison between two emperors.
 
 ```python
 class Emperor:
-    def __init__(self, name, birth, coron, death):
+    def __init__(self, name, birth, coronation, death):
         self.name = name
         self.birth = birth
-        self.coron = coron
+        self.coronation = coronation
         self.death = death
 
-    def lifespan(self):
+    def lifespan(self) -> int:
         return self.death - self.birth
 
-    def prose(self):
-        return f"{self.name} was born in {self.birth} and died in {self.death}."
+    def reign_length(self) -> int:
+        return self.death - self.coronation
 
-    def older_than(self, other):
+    def prose(self) -> str:
+        return (
+            f"{self.name} was born in {self.birth}, "
+            f"crowned in {self.coronation}, "
+            f"and died in {self.death}."
+        )
+
+    def outlived(self, other: "Emperor") -> bool:
         return self.lifespan() > other.lifespan()
 ```
 
-Calling them looks like calling a function on the object:
+Calling a method looks like calling a function on the object:
 
 ```python
-p1 = Emperor("Charlemagne", 742, 800, 814)
-p2 = Emperor("Theuderic IV", 712, 721, 737)
+charlemagne = Emperor("Charlemagne", 742, 800, 814)
+theuderic = Emperor("Theuderic IV", 712, 721, 737)
 
-print(p1.lifespan())
-print(p1.prose())
-print(p1.older_than(p2))
+print(charlemagne.lifespan())          # 72
+print(charlemagne.reign_length())      # 14
+print(charlemagne.prose())
+print(charlemagne.outlived(theuderic)) # True
 ```
 
-## Why bother with classes?
+Notice that `outlived` takes another `Emperor` as its argument and uses `other.lifespan()` to call a method on it. Methods can absolutely call other methods on the same instance or on other instances of the same class.
 
-Why not just use a dictionary for each emperor? Two reasons.
+## Dunder methods — making instances behave naturally
 
-First, classes make it dramatically easier to create many similar objects. One `class` definition powers an unlimited number of instances — each instance is just one line.
+`__init__` is one of a family of methods Python calls automatically. They're surrounded by double underscores ("dunder methods"), and they let you customize how your objects interact with the rest of Python.
 
-Second, classes carry behavior with their data. A dictionary is inert; a class can have methods that know how to operate on the things it stores. As your scripts get bigger, that bundling pays off.
+The two most useful for classes you build:
 
-Spend some time defining your own class — perhaps for a person, a manuscript, or a place. Once you're comfortable, continue to [Lesson 12: Python and Text Files](/course/lesson-12-python-and-text-files/).
+```python
+class Emperor:
+    # ... __init__ as before ...
+
+    def __repr__(self) -> str:
+        return f"Emperor({self.name!r}, born {self.birth})"
+
+    def __lt__(self, other: "Emperor") -> bool:
+        return self.birth < other.birth
+```
+
+`__repr__` controls what you see when you `print` the object or look at it in the REPL. With it defined, `print(charlemagne)` now produces `Emperor('Charlemagne', born 742)` instead of the memory-address default.
+
+`__lt__` defines the `<` operator. Once you've defined it, you can sort a list of `Emperor` objects directly:
+
+```python
+rulers = [charlemagne, theuderic]
+sorted(rulers)    # uses __lt__ to compare them by birth year
+```
+
+There are dunders for `==` (`__eq__`), `+` (`__add__`), iteration (`__iter__`), the `len()` function (`__len__`), and many more. You don't need them all — but knowing they exist is the key to understanding how Python's built-in types work, and how to build classes that fit into the language naturally.
+
+## Dataclasses — the modern shortcut
+
+A class that's mostly attributes — capture some fields in `__init__`, expose them as data, maybe add a `__repr__` — is so common that Python has a built-in shortcut for it: the **dataclass**, available since Python 3.7.
+
+```python
+from dataclasses import dataclass
+
+@dataclass
+class Emperor:
+    name: str
+    birth: int
+    coronation: int
+    death: int
+
+    def lifespan(self) -> int:
+        return self.death - self.birth
+```
+
+The `@dataclass` decorator asks Python to write `__init__` and `__repr__` for you, based on the type-annotated fields. Then you use it exactly like before:
+
+```python
+charlemagne = Emperor("Charlemagne", 742, 800, 814)
+print(charlemagne)        # Emperor(name='Charlemagne', birth=742, coronation=800, death=814)
+print(charlemagne.lifespan())  # 72
+```
+
+For data-shaped classes — and most classes in DH work are data-shaped — dataclasses are almost always what you want. Less boilerplate, no risk of forgetting a `self.x = x` line, and the fields are explicit at the top of the class.
+
+## Why bother with classes at all?
+
+Why not just use a dictionary for each emperor? Three reasons:
+
+1. **They carry behavior.** A dictionary is inert; a class instance can compute its lifespan, render itself, compare itself to another. The methods live with the data they operate on.
+2. **They're documented by their definition.** The class signature tells future readers exactly what fields an `Emperor` has. A dictionary leaves that to convention or to a comment that may rot.
+3. **They scale with the project.** Once a script grows past a few hundred lines, the discipline of "every Emperor has the same shape" turns into a real architectural advantage.
+
+Spend some time defining your own class — for a person, a manuscript, a place, a letter. When you're comfortable, continue to [Lesson 12: Python and Text Files](/course/lesson-12-python-and-text-files/).

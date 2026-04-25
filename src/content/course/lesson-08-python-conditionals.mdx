@@ -3,39 +3,159 @@ title: "Python Conditionals"
 lessonNumber: 8
 part: 3
 partTitle: "Interacting with Data Structures"
-description: "In the last seven lessons, you've been introduced to data types and data structures that we work with in Python for the purposes of the digital humanities."
+description: "How a script makes decisions — if, elif, else, and the Boolean logic that ties them together."
 sourceUrl: "https://pythonhumanities.com/lesson-08-python-conditionals/"
 videoId: "Z4EU_6lqEQA"
 ---
 
-In the last seven lessons, you've been introduced to data types and data structures that we work with in Python for the purposes of the digital humanities. While I have not provided a complete list, these are the most common ones that you will encounter. Early in your Python career, it is essential that you have a core understanding of these basic concepts. I encourage you to go back and make sure that you have completely understood the past seven lessons before moving forward because beginning with Lesson 08, we start doing more advanced things with that data.
+You now have the data side of Python down: integers and floats, strings, tuples, lists, and dictionaries. Part 3 is about making the script *do* something with that data. The first move is the **conditional**: a statement that runs one piece of code if some test is true, and (optionally) a different piece of code if it isn't.
 
-A good way to think about a programming language like Python isn't like code. Yes, you write code in Python, but this is not how you should approach programming. Programming is problem solving. While you create your digital humanities projects, you will absolutely encounter errors and problems. Sometimes you will want to smack your computer. That's okay. We all get frustrated with programming. But, once that moment passes, regroup and figure out the problem and write the solution. That's what programming is. It's writing a solution to some problem. I encourage you to view Python from here on out through that lens.
+A useful frame: **programming is problem-solving in a logical, structured way.** Conditionals are the most direct expression of that. When you write one, it helps to read it aloud in plain English first, then translate. "If the year is before 1700, mark it 'early modern.' Otherwise, mark it 'modern.'" That sentence is almost the code already.
 
-One of the most necessary components of programming to solve some problem is the concept of a conditional statement. A **conditional statement** is precisely what it sounds like. It is a statement that if something is true then do something. If it is not, then do something else. When I program conditional statements, I use Python syntax, but I always speak aloud in proper and full English. This helps me process the logic behind the code. Coding isn't just problem solving, its problem solving within a logical manner consistent with the language's syntax.
+## Booleans — the Yes/No type
 
-So how do we create conditional statements in Python? With three operators: if, elif, and else. An **if statement** is structured like this:
+Before we look at conditionals, you need to know about the type they live and die on. A **Boolean** is a value that is either `True` or `False`. Capital T, capital F — Python is strict about this. The two Booleans are returned by every comparison operator (`==`, `<`, `>`, `!=`, etc.) and accepted by every conditional.
 
 ```python
-if x == 0:
-    print("x is 0")
+1815 < 1850        # True
+1815 == 1850       # False
+"war" in "warfare"  # True
 ```
 
-In this example, we are stating that if x is equal to 0 (notice the two equal signs), then print "x is 0". What we are doing is asking if the condition is True, which is **Boolean**. Booleans are another form of data in Python. There are two Boolean values: True and False. Yes, they must be capitalized in Python. In other programming languages, they are lowercase, but in Python you MUST always use a capital T or F.
+## `if`, `elif`, `else`
 
-An **elif statement** is the same as an if statement but occurs after an initial if statement. Think of it as "or if" in English. It is structured precisely the same way as an if statement.
-
-The final conditional statement is an else statement. **Else statements** allow you to perform a function if the above conditions have not been met.
-
-_Example of if, elif, else statements:_
+The basic shape is an `if` keyword, a test, a colon, and an indented block:
 
 ```python
-if x == 0:
-    print ("x=0")
-if x==1:
-    print ("x=1")
+year = 1815
+if year < 1700:
+    print("early modern")
+```
+
+Indentation is not decoration. In Python, **indentation defines the block.** Four spaces is the convention. Anything indented under the `if:` belongs to the `if`; the first non-indented line below it is back in the main flow.
+
+To handle multiple cases, chain `elif` ("else if"):
+
+```python
+year = 1815
+if year < 1500:
+    print("medieval")
+elif year < 1700:
+    print("early modern")
+elif year < 1800:
+    print("18th-century")
 else:
-    print ("x is something other than 0 or 1")
+    print("modern")
 ```
 
-In the above example, if `x` is 0, we'll see `x=0`; if `x` is 1, we'll see `x=1`; and if `x` is 12, we'll see `x is something other than 0 or 1`. The key to understanding conditionals — as with most things in programming — is logic. You must understand the logic behind the statement. Spend time structuring conditional statements to get comfortable with them, then continue to [Lesson 09: Python Loops](/course/lesson-09-python-loops/).
+The clauses are tested in order. As soon as one is true, its block runs and the rest are skipped. `else` (no test) catches anything none of the earlier clauses caught. Only one branch executes.
+
+## Truthiness — what counts as `True`
+
+Conditionals don't strictly need a Boolean. Python evaluates the test using **truthiness**: any value can be coerced to `True` or `False`.
+
+The values that count as `False`:
+
+- `False` itself
+- The number `0` (and `0.0`)
+- An empty string `""`
+- An empty list `[]`, tuple `()`, set `set()`, or dictionary `{}`
+- `None`
+
+Everything else is `True`. This leads to two of the most common Python idioms:
+
+```python
+items = []
+if items:
+    print("the list has stuff in it")
+else:
+    print("the list is empty")
+
+name = ""
+if not name:
+    print("name is missing")
+```
+
+You almost never write `if len(items) > 0:` or `if name != "":` in idiomatic Python — the empty list and empty string are themselves falsy.
+
+## Combining conditions — `and`, `or`, `not`
+
+The three Boolean operators are spelled as English words, not symbols:
+
+```python
+year = 1815
+country = "France"
+
+if year >= 1789 and year <= 1799:
+    print("French Revolution era")
+
+if country == "France" or country == "USA":
+    print("had a revolution in this period")
+
+if not (year < 1700):
+    print("after 1700")
+```
+
+Python lets you chain comparisons the way mathematics does, which often reads more cleanly than `and`:
+
+```python
+if 1789 <= year <= 1799:
+    print("French Revolution era")
+```
+
+## A worked example — classifying letters
+
+Here's a small block that categorizes a letter record by both date and length. It exercises everything in this lesson:
+
+```python
+letter = {"sender": "Voltaire", "year": 1759, "words": 320}
+
+if letter["year"] < 1700:
+    period = "early modern"
+elif letter["year"] < 1800:
+    period = "18th-century"
+else:
+    period = "modern"
+
+if letter["words"] < 200:
+    length = "short"
+elif letter["words"] < 1000:
+    length = "medium"
+else:
+    length = "long"
+
+print(f"{letter['sender']}: a {length}, {period} letter")
+# Voltaire: a medium, 18th-century letter
+```
+
+Two `if`/`elif`/`else` blocks doing two independent classifications. Each one is its own decision; they don't interfere.
+
+## When to reach for a dict instead of a long `elif` chain
+
+Here's a refactor worth knowing once. If your conditional is doing nothing but mapping one value to another:
+
+```python
+if status == "draft":
+    label = "Working copy"
+elif status == "review":
+    label = "Under review"
+elif status == "published":
+    label = "Live"
+else:
+    label = "Unknown"
+```
+
+…it's often clearer as a dictionary lookup with a default:
+
+```python
+labels = {
+    "draft": "Working copy",
+    "review": "Under review",
+    "published": "Live",
+}
+label = labels.get(status, "Unknown")
+```
+
+You don't always want to do this — if each branch runs different *code*, not just produces a value, the `if`/`elif` is the right shape. But once you spot the pattern, the dictionary version is shorter and easier to extend.
+
+Get the basics solid in the console, then continue to [Lesson 09: Python Loops](/course/lesson-09-python-loops/).

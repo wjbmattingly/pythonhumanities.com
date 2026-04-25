@@ -3,51 +3,127 @@ title: "Python Integers and Floats"
 lessonNumber: 4
 part: 1
 partTitle: "Working with Data"
-description: "Now that you understand how strings work, let's begin exploring another type of data: numbers."
+description: "How numbers behave in Python — arithmetic, conversion, comparison — and why a humanist needs them."
 sourceUrl: "https://pythonhumanities.com/lesson-04-python-integers-and-floats/"
 videoId: "p59pnc2uc8c"
 ---
 
-Now that you understand how strings work, let's begin exploring another type of data: numbers. Numbers in Python exist in two chief forms: integers and floats. As noted in [Lesson 02](/course/lesson-02-storing-data-in-python/), **integers** are numbers without a decimal point, whereas **floats** are numbers with a decimal point. This is an important distinction that you MUST remember, especially when working with data imported from and exported to Excel.
+Now that you can read and write strings, let's look at the other half of the data world: numbers. Python has two basic numeric types, **integers** and **floats**. The difference is simple — integers are whole numbers, floats have a decimal point — but the consequences for analysis are real.
 
-As digital humanists, you might be thinking to yourself, "I just work with text, why should I care so much about numbers?" The answer? Numbers allow us to form quantitative analysis. What if you want to know the times a specific author wrote to a colleague or to which places he wrote most frequently, as was the case with the [Republic of Letters](http://republicofletters.stanford.edu/) project at Stanford? In order to perform that kind of analysis, you MUST have a command of how numbers work in Python, how to perform basic mathematical functions on those numbers, and how to interact with them. Further, numbers are essential to understand for performing more advanced functions in Python, such as Loops, explored in [Lesson 09](/course/lesson-09-python-loops/).
+## Why a humanist needs numbers
 
-The way in which you create a number object in Python is the to create an object name, use the equal sign and type the number. If your number has a decimal, Python will automatically consider it a float. If it does not, it will automatically consider it an integer.
+It's tempting to think numbers are for the social scientists down the hall. They aren't. Almost any humanities project ends up counting something:
 
-_Examples of integer and float:_
+- How many letters did Voltaire send to England, and to whom?
+- How does the average sentence length in Hemingway compare to James?
+- How often does a particular topic word appear in a corpus of sermons?
+- Which characters in a novel share scenes the most?
+
+Stanford's [Republic of Letters](http://republicofletters.stanford.edu/) project is a good demonstration of what counting can reveal: the visualizations are essentially aggregations of integers — letters per year, letters per correspondent — built from a textual archive. Once you can manipulate numbers in Python, every humanities dataset you touch becomes available for that kind of question.
+
+## Creating numbers
+
+There is no special syntax. Type a number on the right of an `=` sign and Python figures out the type from whether you wrote a decimal point.
 
 ```python
-an_int = 1
-a_float = 1.1
+year = 1988          # int
+average = 0.42       # float
+zero_decimal = 1.0   # still a float — the .0 is enough
 ```
 
-If we want to change a float to an integer, we can do so using the **int() function**. When we do this, the float will lose its decimal and the numbers behind the decimal place. We can similarly change an integer to a float using the **float() function**. In this case, the integer will receive a .0 at the end. In some instances, you may need to convert an integer or a float to a string. This is particularly useful when you are trying to create files based on the number of iterations in a loop. I will explain this process in future lessons, but for now, you should know how to do it. To do this, you use the **str() function**. In all of these cases, these functions take a single argument, the item that you want to convert.
-
-_Example of conversion functions:_
+You can check the type at any time with `type`:
 
 ```python
-int(a_float) #This will result in: 1
-float(an_int) #This will result in 1.0
-str(a_float) #This will result in "1.0"
+type(year)      # <class 'int'>
+type(average)   # <class 'float'>
 ```
 
-Throughout your DH project, you will very likely need to manipulate numbers through **mathematical operations**. Here is a list of the common operations:
+For long literals, Python lets you sprinkle in underscores as visual separators:
 
-1. Addition `+`
-2. Subtraction `-`
-3. Multiplication `*`
-4. Exponential Multiplication `**`
-5. Division `/`
-6. Modulo `%` — returns the remainder, e.g. `7 % 2` yields `1`.
-7. Floor `//` — returns the integer part of the division, e.g. `7 // 2` yields `3`.
+```python
+million = 1_000_000   # same as 1000000, just easier to read
+```
 
-In addition to this, you will very often in loops need to identify **comparison operators** (equal to, less than, etc.). Here is a list of those:
+## Converting between types
 
-1. Equal to `==`
-2. Greater than `>`
-3. Less than `<`
-4. Less than or equal to `<=`
-5. Greater than or equal to `>=`
-6. Not equal to `!=`
+Three built-in conversion functions cover almost all cases: `int`, `float`, and `str`.
 
-Once you have these key concepts down, continue to [Lesson 05: Python Tuples](/course/lesson-05-python-tuples/).
+```python
+int(1.7)        # 1   — drops the decimal, does NOT round
+float(1)        # 1.0
+str(1988)       # "1988"
+```
+
+A few things worth pinning down:
+
+- `int(1.7)` returns `1`, not `2`. It truncates toward zero. If you want rounding, use the built-in `round`: `round(1.7)` returns `2`.
+- `int("1988")` works — string-to-int conversion succeeds when the string is a clean number. `int("1988 ")` with extra whitespace also works (it strips). `int("nineteen")` raises a `ValueError`.
+- `str(1988)` is what you reach for when you need to glue a number into a filename: `f"letter_{n}.txt"`.
+
+## Arithmetic
+
+The seven arithmetic operators you'll use most:
+
+| Operation | Operator | Example | Result |
+| --- | --- | --- | --- |
+| Addition | `+` | `7 + 2` | `9` |
+| Subtraction | `-` | `7 - 2` | `5` |
+| Multiplication | `*` | `7 * 2` | `14` |
+| Exponent | `**` | `7 ** 2` | `49` |
+| Division | `/` | `7 / 2` | `3.5` |
+| Floor division | `//` | `7 // 2` | `3` |
+| Modulo | `%` | `7 % 2` | `1` |
+
+Two notes that catch people out:
+
+- `/` always returns a float, even when the numbers divide cleanly. `4 / 2` is `2.0`, not `2`. If you want an integer quotient, use `//`.
+- `%` (modulo) returns the remainder. It's how you check whether a number is even (`n % 2 == 0`), or pick every tenth item in a loop, or wrap around a fixed range.
+
+You can also combine an operator with assignment to update a variable in place:
+
+```python
+total = 0
+total += 1     # same as total = total + 1
+total *= 10    # same as total = total * 10
+```
+
+## Comparison
+
+Comparisons return a Boolean — `True` or `False`. You'll use these constantly inside `if` statements and loops (Lessons 08 and 09).
+
+| Comparison | Operator |
+| --- | --- |
+| Equal | `==` |
+| Not equal | `!=` |
+| Greater than | `>` |
+| Greater than or equal | `>=` |
+| Less than | `<` |
+| Less than or equal | `<=` |
+
+```python
+1815 < 1850        # True
+1815 == 1850       # False
+1815 != 1850       # True
+```
+
+The single-most common mistake for new Python users: writing `=` (assignment) when you mean `==` (comparison). The first changes a variable, the second asks a question.
+
+## Floats are approximate
+
+This last point trips everyone up at least once. Run this in the console:
+
+```python
+0.1 + 0.2
+```
+
+Python returns `0.30000000000000004`, not `0.3`. This isn't a bug — it's how floating-point numbers work in every modern language. They use binary fractions, which can't represent some decimal numbers exactly.
+
+For humanities data this rarely matters — you're not splitting hairs at the fifteenth decimal. But it does mean: never compare two floats with `==`. Compare them with a tolerance instead:
+
+```python
+abs((0.1 + 0.2) - 0.3) < 1e-9   # True
+```
+
+Or, when you're storing money or any value that has to be exact, use `decimal.Decimal` from the standard library.
+
+Once these basics are solid, continue to [Lesson 05: Python Tuples](/course/lesson-05-python-tuples/).

@@ -3,40 +3,101 @@ title: "Python Tuples"
 lessonNumber: 5
 part: 2
 partTitle: "Data Structures"
-description: "In the past two lessons we've looked at two different categories of data: strings and numbers."
+description: "Immutable, ordered collections — when to reach for a tuple instead of a list, and what indexing actually means."
 sourceUrl: "https://pythonhumanities.com/lesson-05-python-tuples/"
 videoId: "knnWH4P45zw"
 ---
 
-In the past two lessons we've looked at two different categories of data: strings and numbers. Strings allowed us to work with text and numbers allowed us to work with integers and floats. In this video, we will begin working with **data structures**. Data structures are divided into two categories: mutable and immutable.
+So far you've worked with single pieces of data: one string, one integer, one float. Real datasets aren't that tidy. A correspondence record has a sender, a recipient, a date, and a place. A sentence is a sequence of words. A bibliography is a stack of citations. To handle this you need **data structures** — types that hold a collection of values.
 
-In this video, we will be working with an immutable data structure called a tuple. **Tuples** are lists of data that cannot be changed. When we look at lists in [Lesson 06](/course/lesson-06-python-lists/), we will see that lists are the exact same thing as tuples, except they can be changed. We can distinguish tuples from lists by the way in which they are formed. While lists use square brackets, tuples use parentheses. We create a tuple, like the example below. Our tuple object is `a_tuple` and the tuple consist of three items: an integer 1, a float 1.0, and a string of "one". Lists and tuples can contain all three of these types of data. The way in which we separate items in a tuple is with a comma.
+Python's three built-in collections are **tuples**, **lists**, and **dictionaries**. They split into two groups:
 
-_Example of a tuple:_
+- **Mutable** structures (lists, dictionaries) can be changed after creation. You can append, remove, and overwrite items in place.
+- **Immutable** structures (tuples) cannot. Once you've built one, its contents are fixed.
+
+This lesson is about tuples; Lesson 06 covers lists.
+
+## Creating a tuple
+
+A tuple is a comma-separated sequence of values inside parentheses:
 
 ```python
 a_tuple = (1, 1.0, "one")
-a_tuple2 = ((1,2), (2,3), (4,2))
 ```
 
-Tuples can also store data structures, i.e. other tuples, lists, and dictionaries. In the second tuple above, `a_tuple2`, we see just that. `a_tuple2` is a tuple that consists of three tuples, `(1,2)`, `(2,3)`, `(4,2)`. Embedding data structures within an overarching data structure is something that you will use in most DH projects, so it is important to get comfortable with it now.
-
-The way in which we access data within a data structure is through a process known as **indexing**. In Python, you can either index a single item from a data structure or you can get all indexes from a data structure in a loop. We will see this in more detail in [Lesson 09](/course/lesson-09-python-loops/), when I cover loops. For now, you should be familiar with how to call a specific item in a tuple.
-
-If I wanted to access the first item in `a_tuple`, I would do the following:
+The items can be of any type, mixed freely — integers, floats, strings, even other tuples. Tuples can also nest, which is where they earn their keep:
 
 ```python
-print (a_tuple[0])
+coordinates = ((40.71, -74.01), (51.51, -0.13), (48.86, 2.35))
 ```
 
-This will return the integer 1.
+That's three (latitude, longitude) pairs — New York, London, Paris — in a single object. You'll see this shape over and over once you start working with structured data.
 
-Were I to do something similar with `a_tuple2`, I would receive `(1,2)`. But what if I wanted to get the first item in `(1,2)`. To do that, I'd simply do the following:
+A tuple of one item needs a trailing comma to disambiguate it from a parenthesized expression:
 
 ```python
-print (a_tuple2[0][0])
+not_a_tuple = (1)        # this is just the integer 1
+yes_a_tuple = (1,)       # this is a tuple with one item
 ```
 
-This will return the integer 1. The reason why this works is because I am indexing to the first position (0) of the object and then indexing the first item in that embedded tuple.
+The parentheses are also optional in many positions — Python recognizes a tuple from the comma. This is how multiple-return values work:
 
-If you are comfortable with these concepts, continue to [Lesson 06: Python Lists](/course/lesson-06-python-lists/).
+```python
+def bounds():
+    return 1815, 1852    # returns a tuple
+
+start, end = bounds()    # unpacks the tuple into two names
+```
+
+## Indexing — accessing one item
+
+To pull a single item out of a tuple, use square brackets and a position number. **Python counts from 0.** So the first item is at index `0`, the second at `1`, and so on.
+
+```python
+a_tuple = (1, 1.0, "one")
+a_tuple[0]    # 1
+a_tuple[1]    # 1.0
+a_tuple[2]    # "one"
+```
+
+Negative indexes count from the end:
+
+```python
+a_tuple[-1]   # "one" — the last item
+```
+
+For nested structures, chain brackets together:
+
+```python
+coordinates = ((40.71, -74.01), (51.51, -0.13), (48.86, 2.35))
+coordinates[0]      # (40.71, -74.01) — the New York pair
+coordinates[0][0]   # 40.71            — its latitude
+coordinates[-1][1]  # 2.35             — Paris's longitude
+```
+
+Read it left to right: "first pair, first item." Once you can navigate nested structures comfortably, the rest of Python opens up.
+
+## Slicing — accessing a range
+
+You can also pull out a sub-section using a colon between two indexes:
+
+```python
+a_tuple = ("first", "second", "third", "fourth", "fifth")
+a_tuple[1:3]    # ("second", "third")
+a_tuple[:2]     # ("first", "second") — from the start
+a_tuple[2:]     # ("third", "fourth", "fifth") — to the end
+```
+
+The slice goes from the first index up to *but not including* the second. This works on lists and strings too — it's a single, consistent rule.
+
+## When to reach for a tuple
+
+Lists are more common, so when do you actually want a tuple? Three cases come up regularly:
+
+1. **A small group of related values you don't expect to change.** A coordinate, a (year, place) pair, a (start, end) range. Using a tuple signals "this is one record" rather than "this is a list I might grow."
+2. **A return value with multiple parts.** Functions return tuples to hand back several values at once.
+3. **A dictionary key or a set member.** Mutable types like lists can't be used as keys or stored in sets. Tuples can. If you ever need to count how many times each (year, place) pair appears in a dataset, the pair has to be a tuple.
+
+A tuple's immutability is its feature, not a limitation. It tells future readers — including future you — that this collection is fixed and safe to share around the program.
+
+If you're comfortable with these concepts, continue to [Lesson 06: Python Lists](/course/lesson-06-python-lists/).

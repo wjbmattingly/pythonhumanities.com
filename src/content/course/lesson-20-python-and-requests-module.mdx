@@ -3,14 +3,18 @@ title: "Python and the Requests Module"
 lessonNumber: 20
 part: 6
 partTitle: "Web Data"
-description: "Use the requests library to fetch raw HTML from a website."
+description: "Use the requests library to fetch raw HTML from the web — and learn the small set of habits that make scraping reliable and polite."
 sourceUrl: "https://pythonhumanities.com/lesson-20-python-and-requests-module/"
 videoId: "kUlU837HXVU"
 ---
 
-This lesson introduces the `requests` module for retrieving HTML from a website. The module gives you a small, friendly API — really only a few functions — that lets you grab a page's contents and store it as a Python object you can work with.
+This lesson introduces **`requests`** — the canonical Python library for fetching things from the web. Once you can fetch, the next lesson parses; together they're the foundation of every scraping project.
 
-## Installing requests
+`requests` is friendly. The basic case is three lines. The interesting parts are the small set of habits that turn a fragile script into a reliable one: error handling, identifying yourself, retries, and rate limiting.
+
+(There's also **`httpx`**, a modern alternative with the same API plus async support. For this course `requests` is fine; if you ever need to hit thousands of URLs concurrently, `httpx` is what to look at.)
+
+## Installing
 
 ```bash
 uv add requests
@@ -18,61 +22,172 @@ uv add requests
 
 ## Basic usage
 
-The fundamental workflow is just three lines:
-
 ```python
 import requests
 
 url = "https://en.wikipedia.org/wiki/Theuderic_IV"
-s = requests.get(url)
-html_content = s.text
+response = requests.get(url)
+html = response.text
 ```
 
-**Importing.** Line 1 imports the `requests` library into your environment.
+What each line does:
 
-**Making the request.** `requests.get()` accepts a URL string and retrieves the page at that address.
+- **Line 1** imports the library.
+- **Line 2** calls `requests.get(url)`, which sends an HTTP GET request and waits for the response.
+- **Line 3** pulls the response body out as a string. This is the same HTML you'd see with View Source in your browser.
 
-**Reading the response.** The response object exposes a few useful attributes:
+The response object has more than just `.text`:
 
-- `s.text` — the response body as a string (decoded text).
-- `s.content` — the response body as raw bytes.
-- `s.status_code` — the HTTP status (e.g. `200` means OK, `404` means not found).
-- `s.headers` — a dictionary of response headers.
+| Attribute | What it gives you |
+| --- | --- |
+| `response.text` | the body as a decoded string |
+| `response.content` | the body as raw bytes (use this for images, PDFs, binary files) |
+| `response.json()` | the body parsed as JSON, if the response is JSON |
+| `response.status_code` | the HTTP status (200 OK, 404 Not Found, etc.) |
+| `response.headers` | a dictionary of response headers |
+| `response.url` | the final URL after any redirects |
+| `response.encoding` | the encoding requests inferred for `.text` |
 
-If you print the response object directly, you'll see something like `<Response [200]>`, which tells you the request succeeded.
+## Always check that the request worked
 
-## Checking that the request worked
+A failed request still returns a `Response` object — `requests.get(...)` doesn't raise an exception when the page is missing. You have to check.
 
-Before parsing, it's worth confirming you actually got a successful response:
+The terse way:
 
 ```python
-if s.status_code == 200:
-    html_content = s.text
+response = requests.get(url)
+response.raise_for_status()
+html = response.text
+```
+
+`raise_for_status()` raises an `HTTPError` for any 4xx or 5xx status. If the request succeeded, it does nothing. This is the line of defense that turns "the script silently scraped 404 pages for two hours" into a clean failure.
+
+The explicit way, when you want to handle errors yourself:
+
+```python
+response = requests.get(url)
+if response.status_code != 200:
+    print(f"Got {response.status_code} for {url}")
 else:
-    print(f"Request failed with status {s.status_code}")
+    html = response.text
 ```
 
-A shorter version uses `raise_for_status()`, which throws an exception on any 4xx or 5xx response:
+## Identifying yourself with a User-Agent
+
+By default `requests` sends a User-Agent like `python-requests/2.32.0`. Many servers either block that or treat it differently. Set a polite, descriptive header:
 
 ```python
-s.raise_for_status()
-html_content = s.text
+headers = {
+    "User-Agent": "DH-research-bot/1.0 (your-email@example.org)",
+}
+response = requests.get(url, headers=headers)
 ```
 
-## A note on politeness
+The format isn't strict. The norm is: name of your tool, version, and a contact (email or URL) so a server admin can reach you if there's a problem.
 
-When you scrape, identify yourself with a `User-Agent` header and don't hammer the server with rapid-fire requests. Respect the site's `robots.txt`. A sensible call looks like:
+## Sending parameters
+
+To hit a URL like `https://example.org/search?q=voltaire&year=1750`, don't build the query string by hand. Pass `params`:
+
+```python
+response = requests.get(
+    "https://example.org/search",
+    params={"q": "voltaire", "year": 1750},
+)
+```
+
+`requests` URL-encodes everything correctly, including spaces and Unicode.
+
+## Timeouts — always set one
+
+By default `requests` will wait *forever* for a server to respond. In a long scraping loop, one slow server can hang the whole script. Always set a timeout:
+
+```python
+response = requests.get(url, timeout=10)   # 10 seconds
+```
+
+You'll catch a `requests.exceptions.Timeout` if the server doesn't answer in time, which is a clean signal to skip and move on.
+
+## Polite scraping — sleep between requests
+
+When you scrape many pages from the same host, slow yourself down:
 
 ```python
 import time
 
-headers = {"User-Agent": "Python for DH course (educational use)"}
-s = requests.get(url, headers=headers)
-time.sleep(1)
+for url in urls:
+    response = requests.get(url, headers=headers, timeout=10)
+    response.raise_for_status()
+    save(response.text)
+    time.sleep(1)            # one request per second
 ```
 
-## What requests can't do
+A second per request is a sensible default for most sites. For a slow or important server (a small institutional archive, say), make it five seconds. Some sites publish a recommended rate; respect it if so.
 
-`requests` retrieves the raw HTML, but it can't parse it or extract specific elements. For that, you need BeautifulSoup, which is the subject of the next lesson.
+## Retries with exponential backoff
 
-Watch the video above and try grabbing HTML from a few websites yourself. Examine the output before moving on to [Lesson 21: Python and BeautifulSoup](/course/lesson-21-python-and-beautifulsoup/).
+For a long scrape, network errors are normal. Retry the failed request a few times, with increasing wait between attempts:
+
+```python
+import time
+import requests
+
+def fetch(url: str, headers: dict, attempts: int = 4) -> str:
+    for i in range(attempts):
+        try:
+            response = requests.get(url, headers=headers, timeout=10)
+            response.raise_for_status()
+            return response.text
+        except requests.RequestException as e:
+            wait = 2 ** i
+            print(f"  attempt {i + 1} failed ({e}); sleeping {wait}s")
+            time.sleep(wait)
+    raise RuntimeError(f"gave up on {url}")
+```
+
+`2 ** i` doubles the wait each time: 1, 2, 4, 8 seconds. After four tries the script gives up rather than hanging forever.
+
+## Sessions — when you'll fetch many URLs from one host
+
+For a long scrape, create a `Session` once and reuse it. It keeps the underlying TCP connection open and reapplies your headers automatically:
+
+```python
+session = requests.Session()
+session.headers.update({"User-Agent": "DH-research-bot/1.0"})
+
+for url in urls:
+    response = session.get(url, timeout=10)
+    response.raise_for_status()
+    save(response.text)
+    time.sleep(1)
+```
+
+A session is faster (no reconnecting between requests) and tidier (headers in one place).
+
+## Saving the HTML
+
+For any scrape that takes more than a minute, save the raw HTML to disk before parsing. Then if your parser changes, you don't have to refetch:
+
+```python
+from pathlib import Path
+
+cache = Path("html-cache")
+cache.mkdir(exist_ok=True)
+
+def fetch_cached(url: str, name: str) -> str:
+    f = cache / f"{name}.html"
+    if f.exists():
+        return f.read_text(encoding="utf-8")
+    response = session.get(url, timeout=10)
+    response.raise_for_status()
+    f.write_text(response.text, encoding="utf-8")
+    return response.text
+```
+
+You hit the network once per page; from then on, parsing is instant. This is the single biggest quality-of-life upgrade for any scraper.
+
+## What `requests` can't do
+
+`requests` retrieves bytes. It doesn't parse HTML, doesn't run JavaScript, doesn't navigate forms. For parsing, that's BeautifulSoup, which is the next lesson. For JavaScript-rendered pages, it's Playwright or Selenium — out of scope for this course but worth knowing about.
+
+Try grabbing HTML from a few sites yourself. Look at `response.status_code`, `response.encoding`, and the first hundred characters of `response.text`. When that feels routine, continue to [Lesson 21: Python and BeautifulSoup](/course/lesson-21-python-and-beautifulsoup/).

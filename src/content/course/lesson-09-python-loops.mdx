@@ -3,36 +3,187 @@ title: "Python Loops"
 lessonNumber: 9
 part: 3
 partTitle: "Interacting with Data Structures"
-description: "Without a doubt, the most common operation I use in my digital humanities projects are loops."
+description: "Loops are how you do the same thing to a thousand items without writing it a thousand times — the single most important pattern in any DH script."
 sourceUrl: "https://pythonhumanities.com/lesson-09-python-loops/"
 videoId: "nNZ2wlgSsq4"
 ---
 
-Without a doubt, the most common operation I use in my digital humanities projects are loops. This is true for most programmers. The reason is because we use computers to perform repetitive tasks quickly. Loops are how you structure repetitive tasks. In Python there are two types of loops: While Loops and For Loops.
+If you only learn one thing well from this course, make it loops. They're the most common operation in every Python project, and they're the reason a script can do in three seconds what would take a graduate student a month: examine ten thousand letters, count words across a corpus, hit an API once for every record in a list.
 
-In almost all cases, you can do the same thing with both loops. You simply need to alter the syntax to make the loop perform the way you want. In most cases, therefore, while loops and for loops are interchangeable. When you program, much like writing in a spoken language, you take on a unique, personal style. For me, I prefer the For Loop and I use it with far greater frequency.
+Python has two loops: `for` and `while`. They can both express the same logic, but they answer different questions:
 
-One of the key ways in which you will need to use loops in the digital humanities is to iterate across a data structure, i.e. a tuple or a list. In the example below, we have a list, a_list, which is a list of numbers: 1, 2, 3. We then begin our for loop on the next line. We state that for [variable] (in this case, the letter i, in a_list and we use a colon. That creates the for loop. Whatever happens beneath that is indented, meaning it is part of the same block of code within the loop. Here, we are simply printing off i. This for loop will examine a_list and iterate across the index of a_list, so 1, then 2, then 3. The loop will continue to run until the condition is complete. In this case, the condition is for as long as there is an item in the list that is left, keep going.
+- **`for`** — "do this once for each item in a collection." Use it when you have a list (or anything iterable) and want to walk through it.
+- **`while`** — "do this as long as some condition is true." Use it when you don't know in advance how many iterations you need.
 
-_Example of a for loop:_
+In practice, `for` is what you reach for 95% of the time.
+
+## The `for` loop
+
+The basic form: the keyword `for`, a variable name to hold each item, the keyword `in`, an iterable, and a colon. Anything indented underneath belongs to the loop:
 
 ```python
-a_list = [1,2,3]
-for i in a_list:
+correspondents = ["Voltaire", "Émilie", "Diderot"]
+for name in correspondents:
+    print(name)
+```
+
+Each pass through the loop, `name` is bound to the next item — first `"Voltaire"`, then `"Émilie"`, then `"Diderot"`. When the list runs out, the loop ends.
+
+The choice of variable name (`name` here, often `i` or `item` in toy examples) is up to you. Pick a name that describes what one thing is, not what the collection is. `for letter in letters:` reads better than `for x in letters:` and is no more typing.
+
+## Iterating with the index — `enumerate`
+
+Sometimes you want both the item and its position. Don't track a counter manually; use `enumerate`:
+
+```python
+for i, name in enumerate(correspondents):
+    print(f"{i}: {name}")
+# 0: Voltaire
+# 1: Émilie
+# 2: Diderot
+```
+
+Pass `start=1` if you want human-friendly numbering: `enumerate(correspondents, start=1)`.
+
+## Iterating over a dictionary
+
+Three loops you'll write often:
+
+```python
+person = {"name": "Ada", "born": 1815, "field": "mathematics"}
+
+for key in person:
+    print(key)              # iterates the keys
+
+for value in person.values():
+    print(value)
+
+for key, value in person.items():
+    print(f"{key}: {value}")
+```
+
+`.items()` is the workhorse — it gives you the key and value at the same time, unpacked into two names.
+
+## Looping a fixed number of times — `range`
+
+`range(n)` produces the numbers `0, 1, 2, ..., n-1`:
+
+```python
+for i in range(5):
     print(i)
+# 0 1 2 3 4
 ```
 
-We can also do this same thing with a while loop. While loops have a predetermined condition. In this case, it is explicit. While x remains less than 0, continue the loop. Note that we print off a_list[x] here, not a single variable. This is because when the while loop runs the first time, x will be 0. Once it prints off that item in the list, Python moves to the next line, which tells Python to increase the value of x by 1. The loop will then reset with x being equal to 1. It will continue to do this until x = 3, because the length of a_list is 3. Once that happens, the loop will break.
-
-_Example of a while loop:_
+`range(start, stop)` and `range(start, stop, step)` give you more control:
 
 ```python
-x = 0
-while x < len(a_list):
-    print(a_list[x])
-    x = x+1
+for year in range(1800, 1900, 10):
+    print(year)
+# 1800 1810 1820 ... 1890
 ```
 
-Loops are simple to implement and are quite powerful. They allow you to perform millions or billions of iterations of a task, something that would be impossible for a human to do. Loops are one of the more powerful elements of programming. You must practice writing for loops until they become as natural as speaking. Right now, we will work with for loops on this basic level but as we advance through this series, you will see me use for loops in more advanced ways, that is, to iterate through text files and across web data. For now though, get these basics down.
+The end value is exclusive — same as slicing.
 
-When you're ready, advance to [Lesson 10: Python Functions](/course/lesson-10-python-functions/).
+## The `while` loop
+
+Use `while` when the stopping condition isn't a finite collection:
+
+```python
+text = "Voltaire wrote letters in many languages."
+i = 0
+while i < len(text) and text[i] != " ":
+    i += 1
+print(f"first word ends at index {i}")
+# first word ends at index 8
+```
+
+Two things you must always check on a `while` loop:
+
+1. **Something inside the loop changes the condition.** The classic infinite-loop bug is forgetting to advance the counter. If you write `while x < 10:` and never modify `x`, the loop never ends.
+2. **The condition can actually become false.** Always have an exit.
+
+For most cases where you're tempted to write a `while` over an index, a `for` loop with `enumerate` is cleaner and safer.
+
+## `break` and `continue`
+
+These two keywords let you fine-tune the flow inside a loop.
+
+`break` exits the loop immediately:
+
+```python
+for name in correspondents:
+    if name == "Diderot":
+        print("found him")
+        break
+    print(f"checking {name}...")
+```
+
+`continue` skips the rest of *this* iteration and moves to the next:
+
+```python
+for name in correspondents:
+    if name.startswith("É"):     # skip names with diacritics
+        continue
+    print(name)
+# Voltaire
+# Diderot
+```
+
+## Building things up inside a loop
+
+The most common DH pattern: walk through a collection, do something to each item, collect the results. You'll write some version of this in every project.
+
+```python
+correspondents = [
+    {"name": "Voltaire", "letters": 21000},
+    {"name": "Émilie",   "letters":   430},
+    {"name": "Diderot",  "letters":  3500},
+]
+
+big_writers = []
+for person in correspondents:
+    if person["letters"] > 1000:
+        big_writers.append(person["name"])
+
+print(big_writers)
+# ['Voltaire', 'Diderot']
+```
+
+For this exact pattern — "filter a list and collect what passes" — Python has a more compact form, the **list comprehension**:
+
+```python
+big_writers = [p["name"] for p in correspondents if p["letters"] > 1000]
+```
+
+Comprehensions and explicit `for` loops are interchangeable for one-line transformations. Use the comprehension when it fits on one readable line; use the explicit loop when there's logic worth showing or when you want to do several things per iteration.
+
+## Counting in a loop
+
+Frequency counts are pure muscle memory:
+
+```python
+words = "the quick brown fox jumped over the lazy dog the fox".split()
+counts = {}
+for word in words:
+    counts[word] = counts.get(word, 0) + 1
+```
+
+Or with `collections.Counter`, which we'll meet again in Lesson 13:
+
+```python
+from collections import Counter
+counts = Counter(words)
+counts.most_common(2)   # [('the', 3), ('fox', 2)]
+```
+
+## Loops and large datasets — a note on performance
+
+A few habits to start now, before they become problems:
+
+- **Avoid building a giant list when you only need to walk through it once.** Python's `for` loop will iterate over a generator, file, or iterator just as happily as a list, and uses a fraction of the memory.
+- **Read files line by line.** `for line in open("big.txt"):` doesn't load the whole file.
+- **Don't loop over a list checking membership in another list.** `if x in some_list:` is slow inside a loop. Convert the lookup target to a `set` first: `if x in some_set:`. The behavior is the same, the speed is dramatically better.
+
+These don't matter on three records. They matter on three million.
+
+When you're comfortable iterating, advance to [Lesson 10: Python Functions](/course/lesson-10-python-functions/).

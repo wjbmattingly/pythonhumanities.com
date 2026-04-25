@@ -3,47 +3,143 @@ title: "Python Lists"
 lessonNumber: 6
 part: 2
 partTitle: "Data Structures"
-description: "In the last lesson, we dealt with tuples."
+description: "The mutable cousin of the tuple — and the workhorse data structure of every Python project."
 sourceUrl: "https://pythonhumanities.com/lesson-06-python-lists/"
 videoId: "BJYvYiTUqII"
 ---
 
-In the last lesson, we dealt with tuples. In this lesson, we switch to a different data structure: lists. **Lists** and tuples are identical with one major exception: lists are mutable. This means that you can create a list object and then alter it in memory as your script runs. This allows for you to do very powerful things to lists that you cannot do to tuples. And these are going to be one of the key data structures you use in all digital humanities projects. The reason? We often need to adjust data while working with it.
+In the last lesson we worked with tuples — ordered collections that cannot be changed once created. Lists are the same thing with one major exception: lists are **mutable**. You can add to them, remove from them, and overwrite items in place after the list exists. That's why lists, more than any other structure, are the workhorse of Python code: real research is iterative, and you almost always want to grow a collection as you go.
 
-While we created a tuple with parentheses, we will create lists with square brackets. In the examples below we have two lists. In the first list we see that lists, just like tuples, can contain integers, floats, or strings. We separate items in our list with a comma. In the second example, a\_list2, we see that lists can contain data structures within them. This is true for lists, tuples, and dictionaries.
+You write a list with square brackets, items separated by commas:
 
-*Examples of lists:*
 ```python
 a_list = [1, 1.0, "one"]
-a_list2 = [[1,2],[2,3]]
+nested = [[1, 2], [2, 3], [4, 2]]
 ```
 
-We can index lists the precisely as we indexed tuples with the square brackets. The command:
+Indexing and slicing work exactly as they do on tuples (see [Lesson 05](/course/lesson-05-python-tuples/)):
+
 ```python
-print (a_list[0])
+a_list[0]     # 1
+a_list[-1]    # "one"
+nested[0][1]  # 2
 ```
-would print of the integer 1.
 
-But because lists are mutable, it means that we can do more powerful things to them. We can alter the object as we progress through out Python script. We can do this with a few different functions. The most important function that you need to know is append(). The **append() function** allows for you to add an item to a list. For your DH projects, you will often have to append a list in a loop to collate data from a database. Its counterpart, the **remove() function**, removes something from a list.
+The interesting part is what you can do *after* the list exists.
 
-*Examples of append and remove functions:*
+## Growing a list — `append` and `extend`
+
+The most common operation in any project: add an item to the end of a list. The method is `append`.
+
 ```python
-a_list.append("Hello")
-a_list.remove(1)
+correspondents = []                 # an empty list
+correspondents.append("Voltaire")
+correspondents.append("Émilie du Châtelet")
+print(correspondents)
+# ['Voltaire', 'Émilie du Châtelet']
 ```
 
-When you are working with loops, you will often want to iterate over a list. To do this and not return an error, you need to know the length of a list. The function for this is the **len() function**.
+Notice that `append` modifies the list in place and returns nothing. Don't write `correspondents = correspondents.append(...)` — that will silently set `correspondents` to `None` and ruin your day.
 
-*Example of len function:*
+If you want to add several items at once, use `extend`:
+
 ```python
-print (len(a_list))
+correspondents.extend(["d'Alembert", "Diderot"])
 ```
 
-Another important function is the clear() function. The **clear() function** in Python clears an entire list. If you wish to know how many times a specific item appears in a list, you can use the **count() function**. If you need to sort the data in the list, you can use the **sort() function**.
+`extend` takes an iterable (another list, a tuple, a generator) and tacks each item on. Compare:
 
-The final important function you should learn is the **join() function** which allows for you to join items in a list with a specified character. You will often join items in a list with a space, so that your command will look like this:
 ```python
-" ".join(a_list)
+a = [1, 2]
+a.append([3, 4])    # [1, 2, [3, 4]]   — one item, which happens to be a list
+a = [1, 2]
+a.extend([3, 4])    # [1, 2, 3, 4]     — two new items
 ```
 
-Working with lists becomes easier with time. Spend ample time early in your Python journey getting acquainted with these basic functions on lists, then continue to [Lesson 07: Python Dictionaries](/course/lesson-07-python-dictionaries/).
+## Removing items — `remove`, `pop`, `del`
+
+There are three ways to take something out, and they answer slightly different questions:
+
+```python
+items = ["a", "b", "c", "b"]
+
+items.remove("b")     # removes the first matching value: ['a', 'c', 'b']
+items.pop()           # removes and returns the LAST item: 'b' → ['a', 'c']
+items.pop(0)          # removes and returns the item at index 0: 'a' → ['c']
+del items[0]          # removes by index, returns nothing
+```
+
+`remove` is for "I know the value." `pop` is for "I want it out and I want a copy of it." `del` is for "I know the position and don't need it back."
+
+## Length, sorting, counting
+
+A few more methods you'll use almost daily:
+
+```python
+items = [3, 1, 4, 1, 5, 9, 2, 6]
+
+len(items)            # 8 — how many items
+items.count(1)        # 2 — how many times 1 appears
+items.sort()          # sorts in place: [1, 1, 2, 3, 4, 5, 6, 9]
+sorted(items)         # returns a NEW sorted list, leaves items alone
+items.reverse()       # reverses in place
+```
+
+Both `sort` and `sorted` accept a `key` argument — a function that says how to compare items. To sort a list of strings by length, regardless of alphabet:
+
+```python
+words = ["the", "quality", "of", "mercy"]
+words.sort(key=len)
+# ['of', 'the', 'mercy', 'quality']
+```
+
+For case-insensitive sorting:
+
+```python
+names = ["Voltaire", "diderot", "Émilie"]
+names.sort(key=str.lower)
+```
+
+## Checking membership and finding positions
+
+```python
+"Voltaire" in correspondents    # True
+"Newton" not in correspondents  # True
+correspondents.index("Diderot") # the position of the first match
+```
+
+`in` is fast to write and reads naturally — prefer it to `count(x) > 0` when you only care whether something is present.
+
+## Joining a list back into a string
+
+This one comes up constantly when you've split a string apart, processed each piece, and want to glue it back together. Strings have a `join` method that takes a list and inserts the string between each pair of items:
+
+```python
+words = ["the", "quality", "of", "mercy"]
+" ".join(words)        # 'the quality of mercy'
+", ".join(words)       # 'the, quality, of, mercy'
+"\n".join(words)       # one word per line
+```
+
+Note the order: it's the *separator* that has the `join` method, and the list is the argument. This catches everyone the first time.
+
+## List comprehensions — the Python way to build lists
+
+Once you're comfortable with the basics, the most idiomatic way to build a new list from an old one is a **list comprehension**: square brackets containing an expression and a `for` clause.
+
+```python
+words = ["the", "quality", "of", "mercy"]
+upper = [w.upper() for w in words]
+# ['THE', 'QUALITY', 'OF', 'MERCY']
+
+long_only = [w for w in words if len(w) > 3]
+# ['quality', 'mercy']
+```
+
+Read it as: "for each w in words, give me w.upper()." Comprehensions are concise, easy to read once you know the pattern, and faster than the equivalent loop. We'll see them throughout the rest of the course.
+
+## A note on `clear`
+
+You'll occasionally see `a_list.clear()`. It empties the list in place. It does the same thing as `a_list = []`, except that any other variable that was pointing at the same list will also see the change. For most projects you can prefer reassigning to a fresh empty list; reach for `clear` only when you specifically need the in-place behavior.
+
+Spend some time in the console pushing items in and out of a list. Once you're confident, continue to [Lesson 07: Python Dictionaries](/course/lesson-07-python-dictionaries/).

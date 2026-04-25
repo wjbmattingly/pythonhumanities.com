@@ -8,45 +8,92 @@ sourceUrl: "https://pythonhumanities.com/lesson-19-finding-html-code/"
 videoId: "428O-1dTg2Q"
 ---
 
-Before you can scrape a website, you need to read its HTML — to find the tags, classes, and structure that hold the data you actually want. Web scraping is **structural**: you give Python a recipe like "every `<a>` tag inside a `<div class="biography">`," and it follows that recipe across the page. So the first job is figuring out the right recipe by looking at the page yourself.
+Before you can scrape a website, you need to read its HTML — to find the tags, classes, and structure that hold the data you actually want. Web scraping is **structural**: you give Python a recipe like "every `<a>` tag inside a `<div class="biography">`" and it follows that recipe across the page. So the first job is figuring out the right recipe by *looking* at the page yourself.
+
+This lesson is mostly observation, not code. The next two lessons (`requests` and `BeautifulSoup`) implement what you spec out here.
+
+## What HTML is, very briefly
+
+HTML is a tree of nested tags. Every page is one big tree. The pieces that matter to a scraper:
+
+- **Tags** like `<a>`, `<p>`, `<div>`, `<table>` — the nodes of the tree.
+- **Attributes** on each tag — most usefully `class` and `id`, but also `href` (links), `src` (images), `data-*` (custom attributes that sites use to mark up structured info).
+- **Text** between opening and closing tags — `<h1>The actual title</h1>`.
+
+A scraper navigates the tree to a specific node, then asks for its text or attributes.
 
 ## Inspecting an element in the browser
 
-Modern browsers ship with developer tools that let you click on any piece of a page and see the HTML behind it.
+Modern browsers ship with developer tools that let you click any piece of a page and see the HTML behind it.
 
-- **Chrome / Edge / Brave**: right-click the element, choose **Inspect**.
-- **Firefox**: right-click, choose **Inspect Element**.
-- **Safari**: enable "Show Develop menu" in Preferences → Advanced, then right-click and choose **Inspect Element**.
+- **Chrome / Edge / Brave / Arc**: right-click the element, choose **Inspect**.
+- **Firefox**: right-click, choose **Inspect**.
+- **Safari**: enable "Show features for web developers" in Settings → Advanced, then right-click and choose **Inspect Element**.
 
-A panel opens showing the page's HTML, with the element you clicked highlighted. Hover over surrounding tags to see them outlined in the page itself.
+A panel opens with the HTML of the page. The element you right-clicked is highlighted. Hover over surrounding tags to see them outlined in the page itself, and click to drill in or out. The **Elements** tab is the one you want.
+
+There's a faster shortcut once the panel is open: click the small "pick" icon in the top-left of devtools (it looks like a cursor in a square), then click any visible element on the page. The panel jumps to that node.
 
 ## What to look for
 
 When you scrape, you'll target elements by some combination of:
 
-- **Tag name** — `a`, `p`, `div`, `table`, `tr`, `td`, etc.
-- **`class` attribute** — `<div class="biography">`. Many elements share a class, so a class is a great way to grab "all of these."
-- **`id` attribute** — `<div id="main-content">`. IDs are unique per page, perfect for grabbing one specific element.
-- **Position relative to a parent** — "the third `<td>` inside this `<tr>`."
+1. **Tag name** — `a`, `p`, `div`, `h2`, `table`, `tr`, `td`. Most pages have hundreds of `div`s, so tag alone is rarely specific enough.
+2. **`class` attribute** — `<div class="biography">`. Many elements share a class, which makes it perfect for "give me all of these."
+3. **`id` attribute** — `<div id="main-content">`. IDs are supposed to be unique per page, perfect for grabbing one specific element.
+4. **Position relative to a parent** — "the third `<td>` inside this `<tr>`," or "the `<p>` tags inside `<div class="biography">`."
 
 Look for the **most specific** marker that uniquely identifies the data you want. A class like `biography-name` is much better than just `<span>`, because the page probably has hundreds of spans.
 
 ## A worked example
 
-Imagine the page contains:
+Imagine a page contains:
 
 ```html
 <div class="biography">
   <h2 class="biography-name">Theuderic IV</h2>
   <p class="biography-dates">721 – 737</p>
+  <a href="/king/theuderic-iv" class="biography-link">read more</a>
 </div>
 ```
 
-To extract every name, the recipe would be: "find all `<h2>` tags with class `biography-name`." We don't have the code yet — we just need to identify the structure.
+To extract every name, the recipe is: **find all `<h2>` tags with class `biography-name`.**
 
-## Why this lesson is short
+To extract every name *and* its dates, you'd find each `<div class="biography">` and then drill into it for `.biography-name` and `.biography-dates`. Containers first, fields second — that's the standard scraping shape.
 
-There's no Python in this lesson, just observation. Once you can comfortably point at an element and tell me its tag and class, you're ready to write the code that grabs it. We do that with two libraries:
+## When the data isn't where you expect
+
+Two common surprises:
+
+**JavaScript-rendered content.** Many modern sites build the page in the browser using JavaScript. View Source (right-click → "View page source") shows the raw HTML the server sent, which often has none of the content you can see in the rendered page. The Inspect panel shows the *current* state of the page, which is what `requests` will *not* fetch.
+
+If View Source is empty, you'll need either a headless browser (Playwright, Selenium) or — better — to find the underlying API. Most JavaScript-heavy sites are calling a JSON endpoint behind the scenes; the **Network** tab in devtools shows you those requests, and hitting the same JSON endpoint with `requests` is far simpler than rendering the whole page.
+
+**`robots.txt` and rate limits.** Before scraping, check `https://example.com/robots.txt`. It tells you which paths the site asks scrapers to avoid. Respect it. Also: don't fire 1,000 requests per second at a server. A `time.sleep(1)` between requests is plain courtesy.
+
+## CSS selectors, briefly
+
+When you read tutorials about scraping, you'll see CSS selectors used as recipes:
+
+| Selector | Meaning |
+| --- | --- |
+| `h2` | every `<h2>` |
+| `.biography` | every element with class `biography` |
+| `#main` | the element with id `main` |
+| `div.biography h2` | every `<h2>` inside a `<div class="biography">` |
+| `a[href^="/king/"]` | links whose `href` starts with `/king/` |
+
+You don't have to learn the whole language. The first three or four cover most scraping. Both BeautifulSoup and modern alternatives (`selectolax`, `lxml`) accept these selectors directly via a `.select()` method.
+
+## A note on legal and ethical scraping
+
+Three rules of thumb:
+
+1. **Respect `robots.txt` and the site's terms of service.** If they explicitly disallow scraping, don't scrape.
+2. **Identify yourself.** Set a `User-Agent` header explaining who you are and why.
+3. **Don't republish proprietary content.** Scraping for analysis is generally fine; scraping to redistribute someone else's text on your own site is not.
+
+Once you can comfortably point at an element in devtools and tell me its tag and class, you're ready to write the code that grabs it. We do that with two libraries:
 
 - [`requests`](/course/lesson-20-python-and-requests-module/) — fetches the HTML.
-- [`BeautifulSoup`](/course/lesson-21-python-and-beautifulsoup/) — parses it and lets you query by tag and class.
+- [`BeautifulSoup`](/course/lesson-21-python-and-beautifulsoup/) — parses it and lets you query by tag, class, or selector.

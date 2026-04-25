@@ -8,9 +8,9 @@ sourceUrl: "https://pythonhumanities.com/lesson-15-python-and-regex-part-02/"
 videoId: "CR459J7TnKo"
 ---
 
-In [Lesson 14](/course/lesson-14-python-and-regex-part-01/) we used regex on small strings defined inside the script. Real DH work usually means applying regex to a **file**: a transcript, a corpus, a chunk of OCR'd text. This lesson walks through that complete cycle — read a file in, run regex over its contents, and write the results back out.
+In [Lesson 14](/course/lesson-14-python-and-regex-part-01/) we ran regex against small strings defined inside the script. Real DH work usually means running regex against a **file** — a transcript, a corpus, a chunk of OCR'd text. This lesson walks the complete cycle: read a file in, run regex over its contents, and write the results back out.
 
-## The example: cleaning verse references
+## The example: extracting verse references
 
 Imagine a file called `scripture.txt` containing lines like:
 
@@ -20,57 +20,120 @@ Genesis 1:2 And the earth was without form, and void.
 Exodus 3:14 And God said, I AM THAT I AM.
 ```
 
-We want to pull out every reference like `Genesis 1:1`, `Exodus 3:14`, and so on.
+We want to pull out every reference like `Genesis 1:1`, `Exodus 3:14`. Make the file in your project folder and follow along.
 
 ## The complete script
 
 ```python
 import re
+from pathlib import Path
 
-# 1. Read the file (without using the with operator)
-fp = open("scripture.txt", "r", encoding="utf-8")
-text = fp.read()
-fp.close()
+source = Path("scripture.txt")
+target = Path("references.txt")
+
+# 1. Read the whole file
+text = source.read_text(encoding="utf-8")
 
 # 2. Apply a regex
 pattern = r"[A-Z][a-z]+ \d+:\d+"
 matches = re.findall(pattern, text)
-
 print(matches)
+# ['Genesis 1:1', 'Genesis 1:2', 'Exodus 3:14']
 
-# 3. Write the matches to a new file
-fp = open("references.txt", "w", encoding="utf-8")
-for ref in matches:
-    fp.write(ref + "\n")
-fp.close()
+# 3. Write the matches to a new file, one per line
+target.write_text("\n".join(matches) + "\n", encoding="utf-8")
 ```
 
-A few things to notice:
+Read the pattern left to right:
 
-- `open(..., "r")` opens for reading; `open(..., "w")` opens for writing (and **erases** any existing file with that name).
-- We are **not** using the `with` operator here. We're manually calling `fp.close()` instead. The `with` form (covered in [Lesson 12](/course/lesson-12-python-and-text-files/)) is preferred in real code because it can't forget to close — but it's worth seeing the manual form once so you recognize it in older tutorials.
-- `[A-Z][a-z]+` — one uppercase letter followed by one or more lowercase letters (the book name).
+- `[A-Z]` — one uppercase letter (start of a book name).
+- `[a-z]+` — one or more lowercase letters (rest of the book name).
 - ` ` — a literal space.
-- `\d+:\d+` — one or more digits, a colon, one or more digits (the chapter:verse).
+- `\d+` — one or more digits (the chapter).
+- `:` — a literal colon.
+- `\d+` — one or more digits (the verse).
 
-## Reading the result
+The script reads `scripture.txt`, finds every match, and writes each on its own line in `references.txt`. The original file is untouched.
 
-After running the script, `references.txt` will contain:
+## Capturing parts of each match
 
+`findall` with a pattern containing **groups** returns tuples instead of strings — one item per group:
+
+```python
+pattern = r"([A-Z][a-z]+) (\d+):(\d+)"
+for book, chapter, verse in re.findall(pattern, text):
+    print(book, chapter, verse)
+# Genesis 1 1
+# Genesis 1 2
+# Exodus 3 14
 ```
-Genesis 1:1
-Genesis 1:2
-Exodus 3:14
+
+That's already enough to feed into a spreadsheet or a database. The regex did the parsing; now you have structured records.
+
+## Multi-word book names
+
+The pattern above won't match `1 Kings`, `Song of Solomon`, or `Acts of the Apostles` — `[A-Z][a-z]+` only takes one capitalized word. A more permissive shape:
+
+```python
+pattern = r"((?:\d\s)?[A-Z][a-zA-Z ]+?)\s+(\d+):(\d+)"
 ```
 
-`scripture.txt` itself is unchanged — we read from it but only wrote to a different file.
+That matches an optional leading digit-and-space (`1 `, `2 `, `3 `), one capitalized word, then any mix of letters and spaces — but **non-greedily** (the `?` after `+`), so it stops at the chapter number rather than swallowing everything up to it.
+
+`(?:...)` is a **non-capturing group** — it groups for the quantifier without adding a tuple slot to the output. Use it whenever you want to group but don't care about capturing.
+
+## Replacing instead of extracting — `re.sub`
+
+If, instead of extracting references, you wanted to **redact** them — replace each one with `[ref]`:
+
+```python
+redacted = re.sub(r"[A-Z][a-z]+ \d+:\d+", "[ref]", text)
+target.write_text(redacted, encoding="utf-8")
+```
+
+`re.sub` returns a new string with every match replaced. It can also take a **function** as the replacement, which runs once per match and returns the replacement string:
+
+```python
+def to_link(match: re.Match) -> str:
+    book, chapter, verse = match.groups()
+    slug = book.lower().replace(" ", "-")
+    return f"[{book} {chapter}:{verse}](#/{slug}/{chapter}/{verse})"
+
+linked = re.sub(r"([A-Z][a-z]+) (\d+):(\d+)", to_link, text)
+```
+
+This is how you build sophisticated rewrites with regex — let the regex find the candidates and the function decide what to do with each.
+
+## Running over a folder of files
+
+Most projects don't have one file; they have many. Combine the file-reading habit from Lesson 12 with a regex pass over each one:
+
+```python
+import re
+from pathlib import Path
+
+pattern = re.compile(r"[A-Z][a-z]+ \d+:\d+")
+
+all_refs: list[tuple[str, str]] = []
+for file in Path("corpus").glob("*.txt"):
+    text = file.read_text(encoding="utf-8")
+    for match in pattern.findall(text):
+        all_refs.append((file.name, match))
+
+print(f"Found {len(all_refs)} references across {len(set(f for f, _ in all_refs))} files.")
+```
+
+A couple of new habits worth adopting:
+
+- **Pre-compile the pattern** with `re.compile` when you're going to use it many times. Compiling once is faster than re-compiling per file.
+- **Use `pathlib`'s `glob`** to walk a folder. `glob("**/*.txt")` recurses into subfolders.
+- **Collect results into a list of tuples** — file, match — so you can write a CSV, summarize, or filter later.
 
 ## Try it yourself
 
-Pay attention to the format of `scripture.txt` before and after running the code. Then experiment:
+- Adapt the pattern to also match books like `1 Kings` and `Song of Solomon`.
+- Capture only the chapter and verse, dropping the book.
+- Modify the script so it *replaces* every reference in `scripture.txt` with `[ref]` and saves the result to `redacted.txt`.
+- Apply your pattern to a folder of `.txt` files and count how many references each file contains.
 
-- Adapt the pattern to match book names with multiple words (`1 Kings`, `Song of Solomon`).
-- Capture just the chapter and verse, dropping the book name.
-- Modify the script to *replace* every reference in `scripture.txt` with `[ref]` and save the result.
-
-Once you're comfortable with regex on real files, continue to [Lesson 16: Python, Excel, and XLRD](/course/lesson-16-python-excel-and-xlrd/).
+Once you're comfortable with regex on real files, continue to [Lesson 16: Python and Excel](/course/lesson-16-python-excel-and-xlrd/).

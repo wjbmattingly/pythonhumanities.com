@@ -8,83 +8,156 @@ sourceUrl: "https://pythonhumanities.com/lesson-21-python-and-beautifulsoup/"
 videoId: "_tdW6n7lUX4"
 ---
 
-When working with web data, `requests` and **BeautifulSoup** are typically used together. Requests is good at fetching the page; it's not very good at parsing the result or pulling specific pieces out. BeautifulSoup handles both.
+`requests` fetches HTML; **BeautifulSoup** parses it. Together they're the standard toolkit for scraping.
 
-## Installing BeautifulSoup
+A BeautifulSoup object is a navigable tree built from HTML. You query it the way you'd query the page in devtools — by tag, by class, by id, by CSS selector. You get back tag objects you can read text from or drill further into.
+
+## Installing
 
 ```bash
-uv add beautifulsoup4
+uv add beautifulsoup4 lxml
 ```
 
-The Python module is named `bs4` even though the package is `beautifulsoup4`.
+The Python module is named `bs4`. The `lxml` package is an optional faster parser; once installed, you can pass `"lxml"` instead of `"html.parser"` and BeautifulSoup will use it. For small scripts the difference doesn't matter; for thousands of pages, `lxml` is several times faster.
 
-## Building a soup object
-
-Pass the HTML from `requests` straight into BeautifulSoup:
+## Building a soup
 
 ```python
 import requests
 from bs4 import BeautifulSoup
 
 url = "https://en.wikipedia.org/wiki/Theuderic_IV"
-s = requests.get(url)
-soup = BeautifulSoup(s.text, "html.parser")
+html = requests.get(url, timeout=10).text
+soup = BeautifulSoup(html, "html.parser")
 ```
 
-The second argument, `"html.parser"`, tells BeautifulSoup which parser to use. The built-in `html.parser` works for most cases.
+`soup` now represents the parsed page. Everything else in this lesson is methods on `soup` (or on tags inside it).
 
-## Finding tags
+## Finding tags — `find` and `find_all`
 
-Two methods do most of the work:
+The two methods that do most of the work:
 
-- `soup.find(tag, attrs)` — returns the **first** matching tag (or `None`).
+- `soup.find(tag, attrs)` — returns the **first** matching tag, or `None`.
 - `soup.find_all(tag, attrs)` — returns a **list** of every matching tag.
 
 ```python
-title_tag = soup.find("h1")
-print(title_tag.text)
+title = soup.find("h1")
+print(title.text)
 
 for link in soup.find_all("a"):
     print(link.get("href"))
 ```
 
-`tag.text` gives you the visible text inside the tag. `tag.get("href")` reads an attribute (returning `None` if missing — safer than `tag["href"]`, which raises a `KeyError`).
+Two safe-defaults you should adopt:
 
-## Filtering by class or id
+- **`tag.text`** gives you the visible text inside the tag (and its descendants), with HTML stripped. Use `tag.get_text(strip=True)` to also strip leading/trailing whitespace.
+- **`tag.get("href")`** reads an attribute, returning `None` if it's missing. Safer than `tag["href"]`, which raises `KeyError`.
 
-Pass an `attrs` dictionary, or use the convenience keywords:
+## Filtering by class, id, or attribute
 
 ```python
 soup.find("div", class_="biography")
 soup.find("div", id="main-content")
-soup.find_all("p", attrs={"class": "lede"})
+soup.find_all("p", class_="lede")
+
+# more general — any attribute
+soup.find_all("a", attrs={"data-track": "biography-link"})
 ```
 
-Note the trailing underscore on `class_` — `class` is a reserved word in Python, so BeautifulSoup uses `class_` instead.
+Note the trailing underscore on `class_`. `class` is a Python keyword, so BeautifulSoup uses `class_` to avoid the conflict.
 
-## Walking from a parent
+## CSS selectors — often the cleanest option
 
-Once you've found a parent element, you can search **inside it** the same way:
+`soup.select(selector)` accepts the same selectors you'd use in CSS or in devtools' "Copy selector":
 
 ```python
-bio = soup.find("div", class_="biography")
-name = bio.find("h2", class_="biography-name").text
-dates = bio.find("p", class_="biography-dates").text
+soup.select("div.biography h2")
+soup.select("a[href^='/king/']")
+soup.select_one("div#main-content > p")
 ```
 
-This is the typical scraping pattern: locate a container, then drill in to grab its fields.
+For nested queries (one element inside another), CSS selectors are usually shorter than chained `find` calls. Pick the form that reads better.
+
+## Walking from a parent — the typical scraping shape
+
+The standard scraping pattern: locate a container, then drill into it for fields.
+
+```python
+records = []
+for box in soup.select("div.biography"):
+    name = box.select_one(".biography-name").get_text(strip=True)
+    dates = box.select_one(".biography-dates").get_text(strip=True)
+    link = box.select_one("a.biography-link")
+    href = link.get("href") if link else None
+
+    records.append({"name": name, "dates": dates, "href": href})
+```
+
+A few habits in that snippet worth copying:
+
+- **Loop over the containers, then `select_one` inside each.** This guarantees every field belongs to the same record. If you instead `select` all names and all dates separately and zip them, one missing element shifts the whole rest of your data by one.
+- **Guard against missing optional fields** with `if link else None`. Real HTML is never as clean as the example.
+- **Build a list of dictionaries.** Same shape we used in the Excel lessons — easy to dump to JSON, write to a spreadsheet, or feed into pandas.
+
+## Getting just the text — `get_text` vs `.text`
+
+These look interchangeable but `get_text` has options that frequently save you a second pass:
+
+```python
+tag.get_text()                   # default: just like .text
+tag.get_text(strip=True)         # collapse leading/trailing whitespace
+tag.get_text(separator=" ", strip=True)   # join inner tags with a space
+```
+
+The third form is what you almost always want for paragraphs that contain inline tags like `<em>` or `<a>`. Without `separator=" "`, the words on either side of those inline tags get jammed together.
+
+## Navigating — children, siblings, parents
+
+You can also walk the tree relative to a tag you already have:
+
+```python
+header = soup.find("h2", class_="biography-name")
+header.parent          # the enclosing element
+header.find_next("p")  # the next <p> after this header
+header.find_previous_sibling("h2")
+header.find_all_next("p", limit=3)
+```
+
+These are useful when classes are unhelpful and the only structure is positional ("the paragraph right after this heading").
 
 ## A complete tiny scraper
 
 ```python
+import time
 import requests
 from bs4 import BeautifulSoup
 
-url = "https://en.wikipedia.org/wiki/Theuderic_IV"
-soup = BeautifulSoup(requests.get(url).text, "html.parser")
+session = requests.Session()
+session.headers.update({"User-Agent": "DH-research-bot/1.0"})
 
-paragraphs = [p.text for p in soup.find_all("p")]
-print(paragraphs[0])
+records = []
+for url in URLS:
+    html = session.get(url, timeout=10).text
+    soup = BeautifulSoup(html, "lxml")
+
+    title = soup.select_one("h1").get_text(strip=True)
+    paragraphs = [p.get_text(" ", strip=True) for p in soup.select("p")]
+
+    records.append({
+        "url": url,
+        "title": title,
+        "intro": paragraphs[0] if paragraphs else "",
+    })
+    time.sleep(1)
+
+print(f"scraped {len(records)} pages")
 ```
+
+That's the whole shape: session, fetch, parse, extract, append, sleep. Once it works for one URL, it works for thousands.
+
+## What BeautifulSoup can't do
+
+- **Run JavaScript.** If the page is rendered client-side, BeautifulSoup sees the empty shell. Either find the JSON API the page is calling, or use Playwright/Selenium to render first.
+- **Fix invalid HTML perfectly.** Most pages parse cleanly with `html.parser` or `lxml`. Wildly broken pages may require trying multiple parsers and picking the cleanest tree.
 
 Once you have data in hand, you'll want to save it. We start that in [Lesson 22: Storing Data in Text Files](/course/lesson-22-python-and-storing-data-in-text-files/).

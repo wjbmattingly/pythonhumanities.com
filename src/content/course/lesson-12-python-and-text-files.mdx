@@ -3,56 +3,175 @@ title: "Python and Text Files"
 lessonNumber: 12
 part: 4
 partTitle: "Working with Text Data"
-description: "Open, read, and write plain text files using Python's with operator."
+description: "Open, read, and write plain text files — the canonical Python pattern, plus pathlib and a few habits that save you bugs later."
 sourceUrl: "https://pythonhumanities.com/lesson-12-python-and-text-files/"
 videoId: "IsdZsuAR9w0"
 ---
 
-In [Lesson 22](/course/lesson-22-python-and-storing-data-in-text-files/), we go deeper on the use and applications of text files in your digital humanities projects. For now, the point is simple: text files are an essential building block of any DH project. You will use them in your own work and you will encounter them in everyone else's. Understanding how to open them, read from them, write to them, and rip the data out of them is therefore foundational.
+Text files are the foundation of any DH project. You'll save scraped pages to them, ship transcripts as them, build corpora out of folders full of them. Lesson 22 goes deeper on storage strategy. This lesson is about the basic moves: opening a file, reading from it, writing to it, and doing it safely.
 
-## What is a text file?
+## What counts as a "text file"
 
-A **text file** is a file with the extension `.txt` containing plain, human-readable characters. In DH projects we use text files to store things like full-text manuscripts, lists of names separated by lines, transcripts, or letters. If you separate fields on each line with commas (or tabs), the same `.txt` file can be read as a CSV. For now, we'll just treat text files as one big string per file.
+A **text file** is a file whose contents are human-readable characters — usually a `.txt`, but the same techniques work for `.csv`, `.json`, `.xml`, `.md`, `.html`, `.py`, and any other text-shaped extension. The opposite is a **binary file** (images, audio, PDFs, Excel `.xlsx`), which needs a specialized library to interpret.
+
+Plain text files don't have any built-in structure. They're just a long string. Whether the string represents a manuscript, a list of names, or a CSV row depends entirely on how *you* read it.
 
 ## Opening a file with `with`
 
-In Python, the modern way to open a file is the `with` operator. **The `with` block automatically closes the file when you leave it**, which means you cannot accidentally leave files open in memory — a common bug in scripts that loop over many files.
-
-Here is the canonical pattern: create a file called `text.txt`, write `"Hello"` to it, then read it back line by line.
+The modern, correct way to open a file in Python is the `with` statement. It guarantees the file is closed when you leave the block, even if an exception happens midway through.
 
 ```python
-file = "text.txt"
+with open("text.txt", "w", encoding="utf-8") as f:
+    f.write("Hello, world.\n")
+```
 
-with open(file, "a+", encoding="utf-8") as f:
-    f.write("Hello")
+Read it as: "open `text.txt` for writing, give me a handle bound to the name `f`, and at the end of this block, close it for me." Forgetting to close a file is a real bug — it can lose data, leak file descriptors, and confuse other programs that try to read the same file. `with` makes the bug impossible.
 
-with open(file, "r", encoding="utf-8") as f:
-    for line in f.readlines():
+A few things every line of file-handling code should have:
+
+- **`encoding="utf-8"`.** Always. The default differs by operating system and is occasionally not UTF-8 on Windows. Specifying it explicitly makes your script work the same everywhere and on every text in any language.
+- **A meaningful mode** (`"r"`, `"w"`, `"a"`, etc. — see below).
+- **A real path or filename.** If the file isn't in the current directory, give the full path or use `pathlib`.
+
+## File modes
+
+The second argument to `open` is the **mode**. Six combinations cover almost everything:
+
+| Mode | Reads? | Writes? | Truncates if exists? | Creates if missing? |
+| --- | --- | --- | --- | --- |
+| `r` | yes | no | no | no (errors) |
+| `r+` | yes | yes | no | no (errors) |
+| `w` | no | yes | **yes** | yes |
+| `w+` | yes | yes | **yes** | yes |
+| `a` | no | yes (appends) | no | yes |
+| `a+` | yes | yes (appends) | no | yes |
+
+The big distinction is **`w*` destroys existing content the moment you open the file.** If you open a 200-page corpus in `"w"` mode, it's gone. Use `"a"` or `"a+"` while learning, and reach for `"w"` only when you mean to overwrite.
+
+There's also `"b"` (e.g. `"rb"`, `"wb"`) for binary mode, used for non-text formats. We'll use it briefly in the scraping lessons.
+
+## Three reading patterns
+
+The right way to read a file depends on what you want.
+
+**The whole file as one string** — for short documents:
+
+```python
+with open("text.txt", "r", encoding="utf-8") as f:
+    text = f.read()
+```
+
+**Line by line, lazy** — for files of any size, and the way you'll do this most often:
+
+```python
+with open("text.txt", "r", encoding="utf-8") as f:
+    for line in f:
+        line = line.rstrip("\n")    # strip the trailing newline
         print(line)
 ```
 
-A few things to note:
+This iterates without ever loading the whole file into memory. A 5 GB file works exactly the same as a 5 KB one.
 
-- `file` is a string — the name (or path) of the file. If it lived in a subfolder, you'd write something like `"data/text.txt"`.
-- `open(file, "a+", encoding="utf-8")` opens the file in **append-and-read** mode and creates it if it doesn't exist. The string `"a+"` is the **file handle** (more on these below).
-- Inside the `with` block, the file is bound to the name `f`. The convention is `f` (sometimes `fp` for "file pointer").
-- `f.write("Hello")` writes the string. Notice it does *not* add a newline; you'd write `"Hello\n"` to do that.
-- The second `with` block opens the file again, this time in read mode (`"r"`), and iterates the lines.
-- Always set `encoding="utf-8"` when working with text. The default differs across operating systems, and UTF-8 is the modern standard.
+**All lines as a list** — when you need random access:
 
-Try editing the example to use string functions you learned in [Lesson 03](/course/lesson-03-python-strings/) — strip whitespace from each line, uppercase it, count occurrences of a substring.
+```python
+with open("text.txt", "r", encoding="utf-8") as f:
+    lines = f.readlines()
+print(lines[0])
+print(len(lines))
+```
 
-## File handles
+`readlines` keeps the trailing `\n` on each line. If you want clean strings, run `.rstrip()` over them or use `f.read().splitlines()`.
 
-The second argument to `open` controls **how** Python opens the file. The handles you should know:
+## Writing
 
-- `r` — read only (the default).
-- `r+` — read and write.
-- `w` — write only; **truncates** the file if it exists.
-- `w+` — write and read; also truncates.
-- `a` — append only; creates the file if it doesn't exist.
-- `a+` — append and read; creates the file if it doesn't exist.
+`write` takes a string and writes it as-is — no newline added:
 
-The big distinction is between `w*` (which destroys existing content) and `a*` (which preserves it). When in doubt, prefer `a+` while you're learning so you don't accidentally wipe out a file.
+```python
+with open("text.txt", "w", encoding="utf-8") as f:
+    f.write("first line\n")
+    f.write("second line\n")
+```
+
+`writelines` takes an iterable of strings (also no newlines added):
+
+```python
+lines = ["first\n", "second\n", "third\n"]
+with open("text.txt", "w", encoding="utf-8") as f:
+    f.writelines(lines)
+```
+
+`print` will also write to a file if you pass `file=`:
+
+```python
+with open("text.txt", "w", encoding="utf-8") as f:
+    print("first line", file=f)
+    print("second line", file=f)
+```
+
+`print` adds the newline for you. Some prefer this pattern; it's purely a matter of taste.
+
+## `pathlib` — the modern way to talk about files
+
+For a script that reads one file in the current directory, the bare filename is fine. As soon as you start juggling subfolders, multiple files, and cross-platform paths, switch to `pathlib`.
+
+```python
+from pathlib import Path
+
+corpus = Path("corpus")
+for file in corpus.glob("*.txt"):
+    text = file.read_text(encoding="utf-8")
+    print(file.name, "—", len(text), "characters")
+```
+
+A few `pathlib` operations you'll use constantly:
+
+```python
+p = Path("data") / "letters" / "1815.txt"   # forward slash joins paths
+p.exists()
+p.is_file()
+p.parent           # Path('data/letters')
+p.name             # '1815.txt'
+p.stem             # '1815'
+p.suffix           # '.txt'
+p.read_text(encoding="utf-8")
+p.write_text("hello", encoding="utf-8")
+```
+
+`Path` works the same on Windows, macOS, and Linux. It handles the slash direction for you. From here on in this course, prefer `Path` over plain string filenames.
+
+## Reading a folder full of texts
+
+Here's a common DH first step — load every `.txt` file in a folder into a dictionary keyed by filename:
+
+```python
+from pathlib import Path
+
+corpus = {}
+for file in Path("corpus").glob("*.txt"):
+    corpus[file.stem] = file.read_text(encoding="utf-8")
+
+print(f"Loaded {len(corpus)} documents.")
+```
+
+That gives you `corpus["1815"]`, `corpus["1820"]`, etc. Build everything else on top of that.
+
+## What about CSV and JSON?
+
+You *can* read CSV and JSON as plain text and parse them by hand. Don't. Python ships with `csv` and `json` modules in the standard library that handle quoting, escaping, encoding, and the dozen edge cases you'd otherwise hit.
+
+```python
+import csv, json
+
+with open("rows.csv", "r", encoding="utf-8", newline="") as f:
+    reader = csv.DictReader(f)
+    for row in reader:
+        print(row["name"], row["born"])
+
+with open("data.json", "r", encoding="utf-8") as f:
+    data = json.load(f)
+```
+
+We'll use `csv` and `json` more in later lessons. For now, the rule is: text files of arbitrary content go through `open`; structured text files have purpose-built modules.
 
 When you're comfortable with files, continue to [Lesson 13: Python Modules and Libraries](/course/lesson-13-python-modules-and-libraries/).

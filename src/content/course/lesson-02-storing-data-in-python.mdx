@@ -3,45 +3,115 @@ title: "Storing Data in Python"
 lessonNumber: 2
 part: 1
 partTitle: "Working with Data"
-description: "In the video, I noted that in Python there are six key pieces of data and data structures with which we will be working: integers, floats, strings, lists, tuples, and dictionaries."
+description: "A tour of the six built-in types you'll use most often as a digital humanist: integers, floats, strings, lists, tuples, and dictionaries."
 sourceUrl: "https://pythonhumanities.com/lesson-02-storing-data-in-python/"
 videoId: "ayjKuGQn7FI"
 ---
 
-In the video, I noted that in Python there are six key pieces of data and data structures with which we will be working: integers, floats, strings, lists, tuples, and dictionaries. **Data** are pieces of information (the singular is datum)i.e., integers, floats, and strings. **Data structures** are objects that make data relational, i.e. lists, tuples, and dictionaries. Before you proceed to lesson three, you _MUST_ have a basic understanding of the ways in which you create data in Python and the ways in which you make that data relational through data structures. Start to train your brain to recognize the Python syntax for these pieces of data and data structures discussed below.
+In the video, I introduced six built-in types that you will use constantly in digital humanities work: **integers**, **floats**, **strings**, **lists**, **tuples**, and **dictionaries**. The first three hold a single piece of information. The last three hold collections of pieces. Before moving on to Lesson 03, you should be comfortable typing each of them and reading them in someone else's code.
 
-An **integer**, as noted in the video, is a digit that does not contain a decimal place, i.e. 1 or 2 or 3. This can be a number of any size, such as 100,001,200. A **float**, on the other hand, is a digit with a decimal place. So, while 1 is an integer, 1.0 is a float. Floats, like integers, can be of any size, but they necessarily have a decimal place, i.e. 200.0020002938. In python, you do not need any special characters to create an integer or float object. You simply need an equal sign. In the example below, we have two objects which are created with a single equal sign. These objects are titled an\_integer and a\_float with the former being an object that corresponds to the integer 1 and the latter being an object that corresponds to the float 1.1.
+This is a tour, not a deep dive. Each of these types gets its own lesson later in Part 1. The goal here is just to recognize the shapes.
 
-_Examples of integer and float objects_:
+## Variables and assignment
+
+Everything below uses the same pattern: a name on the left, an `=` sign, a value on the right.
+
+```python
+year = 1988
+```
+
+`year` is the variable. `1988` is the value. Python keeps a reference to the value under that name until you reassign it or the program ends. Variable names are case-sensitive — `year` and `Year` are two different things — and conventionally use `snake_case` (lowercase with underscores).
+
+## Integers and floats — numbers
+
+An **integer** is a whole number with no decimal point: `1`, `2`, `1988`, `-300`. A **float** is a number that does have a decimal point: `1.0`, `3.14159`, `0.5`. The decimal — even a trailing `.0` — is what tells Python "this is a float, not an integer."
+
 ```python
 an_integer = 1
 a_float = 1.1
 ```
 
-Unlike integers and floats, **strings** are a sequence of characters. These can be digits or they can be letters or symbols, but what makes a string distinctly different from an integer or a float is the presence of quotation marks, i.e. " " or ' '. The opening of a quotation mark indicates to Python that a string has begun and the closing of the same style of a quotation mark indicates the close of a string. It is important to use the same style of quotation mark for a string, either a double or a single. In the examples below, we have two string objects: a\_string and b\_string, the former corresponds to the string "Hello" and the latter corresponds to the string "Bye".
+Python doesn't care how big your integers get. `2 ** 1000` is fine — it returns the exact 302-digit number. Floats, on the other hand, follow IEEE-754 double precision, so very long decimals can be slightly imprecise (you'll see `0.1 + 0.2` print as `0.30000000000000004`). That rarely matters for humanities data, but it's worth knowing the rule: integers are exact, floats are approximate.
 
-_Examples of strings:_
+## Strings — text
+
+A **string** is a sequence of characters wrapped in quotation marks. Either single or double works, as long as you open and close with the same kind:
+
 ```python
-a_string = "Hello"
-b_string = "Bye"
+greeting = "Hello"
+farewell = 'Bye'
 ```
 
-Python has three basic data structures that you MUST be familiar with. These are **lists**, **tuples**, and **dictionaries**. **Tuples** and **lists** are the same thing except for the fact that tuples cannot be changed in memory, while lists can. These distinctions are known as mutable (lists) and immutable (tuples) objects. Tuples are formed by using parentheses, i.e. (1, 2, 3) and lists are formed using block brackets, i.e. [1, 2, 3]. To separate items in a tuple or a list, remember to use commas. See the example objects below.
+Strings can hold any Unicode character — Greek, Arabic, Chinese, emoji, accented Latin — without any extra setup in Python 3. That matters for digital humanists working with non-English sources: `"αρετή"` and `"عَرَب"` are perfectly valid Python strings.
 
-_Examples of tuples and lists:_
+For text that spans multiple lines, use triple quotes:
+
 ```python
-a_tuple = (1, "one", 3.0)
-a_list = [1, "one", 3.0]
+passage = """The quality of mercy is not strain'd,
+It droppeth as the gentle rain from heaven."""
 ```
 
-**Dictionaries** are very different from tuples and lists in that they are formed by using squiggly brackets and have a key and a value associated with that key which are separated by a colon, i.e. \{1 : 2\}. Like lists, dictionaries are mutable. In the examples below, we have two dictionary objects. The first, a\_dict, is a dictionary with a key of "one" and a value of 1. The second, b\_dict, is a dictionary with a key of "two" and a value of 2. As with all other objects, we create a dictionary with an equal sign.
+For strings that mix in the value of a variable, use an **f-string** — a string prefixed with the letter `f`, with variables in curly braces. We'll use these constantly:
 
-_Examples of dictionaries:_
 ```python
-a_dict = {"one": 1}
-b_dict = {"two": 2}
+name = "Ada"
+print(f"Hello, {name}.")  # Hello, Ada.
 ```
 
-Throughout your work with Python for your DH project, you will use all of these forms of data and data structures. The way in which you select which data forms and data structures to use will be dependent upon your data. Use the coding session below to experiment with these types of data and data structures. Right now, I have not introduced you to the way in which you print off objects. I will speak about this in greater detail in future lessons. For now it may be useful to understand that you do this by simply writing print and placing in parentheses what you want to print off, such as the example below with the printing off of a\_string. You can add new code in the console below and when you're ready to run your code, simply hit the play button. As long as you don't leave the page, your code will remain. Once you refresh, however, it will be lost, so if you want to save it, do so.
+## Lists and tuples — ordered collections
 
-A final note: *IMPORTANT* Python is case-sensitive. In the code below, try to print off A\_string. Notice, that you receive an error. Always remain sensitive to the case of your letters.
+A **list** is an ordered collection of items, written with square brackets. A **tuple** is the same idea, written with parentheses. Items go in order, separated by commas, and a single collection can mix types — strings, numbers, even other collections.
+
+```python
+a_list = [1, "one", 1.0]
+a_tuple = (1, "one", 1.0)
+```
+
+The big difference between them: lists are **mutable** (you can add, remove, and replace items after creating the list) and tuples are **immutable** (once created, the contents are fixed). In practice, you'll reach for lists most of the time. Tuples come up when you want to signal that a small group of values belongs together and shouldn't change — coordinates, a (year, place) pair, a row from a database.
+
+You access a single item by **index**, starting from 0:
+
+```python
+a_list[0]  # 1
+a_list[2]  # 1.0
+```
+
+Negative indexes count from the end, which is handy for grabbing the last item:
+
+```python
+a_list[-1]  # 1.0
+```
+
+## Dictionaries — labeled collections
+
+A **dictionary** stores **key–value pairs** in curly braces. The key is the label; the value is what's stored under that label. They're separated by a colon, and pairs are separated by commas.
+
+```python
+person = {"name": "Ada Lovelace", "born": 1815, "field": "mathematics"}
+```
+
+You access a value by its key, the same way you'd index a list — except the key is whatever you defined, not a position:
+
+```python
+person["name"]   # "Ada Lovelace"
+person["born"]   # 1815
+```
+
+Dictionaries are the workhorse data structure for humanities research. A row from a CSV becomes a dictionary. A JSON record from an API is already a dictionary. A row in a spreadsheet, a manuscript with metadata, an entry from a person's correspondence — all natural fits.
+
+## Printing what you have
+
+To show a value, pass it to the built-in `print` function:
+
+```python
+print(a_list)
+print(person["name"])
+```
+
+`print` accepts any of the types above, plus several at once separated by commas:
+
+```python
+print("Born in:", person["born"])
+```
+
+That's enough to start poking around. In Lesson 03 we'll begin doing real work with strings — splitting, joining, replacing — and the rest of Part 1 builds out each of these types in turn.

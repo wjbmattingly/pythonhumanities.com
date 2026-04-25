@@ -1,34 +1,38 @@
 ---
-title: "Python and Storing Data in Text Files"
+title: "Storing Data — Text, CSV, and JSON"
 lessonNumber: 22
 part: 7
 partTitle: "Storing Data"
-description: "Write Python data out to plain text files and read it back in."
+description: "Write your data out to plain text, CSV, and JSON — and pick the right format for the shape you have."
 sourceUrl: "https://pythonhumanities.com/lesson-22-python-and-storing-data-in-text-files/"
 videoId: "WiWp2xqKLPo"
 ---
 
-Once you've gathered or computed some data, you usually want to **keep** it. The simplest way is to write it to a plain text file. This lesson covers opening a file, writing to it, and reading it back.
+Once you've gathered or computed some data, you usually want to **keep** it. Plain `.txt` files are the simplest option, but they're rarely the right one. The right format depends on the shape of the data:
 
-## Writing a single string
+- **Plain text** — for unstructured prose. Transcripts, notes, scraped article bodies.
+- **CSV** — for tabular data. Anything that looks like a spreadsheet.
+- **JSON** — for nested or hierarchical data. The output of a scraper or API.
 
-The pattern is the same one we used to read text files in [Lesson 12](/course/lesson-12-python-and-text-files/), except we open the file in **write mode** (`"w"`) instead of read mode:
+This lesson covers all three. They're the formats you'll write 95% of the time.
+
+## Plain text
+
+The pattern is the same one we used to read text files in [Lesson 12](/course/lesson-12-python-and-text-files/), with the file opened in **write mode** (`"w"`):
 
 ```python
 with open("output.txt", "w", encoding="utf-8") as f:
     f.write("Hello, file!\n")
 ```
 
-A few things worth pointing out:
+A few points worth pinning down:
 
-- The `with` block automatically closes the file when you're done. You should almost always use `with`.
-- `"w"` mode **overwrites** any existing file with the same name. Use `"a"` (append) to add to a file instead.
-- `f.write` does **not** add a newline for you — note the explicit `\n`.
-- Always set `encoding="utf-8"` when working with text. The default differs across platforms, and UTF-8 is the modern standard.
+- The `with` block automatically closes the file when you leave it.
+- `"w"` **overwrites** any existing file with the same name. Use `"a"` (append) to add without erasing.
+- `f.write` does **not** add a newline. Note the explicit `\n`.
+- Always set `encoding="utf-8"`. The default differs across operating systems; UTF-8 is the modern standard everywhere else.
 
-## Writing many lines
-
-If you have a list of strings, you can loop and write each one:
+For a list of strings, write them one per line:
 
 ```python
 names = ["Theuderic IV", "Pippin the Short", "Charlemagne"]
@@ -38,30 +42,128 @@ with open("names.txt", "w", encoding="utf-8") as f:
         f.write(name + "\n")
 ```
 
-Or use `writelines`, which writes the list directly (and again, you supply the newlines yourself):
+`pathlib` has a one-liner equivalent that's even cleaner:
 
 ```python
-with open("names.txt", "w", encoding="utf-8") as f:
-    f.writelines(name + "\n" for name in names)
+from pathlib import Path
+Path("names.txt").write_text("\n".join(names) + "\n", encoding="utf-8")
 ```
 
-## Reading it back
-
-Reading mirrors writing:
+Reading it back is symmetrical:
 
 ```python
-with open("names.txt", "r", encoding="utf-8") as f:
-    contents = f.read()
-print(contents)
+text = Path("names.txt").read_text(encoding="utf-8")
+lines = text.splitlines()
 ```
 
-To get a list of lines without the trailing newlines:
+`splitlines` handles `\n`, `\r\n`, and `\r` uniformly and drops the trailing newlines, which is almost always what you want.
+
+## CSV — for tabular data
+
+When your data is rows and columns, **don't** join with commas yourself. Quoting, escaping, and embedded commas in fields are a swamp; the standard library's `csv` module handles all of that for you.
+
+The cleanest writer takes a list of dictionaries:
 
 ```python
-with open("names.txt", "r", encoding="utf-8") as f:
-    lines = [line.rstrip("\n") for line in f]
+import csv
+
+records = [
+    {"name": "Voltaire", "born": 1694, "letters": 21000},
+    {"name": "Émilie",   "born": 1706, "letters":   430},
+    {"name": "Diderot",  "born": 1713, "letters":  3500},
+]
+
+with open("writers.csv", "w", encoding="utf-8", newline="") as f:
+    writer = csv.DictWriter(f, fieldnames=list(records[0].keys()))
+    writer.writeheader()
+    writer.writerows(records)
 ```
 
-## When text isn't enough
+Two non-obvious arguments to `open` you need every time you work with CSV:
 
-Plain text is great for unstructured data — paragraphs, transcripts, lists. As soon as your data has structure (fields, attributes, nested relationships), a richer format will save you trouble. We'll look at XML in [Lesson 24](/course/lesson-24-python-and-storing-data-in-xml-files/).
+- **`newline=""`**. Without it, `csv` and the OS will both add line endings on Windows, and you'll get blank rows between every record.
+- **`encoding="utf-8"`**. Same reason as before.
+
+Reading it back with the same shape:
+
+```python
+with open("writers.csv", "r", encoding="utf-8", newline="") as f:
+    reader = csv.DictReader(f)
+    records = [row for row in reader]
+
+print(records[0])
+# {'name': 'Voltaire', 'born': '1694', 'letters': '21000'}
+```
+
+Notice that everything came back as a string — CSV has no type information. If you need numbers, convert them yourself: `int(row["born"])`. (`pandas.read_csv` and `polars.read_csv` infer types automatically; for serious tabular work, those are usually the right tool.)
+
+## JSON — for nested data
+
+When your records have nested fields (lists, sub-dictionaries), CSV stops working cleanly. Use JSON. Python's `json` module reads and writes it directly.
+
+```python
+import json
+
+records = [
+    {
+        "name": "Voltaire",
+        "born": 1694,
+        "places": ["Paris", "Cirey", "Ferney"],
+        "correspondents": {"Émilie": 192, "Diderot": 8},
+    },
+]
+
+with open("writers.json", "w", encoding="utf-8") as f:
+    json.dump(records, f, indent=2, ensure_ascii=False)
+```
+
+Three useful arguments to `json.dump`:
+
+- **`indent=2`** writes a pretty-printed, human-readable file. Without it the whole record is on one line. For a file you'll ever look at, always indent.
+- **`ensure_ascii=False`** keeps non-ASCII characters as themselves (`Émilie`) instead of escaping them (`\u00c9milie`). Almost always what you want.
+- **`default=str`** is a fallback for objects `json` doesn't know how to serialize natively — most usefully `datetime` objects.
+
+Reading is even simpler:
+
+```python
+with open("writers.json", "r", encoding="utf-8") as f:
+    records = json.load(f)
+```
+
+You get back the same list of dictionaries you wrote.
+
+## JSONL — one JSON object per line
+
+For long-running scrapers and large datasets, **JSONL** (also called **NDJSON**) is the format to know. Each line of the file is one valid JSON object. You can append to it as you go without rewriting the whole file:
+
+```python
+import json
+
+with open("scraped.jsonl", "a", encoding="utf-8") as f:
+    for record in records:
+        f.write(json.dumps(record, ensure_ascii=False) + "\n")
+```
+
+Reading streams the file:
+
+```python
+with open("scraped.jsonl", "r", encoding="utf-8") as f:
+    records = [json.loads(line) for line in f]
+```
+
+This is the format every modern data pipeline uses for logs and scrape outputs. Tools like `jq`, `polars`, and `pandas` all read it natively. Once a scrape gets past a few hundred records, JSONL is a much better choice than a single growing JSON list.
+
+## Picking a format
+
+A short rule of thumb:
+
+| Your data is… | Use |
+| --- | --- |
+| free-form text (transcripts, articles) | plain `.txt` |
+| flat rows with consistent columns | CSV |
+| nested or variable-shape records | JSON |
+| a long, growing log of records | JSONL |
+| something you'll edit by hand later | the most readable of the above |
+| something a colleague will open in Excel | CSV |
+
+When you're comfortable, [Lesson 24](/course/lesson-24-python-and-storing-data-in-xml-files/) covers the last format you'll meet often: XML.

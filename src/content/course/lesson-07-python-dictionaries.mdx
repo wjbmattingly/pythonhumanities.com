@@ -3,43 +3,151 @@ title: "Python Dictionaries"
 lessonNumber: 7
 part: 2
 partTitle: "Data Structures"
-description: "Like tuples and lists, dictionaries are a data structure in Python."
+description: "Key-value pairs — the structure that backs every JSON record, every CSV row, and most of the data a humanist will touch."
 sourceUrl: "https://pythonhumanities.com/lesson-07-python-dictionaries/"
 videoId: "hOxaU6KiEBI"
 ---
 
-Like tuples and lists, dictionaries are a data structure in Python. Like lists, dictionaries are mutable, meaning they can be changed in memory. Unlike tuples and lists, dictionaries are not lists of data. Instead, they have two components: keys and values. These two components are separated by a colon. All of this is contained within squiggly brackets. In the example below, we have a dictionary, a_dict, with a key of "birth_year" and a value of 1988.
+A dictionary stores **key-value pairs**. Unlike lists and tuples, where you access an item by its position, you access a dictionary value by a label you chose. That single difference makes dictionaries the natural fit for almost any structured humanities data: a row from a CSV, a record from an API, a manuscript with metadata, a single entry in someone's correspondence.
 
-_Example of a dictionary:_
+## Creating a dictionary
 
-```python
-a_dict = {"birth_year": 1988}
-```
-
-In digital humanities projects, dictionaries are particularly useful for structuring complex data that you may have in Excel with each key being an Excel column and each value being its corresponding value. The dictionary name could be the name of the individual to whom the row corresponds. Like lists and tuples, you can embed data structures within a Python dictionary.
-
-_Example of a list inside of a dictionary:_
+Curly braces around a sequence of `key: value` pairs:
 
 ```python
-a_dict2 = {"birth_year": [1988, 1999]}
+person = {
+    "name": "Ada Lovelace",
+    "born": 1815,
+    "died": 1852,
+    "field": "mathematics",
+}
 ```
 
-In the example above, the key "birth_year" now has two values: 1988 and 1999.
+The trailing comma after the last pair is optional — Python doesn't care, and including it makes diffs cleaner when you add another field later.
 
-But we need to do more than simply create dictionaries. We need to understand how to call specific keys and their corresponding values. As with lists and tuples, we need to index the dictionary. But it is a little different. Let's say, we wanted to get the year that corresponds to a_dict's "birth_year" key. To do this, we would simply write:
+Keys are usually strings, but they can be any **immutable** type: strings, numbers, tuples, even booleans. Values can be anything at all — a string, a number, a list, another dictionary.
 
 ```python
-print (a_dict["birth_year"])
+counts_by_year = {1815: 12, 1820: 23, 1825: 8}
 ```
 
-If we run this, it would return a value of 1988.
+## Accessing values
 
-Sometimes you will need to update and change the data in your dictionary. To change the value of "birth_year" to 1990, we simply write:
+To pull a value out, write the dictionary, square brackets, and the key:
 
 ```python
-a_dict["birth_year"]=1990
+person["name"]    # 'Ada Lovelace'
+person["born"]    # 1815
 ```
 
-If we were to reprint off a_dict, we'd see that it now has a new value. This is because dictionaries are mutable. In other words, we have changed it in memory.
+If you ask for a key that isn't there, you get a `KeyError`. To avoid that, use `.get`, which returns `None` (or a default you supply) when the key is missing:
 
-Once you feel comfortable with these concepts, continue to [Lesson 08: Python Conditionals](/course/lesson-08-python-conditionals/).
+```python
+person.get("father")             # None
+person.get("father", "unknown")  # 'unknown'
+```
+
+`.get` is the safer choice when you're working with data that might have missing fields — and almost all real humanities data does.
+
+## Adding and updating
+
+To add a new key or change an existing one, just assign:
+
+```python
+person["father"] = "Lord Byron"   # adds
+person["born"] = 1815             # overwrites (same key, same value, no change)
+```
+
+To remove a key, use `del`:
+
+```python
+del person["father"]
+```
+
+To merge two dictionaries, use `update` or, in modern Python (3.9+), the `|` operator:
+
+```python
+extra = {"died": 1852, "buried": "Hucknall"}
+person.update(extra)              # in place
+merged = person | extra           # new dict, leaves person alone
+```
+
+## Looping through a dictionary
+
+Three patterns come up over and over:
+
+```python
+person = {"name": "Ada", "born": 1815, "field": "mathematics"}
+
+# Just the keys
+for key in person:
+    print(key)
+
+# Just the values
+for value in person.values():
+    print(value)
+
+# Both at once — by far the most common
+for key, value in person.items():
+    print(f"{key}: {value}")
+```
+
+`.items()` is the one you'll use most. It hands you each (key, value) pair in turn.
+
+## Nested data — the real shape of research datasets
+
+A single record is one dictionary. A dataset is usually a list of dictionaries, where every dictionary has the same keys:
+
+```python
+correspondents = [
+    {"name": "Voltaire",  "born": 1694, "letters": 21000},
+    {"name": "Émilie",    "born": 1706, "letters":   430},
+    {"name": "Diderot",   "born": 1713, "letters":  3500},
+]
+```
+
+This shape — list of dicts — is what `csv.DictReader` produces when you read a spreadsheet, what most JSON APIs return, and what `pandas` calls a DataFrame under the hood. You'll see it in nearly every project.
+
+To get the second person's name:
+
+```python
+correspondents[1]["name"]   # 'Émilie'
+```
+
+To get every name:
+
+```python
+[c["name"] for c in correspondents]
+# ['Voltaire', 'Émilie', 'Diderot']
+```
+
+To filter:
+
+```python
+[c for c in correspondents if c["letters"] > 1000]
+```
+
+## Counting with a dictionary
+
+A frequency count is one of the most common DH operations: how often does each word appear in a text, each letter-recipient appear in a corpus, each year appear in a dataset? The classic dictionary idiom:
+
+```python
+text = "the quick brown fox jumps over the lazy dog the fox"
+counts = {}
+for word in text.split():
+    counts[word] = counts.get(word, 0) + 1
+print(counts)
+# {'the': 3, 'quick': 1, 'brown': 1, 'fox': 2, ...}
+```
+
+The standard library has a purpose-built tool for this — `collections.Counter` — that handles the boilerplate for you:
+
+```python
+from collections import Counter
+counts = Counter(text.split())
+counts.most_common(3)   # [('the', 3), ('fox', 2), ('quick', 1)]
+```
+
+We'll see `Counter` again in the modules lesson. For now, recognize the pattern: **dictionary keys are labels; dictionary values can be running totals.**
+
+Once you can read, write, loop, and count with dictionaries, you have the four moves that underlie almost every script in this course. Continue to [Lesson 08: Python Conditionals](/course/lesson-08-python-conditionals/).
