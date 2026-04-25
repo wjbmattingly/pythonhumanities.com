@@ -1,0 +1,37 @@
+---
+title: "Python Loops"
+lessonNumber: 9
+part: 3
+partTitle: "Interacting with Data Structures"
+description: "Without a doubt, the most common operation I use in my digital humanities projects are loops."
+sourceUrl: "https://pythonhumanities.com/lesson-09-python-loops/"
+---
+
+Without a doubt, the most common operation I use in my digital humanities projects are loops. This is true for most programmers. The reason is because we use computers to perform repetitive tasks quickly. Loops are how you structure repetitive tasks. In Python there are two types of loops: While Loops and For Loops.
+
+In almost all cases, you can do the same thing with both loops. You simply need to alter the syntax to make the loop perform the way you want. In most cases, therefore, while loops and for loops are interchangeable. When you program, much like writing in a spoken language, you take on a unique, personal style. For me, I prefer the For Loop and I use it with far greater frequency.
+
+One of the key ways in which you will need to use loops in the digital humanities is to iterate across a data structure, i.e. a tuple or a list. In the example below, we have a list, a_list, which is a list of numbers: 1, 2, 3. We then begin our for loop on the next line. We state that for [variable] (in this case, the letter i, in a_list and we use a colon. That creates the for loop. Whatever happens beneath that is indented, meaning it is part of the same block of code within the loop. Here, we are simply printing off i. This for loop will examine a_list and iterate across the index of a_list, so 1, then 2, then 3. The loop will continue to run until the condition is complete. In this case, the condition is for as long as there is an item in the list that is left, keep going.
+
+_Example of a for loop:_
+
+```python
+a_list = [1,2,3]
+for i in a_list:
+    print(i)
+```
+
+We can also do this same thing with a while loop. While loops have a predetermined condition. In this case, it is explicit. While x remains less than 0, continue the loop. Note that we print off a_list[x] here, not a single variable. This is because when the while loop runs the first time, x will be 0. Once it prints off that item in the list, Python moves to the next line, which tells Python to increase the value of x by 1. The loop will then reset with x being equal to 1. It will continue to do this until x = 3, because the length of a_list is 3. Once that happens, the loop will break.
+
+_Example of a while loop:_
+
+```python
+x = 0
+while x < len(a_list):
+    print(a_list[x])
+    x = x+1
+```
+
+Loops are simple to implement and are quite powerful. They allow you to perform millions or billions of iterations of a task, something that would be impossible for a human to do. Loops are one of the more powerful elements of programming. You must practice writing for loops until they become as natural as speaking. Right now, we will work with for loops on this basic level but as we advance through this series, you will see me use for loops in more advanced ways, that is, to iterate through text files and across web data. For now though, get these basics down.
+
+When you're ready, advance to [Lesson 09: Coding Exercise.](/course/lesson-09-coding-exercise/)

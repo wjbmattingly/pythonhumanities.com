@@ -1,0 +1,41 @@
+---
+title: "Python Tuples"
+lessonNumber: 5
+part: 2
+partTitle: "Data Structures"
+description: "In the past two lessons we've looked at two different categories of data: strings and numbers."
+sourceUrl: "https://pythonhumanities.com/lesson-05-python-tuples/"
+---
+
+In the past two lessons we've looked at two different categories of data: strings and numbers. Strings allowed us to work with text and numbers allowed us to work with integers and floats. In this video, we will begin working with **data structures**. Data structures are divided into two categories: mutable and immutable.
+
+In this video, we will be working with an immutable data structure called a tuple. **Tuples** are lists of data that cannot be changed. When we look at lists in [Lesson 06](/course/lesson-06-python-lists/), we will see that lists are the exact same thing as tuples, except they can be changed. We can distinguish tuples from lists by the way in which they are formed. While lists use square brackets, tuples use parentheses. We create a tuple, like the example below. Our tuple object is `a_tuple` and the tuple consist of three items: an integer 1, a float 1.0, and a string of "one". Lists and tuples can contain all three of these types of data. The way in which we separate items in a tuple is with a comma.
+
+_Example of a tuple:_
+
+```python
+a_tuple = (1, 1.0, "one")
+a_tuple2 = ((1,2), (2,3), (4,2))
+```
+
+Tuples can also store data structures, i.e. other tuples, lists, and dictionaries. In the second tuple above, `a_tuple2`, we see just that. `a_tuple2` is a tuple that consists of three tuples, `(1,2)`, `(2,3)`, `(4,2)`. Embedding data structures within an overarching data structure is something that you will use in most DH projects, so it is important to get comfortable with it now.
+
+The way in which we access data within a data structure is through a process known as **indexing**. In Python, you can either index a single item from a data structure or you can get all indexes from a data structure in a loop. We will see this in more detail in [Lesson 09](/course/lesson-09-python-loops/), when I cover loops. For now, you should be familiar with how to call a specific item in a tuple.
+
+If I wanted to access the first item in `a_tuple`, I would do the following:
+
+```python
+print (a_tuple[0])
+```
+
+This will return the integer 1.
+
+Were I to do something similar with `a_tuple2`, I would receive `(1,2)`. But what if I wanted to get the first item in `(1,2)`. To do that, I'd simply do the following:
+
+```python
+print (a_tuple2[0][0])
+```
+
+This will return the integer 1. The reason why this works is because I am indexing to the first position (0) of the object and then indexing the first item in that embedded tuple.
+
+If you are comfortable with these concepts and ready to test your skill, check out Lesson [05: Coding Exercise](/course/lesson-05-coding-exercise/).

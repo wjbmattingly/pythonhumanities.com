@@ -1,0 +1,30 @@
+---
+title: "Python Strings"
+lessonNumber: 3
+part: 1
+partTitle: "Working with Data"
+description: "As noted in Lesson 02, strings are objects that are delineated by double or single quotation marks."
+sourceUrl: "https://pythonhumanities.com/lesson-03-python-strings/"
+---
+
+As noted in [Lesson 02](/course/lesson-02-storing-data-in-python/), **strings** are objects that are delineated by double or single quotation marks. They are the key way in which we handle text data in Python. This means that for the digital humanist, strings will be fundamentally necessary to understand as they are the chief form of data we use.
+
+This lesson deals with how to interact with strings as pieces of data. The way in which we interact with data in Python is by using **functions**. The chief functions for interacting with strings on a basic level come standard with Python. This means that you do not need to install third-party libraries. Later in this series we will do more advanced things with strings using third-party libraries, such as Regex, but for now, we will simply work with the basic functions.
+
+Although I will discuss functions in greater detail in a later lesson, it is important to understand what a function is. A **function** is a block of code stored outside (or inside) your Python script. We call a function by using the function name and added an open and a close parentheses. Often when we call functions, we need to pass arguments. These are the pieces of data that the function will perform the operations on. The **arguments** are contained within the parentheses and delineated with commas. In some cases, there will be named arguments which require you to specify a specific argument.
+
+In the example below, we have an **object**, which is a string (a\_string), and two different functions. The first function is the **split function** which will split a string. In the example we state the object upon which we want to perform the function. Next, we place a period to state the specific function that we want to run on the string. We have an open **parentheses** in which we have a single argument, a string (created by quotation marks). The specific string is a single comma. This means that we are telling Python to split the string any time it finds a comma. Remember though, strings are immutable. This means that in order to store the result of this function in memory, we need to create a new object. This new object is new\_string which we create with an equal sign. Were we to print off new string, we would see a list of strings that would look like this: ["Hello","Bye"]. To run the code below, hit the play button.
+
+_Examples of functions and arguments:_
+
+The next function occurs after we create a new object (new\_string2). This function is the **replace function**. It takes one item in a string and replaces it with something else. Because the function needs to know two pieces of information, it requires us to pass two arguments (the thing we want to change and the thing we want to change it to). Were we to print off new\_string2, we would get the following "Tacos, Bye"
+
+In the [Lesson 03: Video Tutorial](/course/lesson-03-python-strings/), I show you some other key functions for working with strings:
+
+1. Find = this finds a specific string in a string
+2. Join = this allows you to join together multiple strings
+3. Upper = this makes a string uppercase
+4. Lower = this makes a string lowercase
+5. Format = this allows you to format a string based on arguments that are stored outside of the string
+6. Count = this allows you to count the frequency of a string within a string
+7. Contains = this allows you to determine if a string contains a string

@@ -1,0 +1,46 @@
+---
+title: "Storing Data in Python"
+lessonNumber: 2
+part: 1
+partTitle: "Working with Data"
+description: "In the video, I noted that in Python there are six key pieces of data and data structures with which we will be working: integers, floats, strings, lists, tuples, and dictionaries."
+sourceUrl: "https://pythonhumanities.com/lesson-02-storing-data-in-python/"
+---
+
+In the video, I noted that in Python there are six key pieces of data and data structures with which we will be working: integers, floats, strings, lists, tuples, and dictionaries. **Data** are pieces of information (the singular is datum)i.e., integers, floats, and strings. **Data structures** are objects that make data relational, i.e. lists, tuples, and dictionaries. Before you proceed to lesson three, you _MUST_ have a basic understanding of the ways in which you create data in Python and the ways in which you make that data relational through data structures. Start to train your brain to recognize the Python syntax for these pieces of data and data structures discussed below.
+
+An **integer**, as noted in the video, is a digit that does not contain a decimal place, i.e. 1 or 2 or 3. This can be a number of any size, such as 100,001,200. A **float**, on the other hand, is a digit with a decimal place. So, while 1 is an integer, 1.0 is a float. Floats, like integers, can be of any size, but they necessarily have a decimal place, i.e. 200.0020002938. In python, you do not need any special characters to create an integer or float object. You simply need an equal sign. In the example below, we have two objects which are created with a single equal sign. These objects are titled an\_integer and a\_float with the former being an object that corresponds to the integer 1 and the latter being an object that corresponds to the float 1.1.
+
+_Examples of integer and float objects_:
+```python
+an_integer = 1
+a_float = 1.1
+```
+
+Unlike integers and floats, **strings** are a sequence of characters. These can be digits or they can be letters or symbols, but what makes a string distinctly different from an integer or a float is the presence of quotation marks, i.e. " " or ' '. The opening of a quotation mark indicates to Python that a string has begun and the closing of the same style of a quotation mark indicates the close of a string. It is important to use the same style of quotation mark for a string, either a double or a single. In the examples below, we have two string objects: a\_string and b\_string, the former corresponds to the string "Hello" and the latter corresponds to the string "Bye".
+
+_Examples of strings:_
+```python
+a_string = "Hello"
+b_string = "Bye"
+```
+
+Python has three basic data structures that you MUST be familiar with. These are **lists**, **tuples**, and **dictionaries**. **Tuples** and **lists** are the same thing except for the fact that tuples cannot be changed in memory, while lists can. These distinctions are known as mutable (lists) and immutable (tuples) objects. Tuples are formed by using parentheses, i.e. (1, 2, 3) and lists are formed using block brackets, i.e. [1, 2, 3]. To separate items in a tuple or a list, remember to use commas. See the example objects below.
+
+_Examples of tuples and lists:_
+```python
+a_tuple = (1, "one", 3.0)
+a_list = [1, "one", 3.0]
+```
+
+**Dictionaries** are very different from tuples and lists in that they are formed by using squiggly brackets and have a key and a value associated with that key which are separated by a colon, i.e. \{1 : 2\}. Like lists, dictionaries are mutable. In the examples below, we have two dictionary objects. The first, a\_dict, is a dictionary with a key of "one" and a value of 1. The second, b\_dict, is a dictionary with a key of "two" and a value of 2. As with all other objects, we create a dictionary with an equal sign.
+
+_Examples of dictionaries:_
+```python
+a_dict = {"one": 1}
+b_dict = {"two": 2}
+```
+
+Throughout your work with Python for your DH project, you will use all of these forms of data and data structures. The way in which you select which data forms and data structures to use will be dependent upon your data. Use the coding session below to experiment with these types of data and data structures. Right now, I have not introduced you to the way in which you print off objects. I will speak about this in greater detail in future lessons. For now it may be useful to understand that you do this by simply writing print and placing in parentheses what you want to print off, such as the example below with the printing off of a\_string. You can add new code in the console below and when you're ready to run your code, simply hit the play button. As long as you don't leave the page, your code will remain. Once you refresh, however, it will be lost, so if you want to save it, do so.
+
+A final note: *IMPORTANT* Python is case-sensitive. In the code below, try to print off A\_string. Notice, that you receive an error. Always remain sensitive to the case of your letters.

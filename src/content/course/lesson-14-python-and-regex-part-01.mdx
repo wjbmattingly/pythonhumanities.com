@@ -1,0 +1,35 @@
+---
+title: "Python and Regex (Part 01)"
+lessonNumber: 14
+part: 4
+partTitle: "Working with Text Data"
+description: "The first major library with which we shall work in this series is Regex."
+sourceUrl: "https://pythonhumanities.com/lesson-14-python-and-regex-part-01/"
+---
+
+The first major library with which we shall work in this series is Regex. When it comes to the digital humanities, we work heavily with texts. One of the most powerful libraries for handling strings is certainly Regex, or Regular Expressions. It is so powerful because it allows us to interact with strings in far more dynamic ways than the built in Python functions. We can account for consistent variance in a text.
+
+In this discussion, we will be working with a real world problem. Imagine you have a set of a data that has dates. These dates are, however, inconsistent in the way in which they are structured. Sometimes the month is rendered with a hanging zero, i.e. 02 for 2, and other times it is not. Were we working with Python string functions, we could account for this but it would require a lot of code. With Regex we can do it with a single line of code.
+
+How are we able to do this? We are able to do this because Regex uses a series of commands understood by the library. Regex is implemented in everything from websites to Python applications because these commands allow for us to read text that is inconsistent and extract key data from strings.
+
+Look at the code above. In line 1, we've imported re. In [Lesson 13](/course/lesson-13-python-modules-and-libraries/), we spoke about how to import modules. This is an example of us importing Regex.
+
+In lines 3 and 4, we have two string objects: `new_string` and `description`. Take a moment and read these short strings.
+
+Now, uncomment out line 7. To do this, hold control and hit forward slash. Or, you can simply delete the #. Before running the script, let's examine what is happening here. We are printing off the result of the `re.findall()` function. Within this function, we are passing two arguments. Our first argument is declared with the `r` command and `"\d"`. This is the Regex command for a digit. The second argument is `new_string`. This means that we will search for all digits in `new_string`. Run the script.
+
+Notice that we return the following list: `['1', '2', '3', '5', '5', '5']`. Notice also that 55 has not been caught as a single number. Rather it has returned 5 and 5 individually. This is because `\d` only returns a number and views each number as a single item.
+
+Now, let's alter that line of code. Replace `\d` with `[0-9]{1,2}` and rerun the code. Notice now, our result is: `['1', '2', '3', '5', '55']`. The reason for this is because we are now telling Regex to find all numbers ranging from 0-9 and then our squiggly brackets `{1,2}` tells Regex that this can either be a single digit or 2 digits together. This is a very basic representation of what Regex can do.
+
+To demonstrate greater utility in a real-world problem, examine line 9 and uncomment it out. Our first argument that we are searching for now looks like this: `[0-9]{1,2}/[0-9]{1,2}/[0-9]{2,4}`.
+
+Let's break this down piece by piece. So, we are telling Regex to look for a very very specific string within `description`. This string will contain the following:
+`[0-9]{1,2}` followed by a `/` then `[0-9]{1,2}` followed by another slash. And finally, `[0-9]{2,4}`.
+
+Now, You are familiar with `{1,2}`, what do you think `{2,4}` means? If you guessed, a number consisting of 2 or 4 digits, you'd be right. In other words, we are telling it to look for any string that has 1 or 2 numbers, then a slash, then 1 or 2 numbers, then another `/`, then 2 or 4 numbers. Essentially, we are account for all versions of a numerical date with and without hanging zeros, with and without 2 digits, and with years rendered as either 99 or 1999.
+
+Regex is easy to understand but VERY difficult to master. I encourage you to spend time with it. Spend time with this great [Quick-Start Regex Cheat Sheet](https://www.rexegg.com/regex-quickstart.html). It is a great resource that I continue to reference for my digital humanities projects. Also, check out [regex101.com](https://regex101.com/). On this site, you can experiment in real time with a string and perform Regex searches on it. I often find myself trying to figure out how to account for variance in strings by using this tool.
+
+Once you get comfortable with Regex, take a moment and test your skills in [Lesson 14: Coding Exercise](/course/lesson-14-coding-exercise/).

@@ -1,0 +1,40 @@
+---
+title: "Python Conditionals"
+lessonNumber: 8
+part: 3
+partTitle: "Interacting with Data Structures"
+description: "In the last seven lessons, you've been introduced to data types and data structures that we work with in Python for the purposes of the digital humanities."
+sourceUrl: "https://pythonhumanities.com/lesson-08-python-conditionals/"
+---
+
+In the last seven lessons, you've been introduced to data types and data structures that we work with in Python for the purposes of the digital humanities. While I have not provided a complete list, these are the most common ones that you will encounter. Early in your Python career, it is essential that you have a core understanding of these basic concepts. I encourage you to go back and make sure that you have completely understood the past seven lessons before moving forward because beginning with Lesson 08, we start doing more advanced things with that data.
+
+A good way to think about a programming language like Python isn't like code. Yes, you write code in Python, but this is not how you should approach programming. Programming is problem solving. While you create your digital humanities projects, you will absolutely encounter errors and problems. Sometimes you will want to smack your computer. That's okay. We all get frustrated with programming. But, once that moment passes, regroup and figure out the problem and write the solution. That's what programming is. It's writing a solution to some problem. I encourage you to view Python from here on out through that lens.
+
+One of the most necessary components of programming to solve some problem is the concept of a conditional statement. A **conditional statement** is precisely what it sounds like. It is a statement that if something is true then do something. If it is not, then do something else. When I program conditional statements, I use Python syntax, but I always speak aloud in proper and full English. This helps me process the logic behind the code. Coding isn't just problem solving, its problem solving within a logical manner consistent with the language's syntax.
+
+So how do we create conditional statements in Python? With three operators: if, elif, and else. An **if statement** is structured like this:
+
+```python
+if x == 0:
+    print("x is 0")
+```
+
+In this example, we are stating that if x is equal to 0 (notice the two equal signs), then print "x is 0". What we are doing is asking if the condition is True, which is **Boolean**. Booleans are another form of data in Python. There are two Boolean values: True and False. Yes, they must be capitalized in Python. In other programming languages, they are lowercase, but in Python you MUST always use a capital T or F.
+
+An **elif statement** is the same as an if statement but occurs after an initial if statement. Think of it as "or if" in English. It is structured precisely the same way as an if statement.
+
+The final conditional statement is an else statement. **Else statements** allow you to perform a function if the above conditions have not been met.
+
+_Example of if, elif, else statements:_
+
+```python
+if x == 0:
+    print ("x=0")
+if x==1:
+    print ("x=1")
+else:
+    print ("x is something other than 0 or 1")
+```
+
+In the above example, if x is 0, we'll see "x is 0"; if x is 1, we'll see "x is 1"; and if x is 12, then we will see "x is something other than 0 or 1". The key to understanding conditionals as with most things in programming is logic. You must understand the logic behind the statement. I encourage you to spend time structuring conditional statements to get comfortable with them. You can do this in the [Lesson 08: Coding Exercise.](/course/lesson-08-coding-exercise/)

@@ -1,0 +1,44 @@
+---
+title: "Python Dictionaries"
+lessonNumber: 7
+part: 2
+partTitle: "Data Structures"
+description: "Like tuples and lists, dictionaries are a data structure in Python."
+sourceUrl: "https://pythonhumanities.com/lesson-07-python-dictionaries/"
+---
+
+Like tuples and lists, dictionaries are a data structure in Python. Like lists, dictionaries are mutable, meaning they can be changed in memory. Unlike tuples and lists, dictionaries are not lists of data. Instead, they have two components: keys and values. These two components are separated by a colon. All of this is contained within squiggly brackets. In the example below, we have a dictionary, a_dict, with a key of "birth_year" and a value of 1988.
+
+_Example of a dictionary:_
+
+```python
+a_dict = {"birth_year": 1988}
+```
+
+In digital humanities projects, dictionaries are particularly useful for structuring complex data that you may have in Excel with each key being an Excel column and each value being its corresponding value. The dictionary name could be the name of the individual to whom the row corresponds. Like lists and tuples, you can embed data structures within a Python dictionary.
+
+_Example of a list inside of a dictionary:_
+
+```python
+a_dict2 = {"birth_year": [1988, 1999]}
+```
+
+In the example above, the key "birth_year" now has two values: 1988 and 1999.
+
+But we need to do more than simply create dictionaries. We need to understand how to call specific keys and their corresponding values. As with lists and tuples, we need to index the dictionary. But it is a little different. Let's say, we wanted to get the year that corresponds to a_dict's "birth_year" key. To do this, we would simply write:
+
+```python
+print (a_dict["birth_year"])
+```
+
+If we run this, it would return a value of 1988.
+
+Sometimes you will need to update and change the data in your dictionary. To change the value of "birth_year" to 1990, we simply write:
+
+```python
+a_dict["birth_year"]=1990
+```
+
+If we were to reprint off a_dict, we'd see that it now has a new value. This is because dictionaries are mutable. In other words, we have changed it in memory.
+
+Once you feel comfortable with these concepts, test yourself in [Lesson 07: Coding Exercise.](/course/lesson-07-coding-exercise/)

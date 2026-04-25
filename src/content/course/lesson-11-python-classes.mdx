@@ -1,0 +1,44 @@
+---
+title: "Python Classes"
+lessonNumber: 11
+part: 3
+partTitle: "Interacting with Data Structures"
+description: "Classes are the mark of sophisticated code."
+sourceUrl: "https://pythonhumanities.com/lesson-11-python-classes/"
+---
+
+Classes are the mark of sophisticated code. They are something that you do not have to use, but they are something that make your code much cleaner because they reduce duplicated code, much like functions do. Throughout this Key Concepts, we will look at the same code from [Lesson 11: Video Tutorial.](/course/lesson-11-python-classes/)
+
+We will do this using the Trinket Python shell below. Take a moment and aquaint yourself with the code. You can run it or alter it. If you make a mistake and delete something, simply refresh the page and it will reset.
+
+Look at line 1 in the script. Here, we are creating a class by using the class operator called `class`. We set the class name. In this case, we are calling our class "Emperor". We then use a colon to establish that we are about to enter the block of code pertaining to the class, just like we did for functions, conditionals, and loops.
+
+Once we are in the class code, beginning on line two, we create our first function. This function should always be `__init__()` and the first argument should be `self` so that we can reference it throughout the function. Next we create a series of arguments: name, birth, coron, and death. These are a string, integer, integer, and integer respectively.
+
+Move down to line 18 now. Here we create an object, p1 which we set to our Emperor class by calling it by the name Emperor. Within the parentheses, we pass our arguments: "Charlemagne", 742, 800, and 814.
+
+At this stage, I want you to move up to the script and try to print p1. You should see something that looks like this: `&lt;__main__.Emperor object at 0x7f9b49a4ae80>`. This is called a class object. To us, it looks like total gibberish, but to Python it makes perfect sense. For us to read it, we need to convert it to a dictionary.
+
+There are two ways we can do that. First, we can write:
+
+```python
+print (p1.__dict__)
+```
+
+The second way (and the more Pythonic way now since 3.5) is to use the vars function. Simply write:
+
+```python
+print (vars(p1))
+```
+
+Both yield the same result. Once you have the data as a dictionary, you can interact with as a dictionary. If, however, you wish to simply call a specific part of the class data, you can do that too. Simply write:
+
+```python
+print (p1.birth)
+```
+
+This will yield 742. These are just some of the ways in which we can interact and retrieve the data of a class.
+
+So, why not just use a dictionary? Why bother with classes? For two reasons. First, we can create multiple dictionaries very quickly and easily without as much code. Secondly, classes allow us to have multiple functions that we can call and run, see birth_date, prose, and compare functions on lines 8, 12, and 15, respectively. These functions are discussed in the video at length.
+
+Although this is a fairly rudimentary class, it demonstrates the real world application of a class in an actual DH project. Spend some time playing with the above code and get comfortable with classes and functions within a class. In [Lesson 11: Coding Exercise](/course/lesson-11-coding-exercise/), you will make your own class. When you are ready go to [Lesson 11: Coding Exercise.](/course/lesson-11-coding-exercise/)

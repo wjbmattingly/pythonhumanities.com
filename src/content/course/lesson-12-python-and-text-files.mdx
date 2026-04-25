@@ -1,0 +1,32 @@
+---
+title: "Python and Text Files"
+lessonNumber: 12
+part: 4
+partTitle: "Working with Text Data"
+description: "In Lesson 22, I speak about the use and applications of text files in your digital humanities projects."
+sourceUrl: "https://pythonhumanities.com/lesson-12-python-and-text-files/"
+---
+
+In [Lesson 22](/course/lesson-22-python-and-storing-data-in-text-files/), I speak about the use and applications of text files in your digital humanities projects. For now, I want to simply state that text files are essential components of any digital humanities project. You will use them in your own projects and you will encounter them in the projects of others. Understanding how to call text files in Python, read them, interact with them, write to them, and rip the data from them is, therefore essential. Because I am going to be working with text files throughout the rest of this series, I am speaking about them early in this course.
+
+So, what is a text file? A **text file** is a file that has an extension .txt. In DH projects, we often use text files for storing data that is separated by a line, such as lists, or full texts, such as a letter, a poem, or a book. If you separate items on a line with commas or some other character, you can work with text files as csv files, or comma separated values. For more on this, see [Lesson 22](/course/lesson-22-python-and-storing-data-in-text-files/). Here, we will simply be working with text files as strings.
+
+In Python, we can create new text files and read from and write to existing ones. Let's begin with creating a text file. To do this, we are going to use what is known as an operator. **Operators** allow us to perform a series of tasks that then conclude once we leave the operator. In this case, we will be using the **with operator**. This is the Pythonic way to open a text file. In outdated video tutorials and code, you will see this done a little differently by using open and close functions. The reason why we are using the with operator is because you do not have to manually close the text file once its open. This is important because if you forget to close a file in a Python script, it will remain open in memory. If you are working with loops, this can get expensive quickly.
+
+Let's look at the script above. We begin by creating an object, file, in line 1. This file is a string. It is not a file. It is, however, a string of the root of the text file. If we had a folder within our directory, we would direct it to that folder by using the following /folder_name/text.txt. Notice also that there is no text.txt file next to main.py.
+
+In line 3 we call the with operator. We state with open to open the file. Within the function of open, we pass two arguments. The first is the file name, which is the object file. The second argument is "a+". This is called the **file handle**. I will speak about this below. For now, understand that a+ allows us to append a file and create it if it does not exist. Finally, in line three, we tell Python to open the file as f. This creates the opened file as an object named f. This is the Pythonic way to do this. Sometimes, you will see it opened as fp.
+
+In line 4, we call the write function which we perform on object f. We state that we want to write the string "Hello".
+
+Once we do this, the file is made. But, what if we wanted to read it? That's where line 6 comes in. In line 6 we again open the same file, but this time our second argument is "r". This allows us to read the data. Within the with operator, on line 7 we create a for loop. The function readlines() returns a list of the lines. So, the for loop will iterate across all lines in the list. Within that for loop, on line 8, we simply print off each line.
+
+Run the script above and play with it for a bit. Try some of the string functions that you learned in [Lesson 03.](/course/lesson-03-python-strings/) If you want a reference for common string functions, check out my reference guide for [Python string functions](https://pythonhumanities.com/index.php/python-functions-for-strings/). Create new text files. They will remain on the page until you refresh it.
+
+There are several different file handles that you should memorize. These are:
+
+- r = read only
+- r+ = read and write
+- w+ = write only
+- a = append only
+- a = append and read

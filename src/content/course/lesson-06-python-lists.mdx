@@ -1,0 +1,48 @@
+---
+title: "Python Lists"
+lessonNumber: 6
+part: 2
+partTitle: "Data Structures"
+description: "In the last lesson, we dealt with tuples."
+sourceUrl: "https://pythonhumanities.com/lesson-06-python-lists/"
+---
+
+In the last lesson, we dealt with tuples. In this lesson, we switch to a different data structure: lists. **Lists** and tuples are identical with one major exception: lists are mutable. This means that you can create a list object and then alter it in memory as your script runs. This allows for you to do very powerful things to lists that you cannot do to tuples. And these are going to be one of the key data structures you use in all digital humanities projects. The reason? We often need to adjust data while working with it.
+
+While we created a tuple with parentheses, we will create lists with square brackets. In the examples below we have two lists. In the first list we see that lists, just like tuples, can contain integers, floats, or strings. We separate items in our list with a comma. In the second example, a\_list2, we see that lists can contain data structures within them. This is true for lists, tuples, and dictionaries.
+
+*Examples of lists:*
+```python
+a_list = [1, 1.0, "one"]
+a_list2 = [[1,2],[2,3]]
+```
+
+We can index lists the precisely as we indexed tuples with the square brackets. The command:
+```python
+print (a_list[0])
+```
+would print of the integer 1.
+
+But because lists are mutable, it means that we can do more powerful things to them. We can alter the object as we progress through out Python script. We can do this with a few different functions. The most important function that you need to know is append(). The **append() function** allows for you to add an item to a list. For your DH projects, you will often have to append a list in a loop to collate data from a database. Its counterpart, the **remove() function**, removes something from a list.
+
+*Examples of append and remove functions:*
+```python
+a_list.append("Hello")
+a_list.remove(1)
+```
+
+When you are working with loops, you will often want to iterate over a list. To do this and not return an error, you need to know the length of a list. The function for this is the **len() function**.
+
+*Example of len function:*
+```python
+print (len(a_list))
+```
+
+Another important function is the clear() function. The **clear() function** in Python clears an entire list. If you wish to know how many times a specific item appears in a list, you can use the **count() function**. If you need to sort the data in the list, you can use the **sort() function**.
+
+The final important function you should learn is the **join() function** which allows for you to join items in a list with a specified character. You will often join items in a list with a space, so that your command will look like this:
+```python
+" ".join(a_list)
+```
+
+Working with lists becomes easier with time. You should spend ample time early in your time with Python getting acquainted with these basic functions associated with lists. You can use the Python terminal in [Lesson 06: Coding Exercise](/course/lesson-06-coding-exercise/) to experiment with them.

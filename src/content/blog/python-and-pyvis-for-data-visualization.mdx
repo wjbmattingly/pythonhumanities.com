@@ -1,0 +1,47 @@
+---
+title: "Python and PyVis for Data Visualization"
+date: "2020-04-26"
+author: "William Mattingly"
+category: "Visualization"
+description: "PyVis turns network data into an interactive HTML graph you can drag around in a browser — a friendlier alternative to static NetworkX/Matplotlib output."
+sourceUrl: "https://pythonhumanities.com/python-and-pyvis-for-data-visualization/"
+---
+
+PyVis is a Python module for rendering network graphs you can actually interact with. It reads a graph (typically a NetworkX object) and emits an HTML/CSS/JavaScript page powered by [vis.js](https://visjs.org/) — drag the nodes around, hover for labels, zoom in.
+
+## Why PyVis
+
+NetworkX and Matplotlib are great for analysis and for static figures, but a static figure of a 200-node graph is rarely the visualization you want. PyVis lets you:
+
+- pan and zoom around large graphs in a browser,
+- click and drag individual nodes,
+- hover for tooltips,
+- and ship the whole thing as a single HTML file you can embed on a website.
+
+That last point is genuinely useful. The output is "just HTML," so it slots into a blog post, a course page, or a project site without any extra plumbing.
+
+## A worked example
+
+The video lessons that accompany this post use a digital-history dataset of [Alcuin's letters](https://en.wikipedia.org/wiki/Alcuin) — letters and the manuscripts they survive in, modeled as a bipartite network. In the resulting visualization, letters appear as blue nodes and manuscripts as purple triangles. Every node is movable; the edges follow.
+
+The basic shape of a PyVis program is small:
+
+```python
+from pyvis.network import Network
+import networkx as nx
+
+g = nx.Graph()
+g.add_node("Letter 1", group="letter")
+g.add_node("MS Vat.lat. 1", group="manuscript")
+g.add_edge("Letter 1", "MS Vat.lat. 1")
+
+net = Network(notebook=False, height="700px", width="100%")
+net.from_nx(g)
+net.show("alcuin.html")
+```
+
+Build up the NetworkX graph however you'd normally build it, hand it to PyVis, and call `show()`. You get an HTML file ready to open in a browser or drop into a website.
+
+## Getting the data
+
+If you'd like to follow along, the lessons use a sample JSON of Alcuin's letters as their dataset. The full series is on the [PyVis YouTube playlist](https://www.youtube.com/playlist?list=PL2VXyKi-KpYu7djT-8bDxtylvxznz3WLR).

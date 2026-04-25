@@ -1,0 +1,55 @@
+---
+title: "Python Functions"
+lessonNumber: 10
+part: 3
+partTitle: "Interacting with Data Structures"
+description: "Functions in Python are ways of storing blocks of code that you call throughout your script multiple times."
+sourceUrl: "https://pythonhumanities.com/lesson-10-python-functions/"
+---
+
+Functions in Python are ways of storing blocks of code that you call throughout your script multiple times. A good rule for good code is tight code. By this I mean, code that is as short as possible. Another good rule is easily understood code. Functions allow for both of these things.
+
+Throughout this series, we've worked with functions multiple times. Any time we interacted with data, we did so by calling functions and passing arguments through them. Any time you see something in python that looks like this: `my_function()`, this is a function. It has an open and a close parentheses.
+
+Within the parentheses, we pass arguments. Some functions take a specific number of functions, such as the split function. Split took a single argument. Other functions take two functions, such as the replace function. More advanced functions allow you to pass multiple arguments.
+
+In the example below, we have a string called `a_string` and we call the split function to split it at the "," (which is our argument). If you remember, this will return a list consisting of two things, "Hello" and "I'm Billy."
+
+**Example of split function:**
+
+```python
+a_string = "Hello, I'm Billy."
+a_string.split(",")
+```
+
+But in Python we are not limited to the functions that come with Python. We can actually create our own! In the example below, I have created a function called `my_function()`. I created it by using the operator `def`. This is how we define a function so that we can call it later in our script. The function has a single argument, "a". This means that when I call the function, I must pass 1 argument. The function will then create an object called x and it will be equal to a multiplied by two. To determine what the function will return, we have to declare a return value. Note, you can only return a single object. If you have multiple objects, they will be returned as a tuple, which you must then index. In this case, I am returning the value of x, so I am essentially returning whatever the result is of the argument multiplied by 2.
+
+Below the function, I have called it and passed the argument of 3. This will result in 3*2.
+
+**Example of a created function:**
+
+```python
+def my_function(a):
+    x = a*2
+    return x
+
+num = my_function(3)
+print (num)
+
+my_list = [1, 2, 3]
+for i in my_list:
+    my_function(i)
+```
+
+So, why is this useful? Look at the example above once again. Notice that I created a list called `my_list`. I can then iterate across that list in a for loop and pass each of the items (the variable i) into the function `my_function`.
+
+It is important to note that you cannot have an empty function in Python. Often when I am designing a script for a DH project, I create a bunch of functions that I know I will need, but I don't want to write the actual scripts. To do this, I create my function and simply write `pass` on the first line of code inside the function block. (See example below.)
+
+**Example of pass operator in function:**
+
+```python
+my_function():
+    pass
+```
+
+Spend some time with functions in [Lesson 10: Coding Exercise.](/course/lesson-10-coding-exercise/)
