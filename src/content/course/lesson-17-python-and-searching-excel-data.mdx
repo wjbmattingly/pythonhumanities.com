@@ -115,3 +115,19 @@ with open("voltaire-after-1750.json", "w", encoding="utf-8") as f:
 The `default=str` is a useful trick — it tells `json` to call `str()` on anything it doesn't natively know how to serialize, which catches `datetime` objects from Excel automatically.
 
 In [Lesson 18](/course/lesson-18-python-and-creating-excel-files-with-xlsxwriter/) we'll go the other direction — taking a list of records like this and writing it to a brand-new Excel file with formatting.
+
+## Running the code
+
+This lesson uses `openpyxl`. Add it to your project once:
+
+```bash
+uv add openpyxl
+```
+
+Then save the snippet to a file — say `search_excel.py` — alongside `letters.xlsx` and run it:
+
+```bash
+uv run search_excel.py
+```
+
+`uv run` uses the project's Python and dependencies automatically; no virtualenv to activate. If you haven't set the project up yet, [Lesson 01](/course/lesson-01-introduction-to-python-for-dh/) walks through it.

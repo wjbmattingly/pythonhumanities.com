@@ -173,3 +173,19 @@ pd.DataFrame(records).to_excel("letters.xlsx", index=False)
 That trades the fine-grained control of formats for brevity. Useful when you just need a CSV-ish dump in Excel form.
 
 In the next part of the course we move from spreadsheets to the open web — starting in [Lesson 19](/course/lesson-19-finding-html-code/) with reading HTML.
+
+## Running the code
+
+This lesson uses `xlsxwriter` and `openpyxl`. Add them to your project once:
+
+```bash
+uv add xlsxwriter openpyxl
+```
+
+Then save the snippet to a file — say `write_excel.py` — and run it from your project folder:
+
+```bash
+uv run write_excel.py
+```
+
+`uv run` uses the project's Python and dependencies automatically; no virtualenv to activate. If you haven't set the project up yet, [Lesson 01](/course/lesson-01-introduction-to-python-for-dh/) walks through it.

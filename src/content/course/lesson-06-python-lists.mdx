@@ -143,3 +143,13 @@ Read it as: "for each w in words, give me w.upper()." Comprehensions are concise
 You'll occasionally see `a_list.clear()`. It empties the list in place. It does the same thing as `a_list = []`, except that any other variable that was pointing at the same list will also see the change. For most projects you can prefer reassigning to a fresh empty list; reach for `clear` only when you specifically need the in-place behavior.
 
 Spend some time in the console pushing items in and out of a list. Once you're confident, continue to [Lesson 07: Python Dictionaries](/course/lesson-07-python-dictionaries/).
+
+## Running the code
+
+Save any snippet from this lesson to a file — say `try.py` — and run it from your project folder:
+
+```bash
+uv run try.py
+```
+
+`uv run` uses the project's Python and dependencies automatically; no virtualenv to activate. If you haven't set the project up yet, [Lesson 01](/course/lesson-01-introduction-to-python-for-dh/) walks through it.

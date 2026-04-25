@@ -137,3 +137,13 @@ A couple of new habits worth adopting:
 - Apply your pattern to a folder of `.txt` files and count how many references each file contains.
 
 Once you're comfortable with regex on real files, continue to [Lesson 16: Python and Excel](/course/lesson-16-python-excel-and-xlrd/).
+
+## Running the code
+
+`re` and `pathlib` both ship with Python — nothing to install. Save the script to a file — say `extract_refs.py` — alongside `scripture.txt` and run it from your project folder:
+
+```bash
+uv run extract_refs.py
+```
+
+`uv run` uses the project's Python automatically; no virtualenv to activate. If you haven't set the project up yet, [Lesson 01](/course/lesson-01-introduction-to-python-for-dh/) walks through it.

@@ -161,3 +161,19 @@ That's the whole shape: session, fetch, parse, extract, append, sleep. Once it w
 - **Fix invalid HTML perfectly.** Most pages parse cleanly with `html.parser` or `lxml`. Wildly broken pages may require trying multiple parsers and picking the cleanest tree.
 
 Once you have data in hand, you'll want to save it. We start that in [Lesson 22: Storing Data in Text Files](/course/lesson-22-python-and-storing-data-in-text-files/).
+
+## Running the code
+
+This lesson uses `requests`, `beautifulsoup4`, and `lxml`. Add them to your project once:
+
+```bash
+uv add requests beautifulsoup4 lxml
+```
+
+Then save the snippet to a file — say `scrape.py` — and run it from your project folder:
+
+```bash
+uv run scrape.py
+```
+
+`uv run` uses the project's Python and dependencies automatically; no virtualenv to activate. If you haven't set the project up yet, [Lesson 01](/course/lesson-01-introduction-to-python-for-dh/) walks through it.

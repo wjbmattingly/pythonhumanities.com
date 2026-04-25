@@ -159,3 +159,13 @@ label = labels.get(status, "Unknown")
 You don't always want to do this — if each branch runs different *code*, not just produces a value, the `if`/`elif` is the right shape. But once you spot the pattern, the dictionary version is shorter and easier to extend.
 
 Get the basics solid in the console, then continue to [Lesson 09: Python Loops](/course/lesson-09-python-loops/).
+
+## Running the code
+
+Save any snippet from this lesson to a file — say `try.py` — and run it from your project folder:
+
+```bash
+uv run try.py
+```
+
+`uv run` uses the project's Python and dependencies automatically; no virtualenv to activate. If you haven't set the project up yet, [Lesson 01](/course/lesson-01-introduction-to-python-for-dh/) walks through it.

@@ -37,30 +37,44 @@ const parts = [...partsMap.values()].sort((a, b) => a.number - b.number);
 <SiteLayout title={lesson.data.title} description={lesson.data.description}>
   <article class="lesson container">
     <aside class="lesson-toc" aria-label="All lessons">
-      <p class="toc-eyebrow">Course</p>
-      <h2 class="toc-title">
-        <a href={url("/course/")}>Python for DH</a>
-      </h2>
-      <nav class="toc-nav">
-        {parts.map((part) => (
-          <section class="toc-part">
-            <p class="toc-part-label">
-              <span class="toc-part-num">Part {String(part.number).padStart(2, "0")}</span>
-              <span class="toc-part-title">{part.title}</span>
-            </p>
-            <ol class="toc-lessons">
-              {part.lessons.map((l) => (
-                <li class:list={["toc-item", { current: l.id === lesson.id }]}>
-                  <a href={url(`/course/${l.id}/`)}>
-                    <span class="toc-num">{String(l.data.lessonNumber).padStart(2, "0")}</span>
-                    <span class="toc-text">{l.data.title}</span>
-                  </a>
-                </li>
-              ))}
-            </ol>
-          </section>
-        ))}
-      </nav>
+      <div class="toc-inner">
+        <p class="toc-eyebrow">Course</p>
+        <h2 class="toc-title">
+          <a href={url("/course/")}>Python for DH</a>
+        </h2>
+        <details class="toc-collapse" open>
+          <summary>
+            <span class="toc-collapse-label">Course outline</span>
+            <span class="toc-collapse-current">{`Lesson ${String(lesson.data.lessonNumber).padStart(2, "0")} — ${lesson.data.title}`}</span>
+            <span class="toc-collapse-chevron" aria-hidden="true">▾</span>
+          </summary>
+          <nav class="toc-nav">
+            {parts.map((part) => (
+              <section class="toc-part">
+                <p class="toc-part-label">
+                  <span class="toc-part-num">Part {String(part.number).padStart(2, "0")}</span>
+                  <span class="toc-part-title">{part.title}</span>
+                </p>
+                <ol class="toc-lessons">
+                  {part.lessons.map((l) => (
+                    <li class:list={["toc-item", { current: l.id === lesson.id }]}>
+                      <a href={url(`/course/${l.id}/`)}>
+                        <span class="toc-num">{String(l.data.lessonNumber).padStart(2, "0")}</span>
+                        <span class="toc-text">{l.data.title}</span>
+                      </a>
+                    </li>
+                  ))}
+                </ol>
+              </section>
+            ))}
+          </nav>
+        </details>
+        <script is:inline>
+          if (window.matchMedia("(max-width: 980px)").matches) {
+            document.currentScript.previousElementSibling?.removeAttribute("open");
+          }
+        </script>
+      </div>
     </aside>
 
     <div class="lesson-main">
@@ -118,6 +132,35 @@ const parts = [...partsMap.values()].sort((a, b) => a.number - b.number);
     overflow-y: auto;
     padding-right: var(--space-4);
     border-right: 1px solid var(--rule);
+  }
+
+  .toc-inner {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .toc-collapse {
+    margin: 0;
+  }
+
+  .toc-collapse > summary {
+    display: none;
+    list-style: none;
+    cursor: pointer;
+  }
+
+  .toc-collapse > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .toc-collapse-label,
+  .toc-collapse-current,
+  .toc-collapse-chevron {
+    display: none;
+  }
+
+  .toc-collapse > .toc-nav {
+    display: block;
   }
 
   .toc-eyebrow {
@@ -336,7 +379,7 @@ const parts = [...partsMap.values()].sort((a, b) => a.number - b.number);
   @media (max-width: 980px) {
     .lesson {
       grid-template-columns: 1fr;
-      gap: var(--space-5);
+      gap: var(--space-4);
     }
     .lesson-toc {
       position: static;
@@ -345,7 +388,69 @@ const parts = [...partsMap.values()].sort((a, b) => a.number - b.number);
       padding-right: 0;
       border-right: none;
       border-bottom: 1px solid var(--rule);
-      padding-bottom: var(--space-5);
+      padding-bottom: var(--space-4);
+    }
+
+    .toc-eyebrow,
+    .toc-title {
+      display: none;
+    }
+
+    .toc-collapse > summary {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: var(--space-3);
+      padding: var(--space-3) var(--space-4);
+      background: var(--parchment-light);
+      border: 1px solid var(--rule);
+      border-radius: 4px;
+      transition: border-color 0.15s ease, background 0.15s ease;
+    }
+
+    .toc-collapse > summary:hover {
+      border-color: var(--gold);
+    }
+
+    .toc-collapse-label {
+      display: inline;
+      font-family: var(--font-sans);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--gold-dark);
+      font-weight: 500;
+    }
+
+    .toc-collapse-current {
+      display: inline;
+      font-family: var(--font-display);
+      font-size: 0.95rem;
+      color: var(--ink);
+      font-variation-settings: "opsz" 32;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      min-width: 0;
+    }
+
+    .toc-collapse-chevron {
+      display: inline-block;
+      color: var(--ink-muted);
+      transition: transform 0.2s ease;
+    }
+
+    .toc-collapse[open] > summary .toc-collapse-chevron {
+      transform: rotate(180deg);
+    }
+
+    .toc-collapse:not([open]) > .toc-nav {
+      display: none;
+    }
+
+    .toc-collapse[open] > .toc-nav {
+      display: block;
+      padding-top: var(--space-4);
     }
   }
 

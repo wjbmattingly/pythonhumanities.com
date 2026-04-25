@@ -175,3 +175,13 @@ with open("data.json", "r", encoding="utf-8") as f:
 We'll use `csv` and `json` more in later lessons. For now, the rule is: text files of arbitrary content go through `open`; structured text files have purpose-built modules.
 
 When you're comfortable with files, continue to [Lesson 13: Python Modules and Libraries](/course/lesson-13-python-modules-and-libraries/).
+
+## Running the code
+
+Save any snippet from this lesson to a file — say `try.py` — and run it from your project folder:
+
+```bash
+uv run try.py
+```
+
+`uv run` uses the project's Python and dependencies automatically; no virtualenv to activate. If you haven't set the project up yet, [Lesson 01](/course/lesson-01-introduction-to-python-for-dh/) walks through it.

@@ -191,3 +191,19 @@ You hit the network once per page; from then on, parsing is instant. This is the
 `requests` retrieves bytes. It doesn't parse HTML, doesn't run JavaScript, doesn't navigate forms. For parsing, that's BeautifulSoup, which is the next lesson. For JavaScript-rendered pages, it's Playwright or Selenium — out of scope for this course but worth knowing about.
 
 Try grabbing HTML from a few sites yourself. Look at `response.status_code`, `response.encoding`, and the first hundred characters of `response.text`. When that feels routine, continue to [Lesson 21: Python and BeautifulSoup](/course/lesson-21-python-and-beautifulsoup/).
+
+## Running the code
+
+This lesson uses `requests`. Add it to your project once:
+
+```bash
+uv add requests
+```
+
+Then save the snippet to a file — say `fetch.py` — and run it from your project folder:
+
+```bash
+uv run fetch.py
+```
+
+`uv run` uses the project's Python and dependencies automatically; no virtualenv to activate. If you haven't set the project up yet, [Lesson 01](/course/lesson-01-introduction-to-python-for-dh/) walks through it.

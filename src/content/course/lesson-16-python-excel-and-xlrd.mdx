@@ -125,3 +125,19 @@ If a year is showing up as `42835` instead of `2017`, you're looking at a serial
 ## Where this leads
 
 In [Lesson 17](/course/lesson-17-python-and-searching-excel-data/) we walk every cell looking for matches; in [Lesson 18](/course/lesson-18-python-and-creating-excel-files-with-xlsxwriter/) we go the other direction and write a fresh `.xlsx` file from a Python list.
+
+## Running the code
+
+This lesson uses `openpyxl` for `.xlsx` files and `xlrd` for legacy `.xls` files. Add them to your project once:
+
+```bash
+uv add openpyxl xlrd
+```
+
+Then save the snippet to a file — say `read_excel.py` — alongside your spreadsheet and run it:
+
+```bash
+uv run read_excel.py
+```
+
+`uv run` uses the project's Python and dependencies automatically; no virtualenv to activate. If you haven't set the project up yet, [Lesson 01](/course/lesson-01-introduction-to-python-for-dh/) walks through it.

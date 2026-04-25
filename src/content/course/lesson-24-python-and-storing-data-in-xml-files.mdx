@@ -154,6 +154,22 @@ The `lxml` API is mostly compatible with ElementTree (most ElementTree code work
 uv add lxml
 ```
 
+## Running the code
+
+`xml.etree.ElementTree` ships with Python, so a basic XML script needs nothing extra:
+
+```bash
+uv run try.py
+```
+
+If you've followed the `lxml` note above, add it to your project first:
+
+```bash
+uv add lxml
+```
+
+`uv run` uses the project's Python and dependencies automatically; no virtualenv to activate. If you haven't set the project up yet, [Lesson 01](/course/lesson-01-introduction-to-python-for-dh/) walks through it.
+
 ## Where to next
 
 This is the last numbered lesson in the introductory course. From here, two natural next steps:
