@@ -3,8 +3,66 @@ title: "Python and Searching Excel Data"
 lessonNumber: 17
 part: 5
 partTitle: "Working with Excel Data"
-description: "Watch the video above, then continue to Lesson 18: Python and Creating Excel Files with XLSXwriter."
+description: "Walk every cell of a spreadsheet and pull out the rows that match a query."
 sourceUrl: "https://pythonhumanities.com/lesson-17-python-and-searching-excel-data/"
+videoId: "nufSiL5ybxI"
 ---
 
-Watch the video above, then continue to [Lesson 18: Python and Creating Excel Files with XLSXwriter](/course/lesson-18-python-and-creating-excel-files-with-xlsxwriter/).
+Reading a spreadsheet is one thing; finding the cells you actually care about is another. This lesson shows how to scan every cell of a sheet and collect matches into a Python list you can keep working with.
+
+## The pattern
+
+The general approach has three parts:
+
+1. Open the workbook and pick a sheet (see [Lesson 16](/course/lesson-16-python-excel-and-xlrd/)).
+2. Loop over its rows and columns.
+3. Test each cell against your search criterion and store hits.
+
+```python
+import xlrd
+
+book = xlrd.open_workbook("data.xls")
+sheet = book.sheet_by_index(0)
+
+target = "Paris"
+matches = []
+
+for r in range(sheet.nrows):
+    for c in range(sheet.ncols):
+        if sheet.cell_value(r, c) == target:
+            matches.append((r, c))
+
+print(matches)
+```
+
+`matches` is a list of `(row, column)` tuples — every place the value `"Paris"` appeared.
+
+## Pulling out the whole row
+
+Often you want the entire row that contained a hit, not just the coordinate. `sheet.row_values(r)` returns the row as a list:
+
+```python
+hits = []
+for r in range(sheet.nrows):
+    if target in sheet.row_values(r):
+        hits.append(sheet.row_values(r))
+```
+
+## Case-insensitive and partial matches
+
+Compare on a normalized version of the cell to make the search forgiving:
+
+```python
+needle = "paris"
+for r in range(sheet.nrows):
+    for c in range(sheet.ncols):
+        cell = str(sheet.cell_value(r, c)).lower()
+        if needle in cell:
+            ...
+```
+
+`str(...)` is a guard against numeric cells, which would otherwise blow up on `.lower()`.
+
+## Where this leads
+
+In [Lesson 18](/course/lesson-18-python-and-creating-excel-files-with-xlsxwriter/) we'll go the other direction — taking a list of results like the one above and writing it out to a brand-new spreadsheet.

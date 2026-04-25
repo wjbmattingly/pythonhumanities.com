@@ -3,10 +3,65 @@ title: "Python and Storing Data in Text Files"
 lessonNumber: 22
 part: 7
 partTitle: "Storing Data"
-description: "Once you've gathered or computed some data, you usually want to keep it."
+description: "Write Python data out to plain text files and read it back in."
 sourceUrl: "https://pythonhumanities.com/lesson-22-python-and-storing-data-in-text-files/"
+videoId: "WiWp2xqKLPo"
 ---
 
-Once you've gathered or computed some data, you usually want to keep it. The simplest way is to write it to a plain text file. This lesson covers opening a file in write mode, writing strings (and lines of strings) to it, and closing it cleanly.
+Once you've gathered or computed some data, you usually want to **keep** it. The simplest way is to write it to a plain text file. This lesson covers opening a file, writing to it, and reading it back.
 
-Watch the video above, then continue to [Lesson 24: Python and Storing Data in XML Files](/course/lesson-24-python-and-storing-data-in-xml-files/).
+## Writing a single string
+
+The pattern is the same one we used to read text files in [Lesson 12](/course/lesson-12-python-and-text-files/), except we open the file in **write mode** (`"w"`) instead of read mode:
+
+```python
+with open("output.txt", "w", encoding="utf-8") as f:
+    f.write("Hello, file!\n")
+```
+
+A few things worth pointing out:
+
+- The `with` block automatically closes the file when you're done. You should almost always use `with`.
+- `"w"` mode **overwrites** any existing file with the same name. Use `"a"` (append) to add to a file instead.
+- `f.write` does **not** add a newline for you — note the explicit `\n`.
+- Always set `encoding="utf-8"` when working with text. The default differs across platforms, and UTF-8 is the modern standard.
+
+## Writing many lines
+
+If you have a list of strings, you can loop and write each one:
+
+```python
+names = ["Theuderic IV", "Pippin the Short", "Charlemagne"]
+
+with open("names.txt", "w", encoding="utf-8") as f:
+    for name in names:
+        f.write(name + "\n")
+```
+
+Or use `writelines`, which writes the list directly (and again, you supply the newlines yourself):
+
+```python
+with open("names.txt", "w", encoding="utf-8") as f:
+    f.writelines(name + "\n" for name in names)
+```
+
+## Reading it back
+
+Reading mirrors writing:
+
+```python
+with open("names.txt", "r", encoding="utf-8") as f:
+    contents = f.read()
+print(contents)
+```
+
+To get a list of lines without the trailing newlines:
+
+```python
+with open("names.txt", "r", encoding="utf-8") as f:
+    lines = [line.rstrip("\n") for line in f]
+```
+
+## When text isn't enough
+
+Plain text is great for unstructured data — paragraphs, transcripts, lists. As soon as your data has structure (fields, attributes, nested relationships), a richer format will save you trouble. We'll look at XML in [Lesson 24](/course/lesson-24-python-and-storing-data-in-xml-files/).

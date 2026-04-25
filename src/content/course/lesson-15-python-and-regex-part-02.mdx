@@ -3,10 +3,74 @@ title: "Python and Regex (Part 02)"
 lessonNumber: 15
 part: 4
 partTitle: "Working with Text Data"
-description: "Rather than provide key concepts here, I am simply going to provide you with the code discussed in the video."
+description: "Apply regex to a text file — read it in, transform every match, and write the result back out."
 sourceUrl: "https://pythonhumanities.com/lesson-15-python-and-regex-part-02/"
+videoId: "CR459J7TnKo"
 ---
 
-Rather than provide key concepts here, I am simply going to provide you with the code discussed in the video. Experiment with this code and try to figure out what is happening at each stage. Pay attention to the format of the text file, scripture.txt, before and after you run the code. Notice that I do not use the with operator for files. Rather I am manually opening them and closing them.
+In [Lesson 14](/course/lesson-14-python-and-regex-part-01/) we used regex on small strings defined inside the script. Real DH work usually means applying regex to a **file**: a transcript, a corpus, a chunk of OCR'd text. This lesson walks through that complete cycle — read a file in, run regex over its contents, and write the results back out.
 
-This is the coding exercise for this lesson. When you are comfortable with this, feel free to progress to [Lesson 16: Python, Excel, and XLRD](/course/lesson-16-python-excel-and-xlrd/).
+## The example: cleaning verse references
+
+Imagine a file called `scripture.txt` containing lines like:
+
+```
+Genesis 1:1 In the beginning God created the heavens and the earth.
+Genesis 1:2 And the earth was without form, and void.
+Exodus 3:14 And God said, I AM THAT I AM.
+```
+
+We want to pull out every reference like `Genesis 1:1`, `Exodus 3:14`, and so on.
+
+## The complete script
+
+```python
+import re
+
+# 1. Read the file (without using the with operator)
+fp = open("scripture.txt", "r", encoding="utf-8")
+text = fp.read()
+fp.close()
+
+# 2. Apply a regex
+pattern = r"[A-Z][a-z]+ \d+:\d+"
+matches = re.findall(pattern, text)
+
+print(matches)
+
+# 3. Write the matches to a new file
+fp = open("references.txt", "w", encoding="utf-8")
+for ref in matches:
+    fp.write(ref + "\n")
+fp.close()
+```
+
+A few things to notice:
+
+- `open(..., "r")` opens for reading; `open(..., "w")` opens for writing (and **erases** any existing file with that name).
+- We are **not** using the `with` operator here. We're manually calling `fp.close()` instead. The `with` form (covered in [Lesson 12](/course/lesson-12-python-and-text-files/)) is preferred in real code because it can't forget to close — but it's worth seeing the manual form once so you recognize it in older tutorials.
+- `[A-Z][a-z]+` — one uppercase letter followed by one or more lowercase letters (the book name).
+- ` ` — a literal space.
+- `\d+:\d+` — one or more digits, a colon, one or more digits (the chapter:verse).
+
+## Reading the result
+
+After running the script, `references.txt` will contain:
+
+```
+Genesis 1:1
+Genesis 1:2
+Exodus 3:14
+```
+
+`scripture.txt` itself is unchanged — we read from it but only wrote to a different file.
+
+## Try it yourself
+
+Pay attention to the format of `scripture.txt` before and after running the code. Then experiment:
+
+- Adapt the pattern to match book names with multiple words (`1 Kings`, `Song of Solomon`).
+- Capture just the chapter and verse, dropping the book name.
+- Modify the script to *replace* every reference in `scripture.txt` with `[ref]` and save the result.
+
+Once you're comfortable with regex on real files, continue to [Lesson 16: Python, Excel, and XLRD](/course/lesson-16-python-excel-and-xlrd/).

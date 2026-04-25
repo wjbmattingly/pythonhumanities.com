@@ -3,12 +3,88 @@ title: "Python and BeautifulSoup"
 lessonNumber: 21
 part: 6
 partTitle: "Web Data"
-description: "When working with web data, requests and BeautifulSoup are typically used together."
+description: "Parse HTML with BeautifulSoup and pull out the tags, text, and attributes you actually want."
 sourceUrl: "https://pythonhumanities.com/lesson-21-python-and-beautifulsoup/"
+videoId: "_tdW6n7lUX4"
 ---
 
-When working with web data, `requests` and BeautifulSoup are typically used together. Requests is good at fetching the page; it's not very good at parsing the result or pulling specific pieces out. BeautifulSoup handles both of those.
+When working with web data, `requests` and **BeautifulSoup** are typically used together. Requests is good at fetching the page; it's not very good at parsing the result or pulling specific pieces out. BeautifulSoup handles both.
 
-This lesson shows how to pass the response from `requests` into BeautifulSoup and start navigating the resulting parse tree — finding tags, classes, and the data you actually want.
+## Installing BeautifulSoup
 
-Watch the video above, then continue to [Lesson 22: Python and Storing Data in Text Files](/course/lesson-22-python-and-storing-data-in-text-files/).
+```bash
+uv add beautifulsoup4
+```
+
+The Python module is named `bs4` even though the package is `beautifulsoup4`.
+
+## Building a soup object
+
+Pass the HTML from `requests` straight into BeautifulSoup:
+
+```python
+import requests
+from bs4 import BeautifulSoup
+
+url = "https://en.wikipedia.org/wiki/Theuderic_IV"
+s = requests.get(url)
+soup = BeautifulSoup(s.text, "html.parser")
+```
+
+The second argument, `"html.parser"`, tells BeautifulSoup which parser to use. The built-in `html.parser` works for most cases.
+
+## Finding tags
+
+Two methods do most of the work:
+
+- `soup.find(tag, attrs)` — returns the **first** matching tag (or `None`).
+- `soup.find_all(tag, attrs)` — returns a **list** of every matching tag.
+
+```python
+title_tag = soup.find("h1")
+print(title_tag.text)
+
+for link in soup.find_all("a"):
+    print(link.get("href"))
+```
+
+`tag.text` gives you the visible text inside the tag. `tag.get("href")` reads an attribute (returning `None` if missing — safer than `tag["href"]`, which raises a `KeyError`).
+
+## Filtering by class or id
+
+Pass an `attrs` dictionary, or use the convenience keywords:
+
+```python
+soup.find("div", class_="biography")
+soup.find("div", id="main-content")
+soup.find_all("p", attrs={"class": "lede"})
+```
+
+Note the trailing underscore on `class_` — `class` is a reserved word in Python, so BeautifulSoup uses `class_` instead.
+
+## Walking from a parent
+
+Once you've found a parent element, you can search **inside it** the same way:
+
+```python
+bio = soup.find("div", class_="biography")
+name = bio.find("h2", class_="biography-name").text
+dates = bio.find("p", class_="biography-dates").text
+```
+
+This is the typical scraping pattern: locate a container, then drill in to grab its fields.
+
+## A complete tiny scraper
+
+```python
+import requests
+from bs4 import BeautifulSoup
+
+url = "https://en.wikipedia.org/wiki/Theuderic_IV"
+soup = BeautifulSoup(requests.get(url).text, "html.parser")
+
+paragraphs = [p.text for p in soup.find_all("p")]
+print(paragraphs[0])
+```
+
+Once you have data in hand, you'll want to save it. We start that in [Lesson 22: Storing Data in Text Files](/course/lesson-22-python-and-storing-data-in-text-files/).

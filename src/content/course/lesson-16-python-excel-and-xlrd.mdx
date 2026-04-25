@@ -3,8 +3,69 @@ title: "Python, Excel, and XLRD"
 lessonNumber: 16
 part: 5
 partTitle: "Working with Excel Data"
-description: "Once you finish the video, progress to Lesson 16: Key Concepts."
+description: "Open .xls spreadsheets from Python and pull values out of them cell by cell."
 sourceUrl: "https://pythonhumanities.com/lesson-16-python-excel-and-xlrd/"
+videoId: "OCAksWSEJPY"
 ---
 
-Once you finish the video, progress to [Lesson 16: Key Concepts.](/course/lesson-16-key-concepts/)
+A great deal of humanities data lives in spreadsheets. This lesson introduces **`xlrd`**, a Python library for reading older `.xls` Excel files. We'll open a workbook, pick a sheet, and read individual cells.
+
+> **A note on file formats.** `xlrd` only supports the legacy `.xls` format. For modern `.xlsx` files, use `openpyxl` or `pandas.read_excel(...)`. The mechanics below are similar — open the workbook, choose a sheet, address cells by row and column.
+
+## Installing the library
+
+Add `xlrd` to your project:
+
+```bash
+uv add xlrd
+```
+
+## Opening a workbook
+
+Point `xlrd` at the path to your `.xls` file:
+
+```python
+import xlrd
+
+book = xlrd.open_workbook("data.xls")
+print(book.sheet_names())
+```
+
+`open_workbook` returns a workbook object. `sheet_names()` lists every sheet inside it as a list of strings.
+
+## Selecting a sheet
+
+You can grab a sheet by index or by name:
+
+```python
+sheet = book.sheet_by_index(0)
+sheet = book.sheet_by_name("Sheet1")
+```
+
+Each sheet exposes its dimensions:
+
+```python
+print(sheet.nrows)
+print(sheet.ncols)
+```
+
+## Reading cells
+
+Cells are addressed by `(row, column)`, both starting at 0:
+
+```python
+value = sheet.cell_value(0, 0)
+print(value)
+```
+
+To walk the whole sheet, nest two `range` loops:
+
+```python
+for r in range(sheet.nrows):
+    for c in range(sheet.ncols):
+        print(r, c, sheet.cell_value(r, c))
+```
+
+## Where this fits
+
+`xlrd` is read-only. To **write** Excel files we'll use a different library, `xlsxwriter`, in [Lesson 18](/course/lesson-18-python-and-creating-excel-files-with-xlsxwriter/). To **search** through what we've read, see [Lesson 17](/course/lesson-17-python-and-searching-excel-data/).

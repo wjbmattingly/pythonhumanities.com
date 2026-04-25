@@ -3,10 +3,86 @@ title: "Python and Storing Data in XML Files"
 lessonNumber: 24
 part: 7
 partTitle: "Storing Data"
-description: "Plain text files are useful, but for structured data — anything with nested fields, attributes, or relationships — XML is often a better fit."
+description: "Write structured data to XML files using Python's standard library."
 sourceUrl: "https://pythonhumanities.com/lesson-24-python-and-storing-data-in-xml-files/"
+videoId: "ZFyjpg_I_Rs"
 ---
 
-Plain text files are useful, but for structured data — anything with nested fields, attributes, or relationships — XML is often a better fit. This lesson covers writing data to XML files from Python, using the standard library to build a tree of elements and serialize it.
+Plain text files are fine for unstructured prose, but for structured data — anything with nested fields, attributes, or relationships — XML is often a better fit. This lesson covers writing data to XML files from Python using the standard library, with no third-party packages required.
 
-This is the final lesson in the introductory course. From here you'll likely want to look at the [free textbooks](/textbooks/) for deeper dives into specific topics.
+## The library
+
+Python ships with `xml.etree.ElementTree`, usually imported as `ET`:
+
+```python
+import xml.etree.ElementTree as ET
+```
+
+The model is straightforward: build a tree of `Element` objects, then serialize the tree to disk.
+
+## Building a tree
+
+Every XML document has a single **root** element. Create it with `ET.Element`:
+
+```python
+root = ET.Element("biographies")
+```
+
+Add child elements with `ET.SubElement(parent, tag)`:
+
+```python
+person = ET.SubElement(root, "person")
+ET.SubElement(person, "name").text = "Theuderic IV"
+ET.SubElement(person, "reign_start").text = "721"
+ET.SubElement(person, "reign_end").text = "737"
+```
+
+Setting `.text` on an element gives it a text body. Setting attributes works through `.set` (or by passing a dict to `SubElement`):
+
+```python
+person.set("id", "theuderic-iv")
+```
+
+## A complete example from a list
+
+If you've already got Python data — say a list of dictionaries from a scrape — building the tree is a loop:
+
+```python
+import xml.etree.ElementTree as ET
+
+people = [
+    {"name": "Theuderic IV", "reign_start": "721", "reign_end": "737"},
+    {"name": "Childeric III", "reign_start": "743", "reign_end": "751"},
+]
+
+root = ET.Element("biographies")
+
+for p in people:
+    person = ET.SubElement(root, "person")
+    for field, value in p.items():
+        ET.SubElement(person, field).text = value
+```
+
+## Saving to disk
+
+Wrap the root in an `ElementTree` and call `write`:
+
+```python
+tree = ET.ElementTree(root)
+tree.write("biographies.xml", encoding="utf-8", xml_declaration=True)
+```
+
+`xml_declaration=True` writes the `<?xml version="1.0" ?>` header at the top of the file.
+
+## Pretty-printing
+
+`ElementTree.write` produces compact output on a single line. To make the file human-readable, call `ET.indent` (Python 3.9+) before writing:
+
+```python
+ET.indent(tree, space="  ")
+tree.write("biographies.xml", encoding="utf-8", xml_declaration=True)
+```
+
+## Where to next
+
+This is the final lesson in the introductory course. From here you'll likely want to look at the [free textbooks](/textbooks/) for deeper dives: spaCy, BookNLP, named entity recognition, and a full Python-for-DH textbook with worked examples.

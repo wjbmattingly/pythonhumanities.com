@@ -3,16 +3,58 @@ title: "Python Modules and Libraries"
 lessonNumber: 13
 part: 4
 partTitle: "Working with Text Data"
-description: "This key concepts lesson will be short as the video summarizes the details."
+description: "Install and import third-party libraries — the engine behind almost every digital humanities project."
 sourceUrl: "https://pythonhumanities.com/lesson-13-python-modules-and-libraries/"
+videoId: "QWBron1k5HA"
 ---
 
-This key concepts lesson will be short as the video summarizes the details. For digital humanities projects in which you want to use Python, you will very likely need to use third-party modules. This is not considered plagiarism. This is not considered cheating. They are open source and free to use.
+Most of the interesting work in a digital humanities project happens not in the code you write yourself but in the **libraries** you pull in: regex, `requests`, BeautifulSoup, spaCy, pandas, and so on. Using these is not plagiarism and it is not cheating. They are open source, free to use, and the entire ecosystem expects you to use them.
 
-What are modules? They are blocks of code written by others, from academic institutions like M.I.T. and Stanford to Pythonistas. They allow you to use past work and bring complex functions into your own code. Each time you work with a module, get to know the functions, the arguments they take, and how they work. Most modules have good documentation that can be found on their main website. Simply Google the name of module and you can find the homepage of the module easily.
+## What is a module?
 
-To install modules, you use the built-in Python installation module called Pip. You open command prompt and type `pip install [module name]` but without the brackets.
+A **module** (also called a **package** or **library**) is a block of code written by someone else — sometimes a single developer, sometimes a research lab at MIT, Stanford, or an institute like AllenAI. Modules let you bring complex behavior into your script with a single import. Most modules have good documentation on their main website; if you Google the module name, you'll usually land on it within the first two results.
 
-To import a module, you use the import operator. Simply write `import [module name]` without brackets in your Python script. You must import a module before you can use its functions. Most coders put all their imports at the top of the script. In more advanced machine learning projects, however, you do this as you code. For the purposes of this tutorial series, we always import our modules at the top of our script.
+## Installing a module
 
-In [Lesson 14: Coding Exercise](/course/lesson-14-coding-exercise/), we do just this. We import re, or Regex. Once you are comfortable with this concept, feel free to move on to [Lesson 14.](/course/lesson-14-python-and-regex-part-01/) You will get more comfortable with modules as you work through this series.
+In modern Python (and throughout this course), we install dependencies with [`uv`](/course/lesson-01-introduction-to-python-for-dh/). Inside your project folder:
+
+```bash
+uv add <module-name>
+```
+
+For example, to install the regex library we're about to use:
+
+```bash
+uv add regex
+```
+
+(Python ships with a built-in regex module called `re`, so for `re` you don't actually need `uv add`. But for almost any *third-party* library — `requests`, `beautifulsoup4`, `spacy`, `pandas` — you do.)
+
+You may see older tutorials use `pip install <module>`. That still works, but `uv add` writes the dependency into your `pyproject.toml` so the project is reproducible.
+
+## Importing a module
+
+Once installed, bring the module into your script with `import`:
+
+```python
+import re
+```
+
+Most coders put all their imports at the top of a script. (Machine-learning notebooks sometimes scatter imports next to where they're used, but for the purposes of this series, keep them at the top.)
+
+You can also rename a module on import — common for libraries with long names:
+
+```python
+import pandas as pd
+import numpy as np
+```
+
+Or import just one piece of a module:
+
+```python
+from bs4 import BeautifulSoup
+```
+
+## Where this leads
+
+In [Lesson 14: Python and Regex (Part 01)](/course/lesson-14-python-and-regex-part-01/), we put modules to work — importing `re` and using it to extract dates out of messy text. You'll get more comfortable with modules as you progress through the rest of this series; nearly every remaining lesson uses one.

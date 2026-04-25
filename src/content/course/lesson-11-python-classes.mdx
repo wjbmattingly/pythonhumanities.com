@@ -3,42 +3,109 @@ title: "Python Classes"
 lessonNumber: 11
 part: 3
 partTitle: "Interacting with Data Structures"
-description: "Classes are the mark of sophisticated code."
+description: "Classes are the mark of sophisticated code — a way of bundling data and the functions that operate on it."
 sourceUrl: "https://pythonhumanities.com/lesson-11-python-classes/"
+videoId: "nqDxOUdQmSI"
 ---
 
-Classes are the mark of sophisticated code. They are something that you do not have to use, but they are something that make your code much cleaner because they reduce duplicated code, much like functions do. Throughout this Key Concepts, we will look at the same code from [Lesson 11: Video Tutorial.](/course/lesson-11-python-classes/)
+Classes are the mark of sophisticated code. They are something you do not have to use, but they make your code much cleaner because they reduce duplicated logic, much like functions do. A **class** is a template that bundles together some data (the things it knows) and some functions (the things it can do).
 
-We will do this using the Trinket Python shell below. Take a moment and aquaint yourself with the code. You can run it or alter it. If you make a mistake and delete something, simply refresh the page and it will reset.
+Throughout this lesson we'll work with the same example used in the video: a `Emperor` class for representing rulers from history.
 
-Look at line 1 in the script. Here, we are creating a class by using the class operator called `class`. We set the class name. In this case, we are calling our class "Emperor". We then use a colon to establish that we are about to enter the block of code pertaining to the class, just like we did for functions, conditionals, and loops.
+## Defining a class
 
-Once we are in the class code, beginning on line two, we create our first function. This function should always be `__init__()` and the first argument should be `self` so that we can reference it throughout the function. Next we create a series of arguments: name, birth, coron, and death. These are a string, integer, integer, and integer respectively.
-
-Move down to line 18 now. Here we create an object, p1 which we set to our Emperor class by calling it by the name Emperor. Within the parentheses, we pass our arguments: "Charlemagne", 742, 800, and 814.
-
-At this stage, I want you to move up to the script and try to print p1. You should see something that looks like this: `&lt;__main__.Emperor object at 0x7f9b49a4ae80>`. This is called a class object. To us, it looks like total gibberish, but to Python it makes perfect sense. For us to read it, we need to convert it to a dictionary.
-
-There are two ways we can do that. First, we can write:
+We define a class with the `class` keyword followed by the class name. Then, just like functions, we use a colon and indent the body:
 
 ```python
-print (p1.__dict__)
+class Emperor:
+    def __init__(self, name, birth, coron, death):
+        self.name = name
+        self.birth = birth
+        self.coron = coron
+        self.death = death
 ```
 
-The second way (and the more Pythonic way now since 3.5) is to use the vars function. Simply write:
+The first method, `__init__`, is special. It is the **initializer** — it runs whenever you create a new `Emperor`. The first argument is always `self`, which refers to the instance being built. The remaining arguments are whatever you want to capture about each emperor: name, birth year, coronation year, year of death.
+
+Inside `__init__`, we attach those arguments to `self` so that they stick around as attributes of the object.
+
+## Creating an instance
+
+To make a specific emperor, call the class as if it were a function:
 
 ```python
-print (vars(p1))
+p1 = Emperor("Charlemagne", 742, 800, 814)
 ```
 
-Both yield the same result. Once you have the data as a dictionary, you can interact with as a dictionary. If, however, you wish to simply call a specific part of the class data, you can do that too. Simply write:
+`p1` is now an **instance** of `Emperor`. If you print it directly, you'll see something like:
+
+```
+<__main__.Emperor object at 0x7f9b49a4ae80>
+```
+
+That looks like gibberish to us, but Python is just telling us "this is an Emperor object stored at this memory address." To inspect the actual data, convert it to a dictionary:
 
 ```python
-print (p1.birth)
+print(p1.__dict__)
 ```
 
-This will yield 742. These are just some of the ways in which we can interact and retrieve the data of a class.
+Or, more idiomatic since Python 3.5:
 
-So, why not just use a dictionary? Why bother with classes? For two reasons. First, we can create multiple dictionaries very quickly and easily without as much code. Secondly, classes allow us to have multiple functions that we can call and run, see birth_date, prose, and compare functions on lines 8, 12, and 15, respectively. These functions are discussed in the video at length.
+```python
+print(vars(p1))
+```
 
-Although this is a fairly rudimentary class, it demonstrates the real world application of a class in an actual DH project. Spend some time playing with the above code and get comfortable with classes and functions within a class. In [Lesson 11: Coding Exercise](/course/lesson-11-coding-exercise/), you will make your own class. When you are ready go to [Lesson 11: Coding Exercise.](/course/lesson-11-coding-exercise/)
+Both yield the same result — a dictionary of the attributes you stored.
+
+## Accessing a single attribute
+
+You don't always need the whole dictionary. You can ask for any one attribute by name:
+
+```python
+print(p1.birth)
+```
+
+This returns `742`.
+
+## Adding methods
+
+The real power of a class is that it can carry **methods** — functions that operate on `self`. Here we add three: one to compute lifespan, one to render a short bio, and one to compare two emperors.
+
+```python
+class Emperor:
+    def __init__(self, name, birth, coron, death):
+        self.name = name
+        self.birth = birth
+        self.coron = coron
+        self.death = death
+
+    def lifespan(self):
+        return self.death - self.birth
+
+    def prose(self):
+        return f"{self.name} was born in {self.birth} and died in {self.death}."
+
+    def older_than(self, other):
+        return self.lifespan() > other.lifespan()
+```
+
+Calling them looks like calling a function on the object:
+
+```python
+p1 = Emperor("Charlemagne", 742, 800, 814)
+p2 = Emperor("Theuderic IV", 712, 721, 737)
+
+print(p1.lifespan())
+print(p1.prose())
+print(p1.older_than(p2))
+```
+
+## Why bother with classes?
+
+Why not just use a dictionary for each emperor? Two reasons.
+
+First, classes make it dramatically easier to create many similar objects. One `class` definition powers an unlimited number of instances — each instance is just one line.
+
+Second, classes carry behavior with their data. A dictionary is inert; a class can have methods that know how to operate on the things it stores. As your scripts get bigger, that bundling pays off.
+
+Spend some time defining your own class — perhaps for a person, a manuscript, or a place. Once you're comfortable, continue to [Lesson 12: Python and Text Files](/course/lesson-12-python-and-text-files/).

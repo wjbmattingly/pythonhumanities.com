@@ -11,6 +11,7 @@ const course = defineCollection({
     partTitle: z.string(),
     description: z.string().optional(),
     sourceUrl: z.string().url().optional(),
+    videoId: z.string().optional(),
   }),
 });
 

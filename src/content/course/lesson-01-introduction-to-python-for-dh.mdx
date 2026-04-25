@@ -3,13 +3,102 @@ title: "Introduction to Python for DH"
 lessonNumber: 1
 part: 0
 partTitle: "Introduction"
-description: "Begin by watching the video above."
+description: "Set up a modern Python environment so you can follow along with the rest of the course."
 sourceUrl: "https://pythonhumanities.com/lesson-01-introduction-to-python-for-dh/"
+videoId: "KSOX_4tTSQk"
 ---
 
-Begin by watching the video above. Before moving to the next video in which we begin working with data in Python, do the following:
+Welcome to **Python for the Digital Humanities**. Before we write any code, we need a working Python environment. The video above gives an overview of the series; this written lesson walks through a clean 2026-era setup that you only have to do once.
 
-1. Install Python 3.7 (the version I use in the video series):
-   [https://www.python.org/downloads/](https://www.python.org/downloads/)
-2. Install Atom (optional):
-   [https://atom.io/](https://atom.io/)
+There are two pieces to install:
+
+1. **Python**, the language itself, managed through `uv` — a fast, modern Python installer and project tool from Astral.
+2. **Visual Studio Code**, a free editor that runs Python well on macOS, Windows, and Linux.
+
+You can absolutely use other editors (PyCharm, Cursor, Zed, even a plain terminal) and other installation methods. The combination below is just a sensible default for someone starting out today.
+
+## 1. Install `uv`
+
+`uv` is a single command-line tool that downloads Python for you, manages versions, and handles project dependencies. It replaces the old dance of "install Python, then install pip, then create a virtual environment."
+
+**On macOS or Linux**, open a terminal and run:
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+**On Windows**, open PowerShell and run:
+
+```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+Close and reopen the terminal so the new `uv` command is on your `PATH`. To confirm it works:
+
+```bash
+uv --version
+```
+
+You should see a version number printed back to you.
+
+## 2. Install Python through `uv`
+
+Tell `uv` which Python version to install. For this course, any modern version (3.11 or newer) is fine. We'll pin to 3.12:
+
+```bash
+uv python install 3.12
+```
+
+`uv` will download the interpreter and remember it. You don't need to add anything to your `PATH` manually.
+
+## 3. Create your first project
+
+Pick a folder where your course work will live and create a project in it:
+
+```bash
+mkdir python-for-dh
+cd python-for-dh
+uv init --python 3.12
+```
+
+This creates a small project with a `pyproject.toml` and a `main.py`. To run it:
+
+```bash
+uv run main.py
+```
+
+When you want to add a third-party library later in the course (like `requests` or `beautifulsoup4`), you'll do:
+
+```bash
+uv add requests
+```
+
+`uv` handles the virtual environment for you — there is no `pip install` to memorize and no `venv` to activate.
+
+## 4. Install Visual Studio Code
+
+Download VS Code from the official site:
+
+[https://code.visualstudio.com/](https://code.visualstudio.com/)
+
+After installing, open VS Code and install the **Python** extension from Microsoft (search `Python` in the Extensions sidebar). The extension gives you syntax highlighting, autocomplete, and a click-to-run button for Python files.
+
+Open your project folder in VS Code with **File → Open Folder…** and pick the `python-for-dh` directory you just made.
+
+## 5. Verify everything works
+
+Inside VS Code, open `main.py` and replace its contents with:
+
+```python
+print("Hello, digital humanities!")
+```
+
+Save the file, then in the VS Code terminal (**Terminal → New Terminal**) run:
+
+```bash
+uv run main.py
+```
+
+If you see `Hello, digital humanities!` printed back, you are ready for [Lesson 02](/course/lesson-02-storing-data-in-python/).
+
+> **A note on older tutorials.** The original version of this course (filmed in 2020) recommended installing Python 3.7 from python.org and using the Atom editor. Both still work, but Atom has been retired and Python has moved on through many versions. The `uv` + VS Code combination above is the path I'd recommend to anyone starting today.

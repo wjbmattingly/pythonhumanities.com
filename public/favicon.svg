@@ -1,1 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="#f5efe3"/><text x="16" y="23" font-family="Georgia, serif" font-size="22" font-weight="400" text-anchor="middle" fill="#8b2e1a">π</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="PyDH">
+  <rect width="32" height="32" rx="6" fill="#f5efe3"/>
+  <circle cx="16" cy="16" r="13.5" fill="none" stroke="#8b2e1a" stroke-width="0.9"/>
+  <text x="16" y="20.5"
+        font-family="Georgia, 'Iowan Old Style', serif"
+        font-size="11"
+        font-weight="500"
+        font-style="italic"
+        text-anchor="middle"
+        fill="#8b2e1a">PyDH</text>
+</svg>

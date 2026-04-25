@@ -3,10 +3,74 @@ title: "Python and Creating Excel Files with XLSXwriter"
 lessonNumber: 18
 part: 5
 partTitle: "Working with Excel Data"
-description: "This lesson covers how to use the XLSXwriter library to create Excel files programmatically from Python — generating spreadsheets, writing rows, and applying basic formatting."
+description: "Generate Excel spreadsheets from Python — writing rows, applying formats, and saving the workbook."
 sourceUrl: "https://pythonhumanities.com/lesson-18-python-and-creating-excel-files-with-xlsxwriter/"
+videoId: "uTeRm-Cl38A"
 ---
 
-This lesson covers how to use the XLSXwriter library to create Excel files programmatically from Python — generating spreadsheets, writing rows, and applying basic formatting.
+So far we've **read** spreadsheets. This lesson shows how to **write** them. The `xlsxwriter` library produces modern `.xlsx` files and gives you precise control over cells, formats, and worksheet layout.
 
-Watch the video above, then continue to [Lesson 19: Finding HTML Code](/course/lesson-19-finding-html-code/).
+## Installing the library
+
+```bash
+uv add xlsxwriter
+```
+
+## Hello, workbook
+
+The minimal example is three steps: create a workbook, add a worksheet, write a cell, and close.
+
+```python
+import xlsxwriter
+
+workbook = xlsxwriter.Workbook("output.xlsx")
+worksheet = workbook.add_worksheet("Results")
+
+worksheet.write(0, 0, "Hello, spreadsheet!")
+
+workbook.close()
+```
+
+Cells are addressed `(row, column)`, both 0-indexed. So `(0, 0)` is `A1`.
+
+## Writing rows of data
+
+If you have a list of rows (each row being a list of values), write them with a loop:
+
+```python
+rows = [
+    ["City", "Country", "Year"],
+    ["Paris", "France", 1789],
+    ["Vienna", "Austria", 1815],
+    ["Berlin", "Germany", 1989],
+]
+
+for r, row in enumerate(rows):
+    for c, value in enumerate(row):
+        worksheet.write(r, c, value)
+```
+
+`xlsxwriter` is smart about types: numbers are written as numbers, strings as strings.
+
+## Adding a header format
+
+To make the first row stand out, define a format and pass it to `write`:
+
+```python
+header = workbook.add_format({"bold": True, "bg_color": "#f5efe3"})
+
+for c, label in enumerate(rows[0]):
+    worksheet.write(0, c, label, header)
+```
+
+Formats can also set fonts, colors, borders, number formatting, and more.
+
+## Don't forget to close
+
+Nothing is actually written to disk until you call `workbook.close()`. Forgetting this is the most common reason a script appears to "do nothing":
+
+```python
+workbook.close()
+```
+
+In the next part of the course we move from spreadsheets to the open web — starting in [Lesson 19](/course/lesson-19-finding-html-code/) with reading HTML.

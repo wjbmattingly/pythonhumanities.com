@@ -3,10 +3,50 @@ title: "Finding HTML Code"
 lessonNumber: 19
 part: 6
 partTitle: "Web Data"
-description: "Before you can scrape a website, you need to be able to read its HTML — to find the tags, classes, and structure that hold the data you actually want."
+description: "Before scraping a website, learn to read its HTML — find the tags, classes, and structure that hold the data you actually want."
 sourceUrl: "https://pythonhumanities.com/lesson-19-finding-html-code/"
+videoId: "428O-1dTg2Q"
 ---
 
-Before you can scrape a website, you need to be able to read its HTML — to find the tags, classes, and structure that hold the data you actually want. This lesson walks through inspecting a page in the browser and identifying which elements contain the information you're after.
+Before you can scrape a website, you need to read its HTML — to find the tags, classes, and structure that hold the data you actually want. Web scraping is **structural**: you give Python a recipe like "every `<a>` tag inside a `<div class="biography">`," and it follows that recipe across the page. So the first job is figuring out the right recipe by looking at the page yourself.
 
-Watch the video above, then continue to [Lesson 20: Python and the Requests Module](/course/lesson-20-python-and-requests-module/).
+## Inspecting an element in the browser
+
+Modern browsers ship with developer tools that let you click on any piece of a page and see the HTML behind it.
+
+- **Chrome / Edge / Brave**: right-click the element, choose **Inspect**.
+- **Firefox**: right-click, choose **Inspect Element**.
+- **Safari**: enable "Show Develop menu" in Preferences → Advanced, then right-click and choose **Inspect Element**.
+
+A panel opens showing the page's HTML, with the element you clicked highlighted. Hover over surrounding tags to see them outlined in the page itself.
+
+## What to look for
+
+When you scrape, you'll target elements by some combination of:
+
+- **Tag name** — `a`, `p`, `div`, `table`, `tr`, `td`, etc.
+- **`class` attribute** — `<div class="biography">`. Many elements share a class, so a class is a great way to grab "all of these."
+- **`id` attribute** — `<div id="main-content">`. IDs are unique per page, perfect for grabbing one specific element.
+- **Position relative to a parent** — "the third `<td>` inside this `<tr>`."
+
+Look for the **most specific** marker that uniquely identifies the data you want. A class like `biography-name` is much better than just `<span>`, because the page probably has hundreds of spans.
+
+## A worked example
+
+Imagine the page contains:
+
+```html
+<div class="biography">
+  <h2 class="biography-name">Theuderic IV</h2>
+  <p class="biography-dates">721 – 737</p>
+</div>
+```
+
+To extract every name, the recipe would be: "find all `<h2>` tags with class `biography-name`." We don't have the code yet — we just need to identify the structure.
+
+## Why this lesson is short
+
+There's no Python in this lesson, just observation. Once you can comfortably point at an element and tell me its tag and class, you're ready to write the code that grabs it. We do that with two libraries:
+
+- [`requests`](/course/lesson-20-python-and-requests-module/) — fetches the HTML.
+- [`BeautifulSoup`](/course/lesson-21-python-and-beautifulsoup/) — parses it and lets you query by tag and class.

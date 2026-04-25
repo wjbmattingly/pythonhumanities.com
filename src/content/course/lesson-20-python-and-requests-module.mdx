@@ -3,11 +3,18 @@ title: "Python and the Requests Module"
 lessonNumber: 20
 part: 6
 partTitle: "Web Data"
-description: "This lesson introduces the requests module for retrieving HTML from a website."
+description: "Use the requests library to fetch raw HTML from a website."
 sourceUrl: "https://pythonhumanities.com/lesson-20-python-and-requests-module/"
+videoId: "kUlU837HXVU"
 ---
 
 This lesson introduces the `requests` module for retrieving HTML from a website. The module gives you a small, friendly API — really only a few functions — that lets you grab a page's contents and store it as a Python object you can work with.
+
+## Installing requests
+
+```bash
+uv add requests
+```
 
 ## Basic usage
 
@@ -21,16 +28,48 @@ s = requests.get(url)
 html_content = s.text
 ```
 
-**Importing.** Line 1 imports the requests library into your environment.
+**Importing.** Line 1 imports the `requests` library into your environment.
 
-**Making the request.** `requests.get()` accepts a URL string and retrieves the HTML from that web address.
+**Making the request.** `requests.get()` accepts a URL string and retrieves the page at that address.
 
-**Reading the response.** The response object exposes two main attributes:
+**Reading the response.** The response object exposes a few useful attributes:
 
-- `s.text` — the HTML as a string
-- `s.content` — the HTML as bytes
+- `s.text` — the response body as a string (decoded text).
+- `s.content` — the response body as raw bytes.
+- `s.status_code` — the HTTP status (e.g. `200` means OK, `404` means not found).
+- `s.headers` — a dictionary of response headers.
 
-If you print the response object directly, you'll see something like `&lt;Response [200]>`, which tells you the request succeeded.
+If you print the response object directly, you'll see something like `<Response [200]>`, which tells you the request succeeded.
+
+## Checking that the request worked
+
+Before parsing, it's worth confirming you actually got a successful response:
+
+```python
+if s.status_code == 200:
+    html_content = s.text
+else:
+    print(f"Request failed with status {s.status_code}")
+```
+
+A shorter version uses `raise_for_status()`, which throws an exception on any 4xx or 5xx response:
+
+```python
+s.raise_for_status()
+html_content = s.text
+```
+
+## A note on politeness
+
+When you scrape, identify yourself with a `User-Agent` header and don't hammer the server with rapid-fire requests. Respect the site's `robots.txt`. A sensible call looks like:
+
+```python
+import time
+
+headers = {"User-Agent": "Python for DH course (educational use)"}
+s = requests.get(url, headers=headers)
+time.sleep(1)
+```
 
 ## What requests can't do
 
