@@ -1,0 +1,308 @@
+---
+title: "Introduction to Pandas"
+lessonNumber: 20
+part: 5
+partTitle: "Working with Tabular Data"
+description: "Meet pandas — the library every working researcher uses for tabular data. Read CSVs and Excel files, inspect a DataFrame, and pick out the rows and columns you need."
+---
+
+You've reached the part of the course where Python stops being just a language and becomes a research instrument. Up to now, you've been building lists of dictionaries and writing them to CSV by hand. That's enough to learn how data flows through a program. It is not how anyone with a deadline actually works.
+
+This lesson introduces **pandas** — the library every social scientist, digital humanist, and data analyst with even an hour of Python experience eventually uses. By the end of the next three lessons, you'll be able to load a spreadsheet, filter it, summarize it, clean it, and write the result back out — in a fraction of the lines it would take with the standard library alone.
+
+## What pandas actually is
+
+`pandas` is a third-party Python library for working with **tabular data** — anything that looks like a spreadsheet. Two ideas do most of the work:
+
+- A **DataFrame** is a table. Rows and columns. Each column has a name and a type. It is the in-memory version of a CSV.
+- A **Series** is one column of a DataFrame. It's a 1-D array with an index attached.
+
+That's it. The rest of the library — filtering, grouping, joining, plotting, exporting — is methods on those two objects.
+
+Compared to writing your own loops over lists of dictionaries, pandas gives you:
+
+- **Speed.** Operations are vectorized — implemented in C under the hood — so a calculation across a million rows is a single line and finishes in milliseconds, not minutes.
+- **One vocabulary.** Read a CSV, an Excel file, a SQL query, or a JSON file — all of them give you a DataFrame. Everything you learn in this lesson works regardless of where the data came from.
+- **Sharp filtering.** Pulling "all letters by Voltaire after 1750" out of a 50,000-row table is a single expression.
+
+The cost is that pandas has its own way of thinking. The first hour can feel like learning a small new language inside Python. After that, it's the most useful skill you'll pick up in this course.
+
+## Installing
+
+```bash
+uv add pandas openpyxl
+```
+
+`pandas` is the library itself; `openpyxl` is what pandas uses behind the scenes to read and write `.xlsx` Excel files. Both are installed once and forgotten.
+
+The convention everywhere in the world is to import pandas as `pd`:
+
+```python
+import pandas as pd
+print(pd.__version__)
+```
+
+## Reading a CSV
+
+The most common starting point. Suppose you have a `writers.csv`:
+
+```
+name,born,died,letters
+Voltaire,1694,1778,21000
+Émilie du Châtelet,1706,1749,430
+Diderot,1713,1784,3500
+d'Alembert,1717,1783,1200
+```
+
+Loading it is one line:
+
+```python
+import pandas as pd
+
+# Make a small CSV first so this snippet runs standalone.
+sample = """name,born,died,letters
+Voltaire,1694,1778,21000
+Émilie du Châtelet,1706,1749,430
+Diderot,1713,1784,3500
+d'Alembert,1717,1783,1200
+"""
+with open("writers.csv", "w", encoding="utf-8") as f:
+    f.write(sample)
+
+df = pd.read_csv("writers.csv")
+print(df)
+```
+
+`df` is the DataFrame. The output shows columns, data types are inferred (`born` becomes an integer, `name` stays a string), and rows are numbered automatically. That numbering on the left is the **index** — pandas's way of identifying rows when columns can't.
+
+A few useful options for `read_csv` you'll reach for often:
+
+```python
+import pandas as pd
+
+# Pass a column to use as the index instead of the auto-numbered one.
+df = pd.read_csv("writers.csv", index_col="name")
+
+# Treat extra strings as missing values (in addition to the empty string).
+df = pd.read_csv("writers.csv", na_values=["—", "n/a", "?"])
+
+# Force a column type when inference gets it wrong.
+df = pd.read_csv("writers.csv", dtype={"born": "Int64"})
+
+print(df.head())
+```
+
+## Reading an Excel file
+
+The shape is identical:
+
+```python
+import pandas as pd
+
+# (You'd normally start with an existing .xlsx file. We'll write one in lesson 18.)
+df = pd.read_excel("writers.xlsx")
+print(df.head())
+```
+
+If the workbook has multiple sheets, name the one you want:
+
+```python
+import pandas as pd
+
+df = pd.read_excel("writers.xlsx", sheet_name="philosophes")
+
+# Or read every sheet into a dict of DataFrames.
+sheets = pd.read_excel("writers.xlsx", sheet_name=None)
+print(list(sheets.keys()))
+```
+
+`pandas` handles `.xlsx`, `.xls` (with the right engine), Google Sheets exports, and OpenOffice files. For 99% of research data, `read_excel` and `read_csv` are the only two readers you'll ever use.
+
+## Inspecting a DataFrame
+
+Once you have one, look at it. These four methods cover almost every "what is this thing?" moment:
+
+```python
+import pandas as pd
+
+sample = """name,born,died,letters
+Voltaire,1694,1778,21000
+Émilie du Châtelet,1706,1749,430
+Diderot,1713,1784,3500
+d'Alembert,1717,1783,1200
+"""
+with open("writers.csv", "w", encoding="utf-8") as f:
+    f.write(sample)
+df = pd.read_csv("writers.csv")
+
+print(df.head())        # first 5 rows
+print(df.tail(2))       # last 2 rows
+print(df.shape)         # (rows, columns)
+print(df.columns)       # column names
+```
+
+For a quick numeric summary across every column:
+
+```python
+import pandas as pd
+
+sample = """name,born,died,letters
+Voltaire,1694,1778,21000
+Émilie du Châtelet,1706,1749,430
+Diderot,1713,1784,3500
+d'Alembert,1717,1783,1200
+"""
+with open("writers.csv", "w", encoding="utf-8") as f:
+    f.write(sample)
+df = pd.read_csv("writers.csv")
+
+print(df.describe())    # count, mean, std, min, max — for every numeric column
+print(df.dtypes)        # what type is each column?
+print(df.info())        # column types + non-null counts + memory
+```
+
+`describe`, `dtypes`, and `info` together answer most of the questions you have in the first thirty seconds with new data.
+
+## Selecting columns
+
+A single column comes back as a Series:
+
+```python
+import pandas as pd
+
+sample = """name,born,died,letters
+Voltaire,1694,1778,21000
+Émilie du Châtelet,1706,1749,430
+Diderot,1713,1784,3500
+d'Alembert,1717,1783,1200
+"""
+with open("writers.csv", "w", encoding="utf-8") as f:
+    f.write(sample)
+df = pd.read_csv("writers.csv")
+
+names = df["name"]
+print(names)
+print(type(names))   # <class 'pandas.core.series.Series'>
+```
+
+A list of columns comes back as a smaller DataFrame:
+
+```python
+import pandas as pd
+
+sample = """name,born,died,letters
+Voltaire,1694,1778,21000
+Émilie du Châtelet,1706,1749,430
+Diderot,1713,1784,3500
+d'Alembert,1717,1783,1200
+"""
+with open("writers.csv", "w", encoding="utf-8") as f:
+    f.write(sample)
+df = pd.read_csv("writers.csv")
+
+subset = df[["name", "letters"]]
+print(subset)
+```
+
+Note the **double brackets** — `df[["name", "letters"]]` passes a *list* of column names, which is what `df[...]` expects when you want more than one.
+
+## Selecting rows — the difference between `.loc` and `.iloc`
+
+Pandas gives you two row-indexers, and the difference confuses everyone for about a week. After that, it's automatic.
+
+- **`df.iloc[i]`** — by *integer position*. `df.iloc[0]` is always the first row, regardless of the index.
+- **`df.loc[label]`** — by *index label*. If your index is the default 0, 1, 2, …, this looks the same; if you set a meaningful index, it's how you address rows by name.
+
+```python
+import pandas as pd
+
+sample = """name,born,died,letters
+Voltaire,1694,1778,21000
+Émilie du Châtelet,1706,1749,430
+Diderot,1713,1784,3500
+d'Alembert,1717,1783,1200
+"""
+with open("writers.csv", "w", encoding="utf-8") as f:
+    f.write(sample)
+df = pd.read_csv("writers.csv", index_col="name")
+
+print(df.iloc[0])                   # the first row, by position
+print(df.loc["Voltaire"])           # the row whose index is "Voltaire"
+print(df.loc["Voltaire", "born"])   # one cell — row, column
+```
+
+For now, the rule of thumb: use `.loc` whenever you've set a meaningful index (a name, an ID); use `.iloc` when you genuinely want "the first n rows" or "the last row."
+
+## Quick aggregate calculations
+
+A single column is a Series. Series have all the math methods you'd hope for:
+
+```python
+import pandas as pd
+
+sample = """name,born,died,letters
+Voltaire,1694,1778,21000
+Émilie du Châtelet,1706,1749,430
+Diderot,1713,1784,3500
+d'Alembert,1717,1783,1200
+"""
+with open("writers.csv", "w", encoding="utf-8") as f:
+    f.write(sample)
+df = pd.read_csv("writers.csv")
+
+print(df["letters"].sum())       # total letters across all writers
+print(df["letters"].mean())      # mean
+print(df["letters"].max())       # largest single value
+print(df["born"].min())          # earliest birth year
+print(df["letters"].median())    # median letter count
+```
+
+Each of those is a vectorized C-loop under the hood. On a 50,000-row dataset, it finishes before you can blink.
+
+## Adding a column
+
+A new column is just an assignment:
+
+```python
+import pandas as pd
+
+sample = """name,born,died,letters
+Voltaire,1694,1778,21000
+Émilie du Châtelet,1706,1749,430
+Diderot,1713,1784,3500
+d'Alembert,1717,1783,1200
+"""
+with open("writers.csv", "w", encoding="utf-8") as f:
+    f.write(sample)
+df = pd.read_csv("writers.csv")
+
+df["lifespan"] = df["died"] - df["born"]
+print(df)
+```
+
+Notice you didn't write a `for` loop. `df["died"] - df["born"]` is element-wise subtraction across two columns, returning a new Series the same length. This vectorized style is the entire point of pandas — and the habit that makes it fast.
+
+## Where to next
+
+You've met the DataFrame, loaded data into one, looked it over, picked out columns and rows, and computed a few aggregates. That's enough to be useful.
+
+The next two lessons go deeper:
+
+- **Lesson 21 — Filtering and Querying** uses Boolean masks, `.query`, and GroupBy to ask interesting questions of a table.
+- **Lesson 22 — Cleaning and Exporting** handles missing values, text cleanup, sorting, and writing the result back out as a CSV or Excel file.
+
+## Running the code
+
+This lesson uses pandas. Add it to your project once:
+
+```bash
+uv add pandas openpyxl
+```
+
+Save any snippet to a file — say `try.py` — and run it from your project folder:
+
+```bash
+uv run try.py
+```
+
+`uv run` uses the project's Python and dependencies automatically; no virtualenv to activate. If you haven't set the project up yet, [Lesson 01](/course/lesson-01-introduction-to-python-for-dh/) walks through it.

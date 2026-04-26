@@ -1,0 +1,270 @@
+---
+title: "Capstone — Analyzing a Real CSV Dataset"
+lessonNumber: 23
+part: 5
+partTitle: "Working with Tabular Data"
+description: "End-to-end pandas workflow on a small but realistic dataset of Enlightenment correspondence — load, clean, filter, group, summarize, and export."
+---
+
+You've met pandas in three lessons: a DataFrame is a table; you can filter, group, and clean it; you can write the result back out. This capstone does all of that in a single, end-to-end workflow on a realistic-looking dataset of letters from Enlightenment writers.
+
+The pattern you walk through here is the **basic shape of every quantitative DH project**. You'll do it dozens of times in your career; the value of a capstone is to feel the whole thing in one sitting.
+
+## The dataset
+
+A small but realistic letters dataset — the kind a digital humanist might assemble from an archive. Real datasets are bigger; the moves are identical.
+
+```python
+import pandas as pd
+
+raw = """sender,recipient,year,place,word_count
+Voltaire,Frederick II,1750,Berlin,1240
+Voltaire ,Madame du Deffand,1759,Geneva,890
+Voltaire,Madame du Deffand,1760,Ferney,
+voltaire,Frederick II,1751,Berlin,1500
+Émilie du Châtelet,Voltaire,1740,Cirey,420
+Émilie du Châtelet,Pierre-Louis Maupertuis,1741,Cirey,610
+Diderot,Voltaire,1762,Paris,n/a
+Diderot,Sophie Volland,1759,Paris,2150
+ Rousseau,Voltaire,1760,Geneva,3100
+Rousseau,Madame d'Épinay,1757,Paris,?
+Hume,Adam Smith,1759,London,720
+Hume,Rousseau,1766,London,1400
+"""
+
+with open("letters.csv", "w", encoding="utf-8") as f:
+    f.write(raw)
+
+print("wrote letters.csv")
+```
+
+Even at 12 rows it has every problem real data has: stray spaces, inconsistent capitalisation, mixed missing-value markers, a column that came in as text because of those markers.
+
+## Step 1 — Load and look
+
+```python
+import pandas as pd
+
+raw = """sender,recipient,year,place,word_count
+Voltaire,Frederick II,1750,Berlin,1240
+Voltaire ,Madame du Deffand,1759,Geneva,890
+Voltaire,Madame du Deffand,1760,Ferney,
+voltaire,Frederick II,1751,Berlin,1500
+Émilie du Châtelet,Voltaire,1740,Cirey,420
+Émilie du Châtelet,Pierre-Louis Maupertuis,1741,Cirey,610
+Diderot,Voltaire,1762,Paris,n/a
+Diderot,Sophie Volland,1759,Paris,2150
+ Rousseau,Voltaire,1760,Geneva,3100
+Rousseau,Madame d'Épinay,1757,Paris,?
+Hume,Adam Smith,1759,London,720
+Hume,Rousseau,1766,London,1400
+"""
+with open("letters.csv", "w", encoding="utf-8") as f:
+    f.write(raw)
+
+df = pd.read_csv("letters.csv", na_values=["n/a", "?"])
+print(df.shape)
+print(df.head())
+print(df.dtypes)
+print(df.isna().sum())
+```
+
+That's the four-line health check from Lesson 22. Already we can see: 12 rows, 5 columns, `word_count` is now numeric, two missing values.
+
+## Step 2 — Clean the senders
+
+The sender column has whitespace and capitalisation issues. `.str.strip()` and `.str.title()` handle both:
+
+```python
+import pandas as pd
+
+raw = """sender,recipient,year,place,word_count
+Voltaire,Frederick II,1750,Berlin,1240
+Voltaire ,Madame du Deffand,1759,Geneva,890
+voltaire,Frederick II,1751,Berlin,1500
+ Rousseau,Voltaire,1760,Geneva,3100
+Rousseau,Madame d'Épinay,1757,Paris,720
+"""
+with open("letters.csv", "w", encoding="utf-8") as f:
+    f.write(raw)
+df = pd.read_csv("letters.csv")
+
+df["sender"] = df["sender"].str.strip().str.title()
+print(df["sender"].value_counts())
+```
+
+Now `Voltaire`, `Voltaire ` (trailing space), and `voltaire` all collapse to a single value. The first time you do this on real data, you'll watch your row counts change and feel a real "ohhh, that's why my numbers were off" moment.
+
+## Step 3 — Drop unusable rows
+
+Word counts of `NaN` are unhelpful for the analysis we want. Drop them:
+
+```python
+import pandas as pd
+
+raw = """sender,recipient,year,place,word_count
+Voltaire,Frederick II,1750,Berlin,1240
+Voltaire,Madame du Deffand,1759,Geneva,890
+Voltaire,Madame du Deffand,1760,Ferney,
+Diderot,Voltaire,1762,Paris,n/a
+Hume,Adam Smith,1759,London,720
+"""
+with open("letters.csv", "w", encoding="utf-8") as f:
+    f.write(raw)
+df = pd.read_csv("letters.csv", na_values=["n/a", "?"])
+
+before = len(df)
+df = df.dropna(subset=["word_count"])
+print(f"dropped {before - len(df)} row(s); {len(df)} remaining")
+```
+
+Be honest in your write-up that you did this. *"We dropped 12 letters with missing word counts"* is exactly the kind of methodological detail that makes a paper trustworthy.
+
+## Step 4 — Quick filtering
+
+Boolean masks (Lesson 21) for "Voltaire's letters from the 1750s":
+
+```python
+import pandas as pd
+
+df = pd.DataFrame({
+    "sender": ["Voltaire", "Voltaire", "Voltaire", "Diderot"],
+    "year":   [1750, 1759, 1762, 1759],
+    "word_count": [1240, 890, 1500, 2150],
+})
+
+voltaire_50s = df[(df["sender"] == "Voltaire") & (df["year"].between(1750, 1759))]
+print(voltaire_50s)
+```
+
+Two conditions, joined with `&`, each in parentheses. The pattern you'll use a thousand times.
+
+## Step 5 — Group by sender
+
+The "letters per sender" question is one line:
+
+```python
+import pandas as pd
+
+df = pd.DataFrame({
+    "sender": ["Voltaire", "Voltaire", "Voltaire", "Diderot", "Diderot", "Hume"],
+    "word_count": [1240, 890, 1500, 2150, 1100, 720],
+})
+
+per_sender = df.groupby("sender").agg(
+    n_letters=("word_count", "count"),
+    total_words=("word_count", "sum"),
+    avg_words=("word_count", "mean"),
+).sort_values("n_letters", ascending=False)
+
+print(per_sender)
+```
+
+Three statistics per sender, in a single chained expression. This is the pandas idiom worth memorising — it's the answer to most "summarise by category" questions.
+
+## Step 6 — Group by place and year
+
+You can group by more than one column:
+
+```python
+import pandas as pd
+
+df = pd.DataFrame({
+    "place": ["Paris", "Paris", "Geneva", "Geneva", "London"],
+    "year":  [1759, 1759, 1760, 1760, 1759],
+    "word_count": [890, 2150, 3100, 1500, 720],
+})
+
+per_place_year = df.groupby(["place", "year"])["word_count"].sum().reset_index()
+print(per_place_year)
+```
+
+The `reset_index()` flattens the result back into a regular DataFrame instead of leaving it indexed by the group keys. That's almost always what you want when you're going to keep working with the result.
+
+## Step 7 — A small "report"
+
+Pulling it all together, a short script that produces a one-page summary:
+
+```python
+import pandas as pd
+
+raw = """sender,recipient,year,place,word_count
+Voltaire,Frederick II,1750,Berlin,1240
+Voltaire ,Madame du Deffand,1759,Geneva,890
+Voltaire,Madame du Deffand,1760,Ferney,
+voltaire,Frederick II,1751,Berlin,1500
+Émilie du Châtelet,Voltaire,1740,Cirey,420
+Émilie du Châtelet,Pierre-Louis Maupertuis,1741,Cirey,610
+Diderot,Voltaire,1762,Paris,n/a
+Diderot,Sophie Volland,1759,Paris,2150
+ Rousseau,Voltaire,1760,Geneva,3100
+Rousseau,Madame d'Épinay,1757,Paris,?
+Hume,Adam Smith,1759,London,720
+Hume,Rousseau,1766,London,1400
+"""
+with open("letters.csv", "w", encoding="utf-8") as f:
+    f.write(raw)
+
+# 1. Load and clean.
+df = pd.read_csv("letters.csv", na_values=["n/a", "?"])
+df["sender"] = df["sender"].str.strip().str.title()
+df = df.dropna(subset=["word_count"])
+
+# 2. Headline numbers.
+print(f"{len(df)} letters")
+print(f"Mean word count: {df['word_count'].mean():.0f}")
+print(f"Total words:     {df['word_count'].sum():.0f}")
+
+# 3. Top senders.
+print("\nLetters per sender:")
+print(df.groupby("sender").size().sort_values(ascending=False))
+
+# 4. Letters per decade.
+df["decade"] = (df["year"] // 10) * 10
+print("\nLetters per decade:")
+print(df.groupby("decade").size())
+
+# 5. Save the cleaned data.
+df.to_csv("letters_clean.csv", index=False)
+print("\nwrote letters_clean.csv")
+```
+
+Six steps, twenty lines. That's a respectable first cut at a quantitative analysis. The final `to_csv` is the export step from Lesson 22 — if anyone asks "what data did you use?", you have a clean file you can hand over.
+
+## What this is the start of
+
+Everything more sophisticated you'll do with tabular DH data builds on the same shape:
+
+- **Network analysis.** Group by `(sender, recipient)` and you have an edge list ready for NetworkX.
+- **Time-series.** A column of years and a column of counts is exactly what you need to plot frequencies over time.
+- **Comparative studies.** Filter to two authors, run the same summary on each, compare.
+
+The cleaning + grouping + exporting loop you just walked is *the* loop. New libraries replace the analysis step with something fancier; the rest stays.
+
+## Try it yourself
+
+- Plot letters per decade with `df.groupby("decade").size().plot.bar()`. (Pandas has plotting built in via matplotlib.)
+- Build a `correspondents` DataFrame from `df["sender"].unique()` and `df["recipient"].unique()` joined together — the union of every name that appears.
+- Try a pivot table: `pd.pivot_table(df, index="sender", columns="decade", values="word_count", aggfunc="sum")`. What does it tell you that the grouped views didn't?
+
+## Where to next
+
+Part 6 takes you onto the open web. You'll learn how to read HTML, fetch pages with `requests`, and parse them with BeautifulSoup — the trio behind most of the DH datasets you'll ever build yourself.
+
+Continue to [Lesson 24: Finding HTML Code](/course/lesson-24-finding-html-code/).
+
+## Running the code
+
+This lesson uses pandas. Add it to your project once:
+
+```bash
+uv add pandas
+```
+
+Save any snippet to a file — say `letters.py` — and run it from your project folder:
+
+```bash
+uv run letters.py
+```
+
+`uv run` uses the project's Python and dependencies automatically; no virtualenv to activate. If you haven't set the project up yet, [Lesson 01](/course/lesson-01-introduction-to-python-for-dh/) walks through it.

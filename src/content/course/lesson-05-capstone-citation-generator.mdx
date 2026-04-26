@@ -1,0 +1,165 @@
+---
+title: "Capstone — Build a Citation Generator"
+lessonNumber: 5
+part: 1
+partTitle: "Working with Data"
+description: "Tie Part 1 together by writing a tiny program that takes the bits of a citation — author, title, year, place — and prints out a properly formatted reference."
+---
+
+You've spent four lessons getting comfortable with Python's basic data types. Strings hold text; integers and floats hold numbers; variables let you give them names. That's enough to write something that earns its keep on a real research project.
+
+This capstone builds a **citation generator** — a tiny program that takes the parts of a bibliographic entry and prints them out as a properly formatted reference. It's the kind of helper a working researcher writes once and reuses for years.
+
+Everything here uses only the types and operations from Lessons 02–04. No lists, dicts, loops, or functions yet — those come in the next parts.
+
+## What we're building
+
+A citation looks like this in MLA-ish style:
+
+```
+Voltaire. Candide. 1759. Paris.
+```
+
+Four pieces — author, title, year, place — strung together with the right punctuation. Easy to write by hand once. Annoying to write by hand fifty times. Computers exist for this.
+
+## A first cut
+
+The simplest version is four variables and a `print`:
+
+```python
+author = "Voltaire"
+title = "Candide"
+year = 1759
+place = "Paris"
+
+print(author + ". " + title + ". " + str(year) + ". " + place + ".")
+```
+
+Notice the `str(year)` — `year` is an integer, and Python won't concatenate an integer to a string. You have to convert. That's the first gotcha you ran into in Lesson 04.
+
+## Cleaner with f-strings
+
+Concatenation gets ugly fast. F-strings — string literals that splice in values — read better:
+
+```python
+author = "Voltaire"
+title = "Candide"
+year = 1759
+place = "Paris"
+
+citation = f"{author}. {title}. {year}. {place}."
+print(citation)
+```
+
+That's the version you'd actually write. The `f` prefix turns the string into a template; anything inside `{}` is evaluated as Python and inserted.
+
+## Italicizing the title
+
+Print can't italicize, but a real citation often wraps the title in markdown asterisks or underscores. One line gets you there:
+
+```python
+author = "Voltaire"
+title = "Candide"
+year = 1759
+place = "Paris"
+
+citation = f"{author}. *{title}*. {year}. {place}."
+print(citation)
+```
+
+Now you have something you could paste into a Markdown document or a Jupyter notebook and have it render properly.
+
+## Computing the age of the work
+
+The current year minus the publication year is the work's age. That's an integer subtraction:
+
+```python
+author = "Voltaire"
+title = "Candide"
+year = 1759
+
+current_year = 2025
+age = current_year - year
+
+print(f"{title} is {age} years old.")
+```
+
+## Multiple authors
+
+A book with two authors needs different formatting. Without lists yet, the trick is to keep two name variables and join them with a comma:
+
+```python
+first_author = "Diderot"
+second_author = "d'Alembert"
+title = "Encyclopédie"
+year = 1751
+
+citation = f"{first_author} and {second_author}. *{title}*. {year}."
+print(citation)
+```
+
+When you reach lists in Lesson 07, you'll see a much cleaner way to handle "any number of authors." For now, this is plenty.
+
+## Cleaning user-supplied text
+
+Real input is messy. Authors might come in with stray spaces or inconsistent capitalization. Two string methods from Lesson 03 handle most of it:
+
+```python
+raw_author = "  voltaire  "
+raw_title = "candide"
+
+author = raw_author.strip().title()    # "Voltaire"
+title = raw_title.title()              # "Candide"
+
+print(f"{author}. *{title}*.")
+```
+
+`strip()` removes leading/trailing whitespace; `title()` capitalizes the first letter of each word. They're cheap insurance against inconsistent input.
+
+## Putting it together
+
+Here's the version that uses everything from Part 1 — string formatting, integer math, type conversion, and a touch of cleanup:
+
+```python
+raw_author = "  voltaire  "
+raw_title = "candide"
+year = 1759
+place = "Paris"
+current_year = 2025
+
+author = raw_author.strip().title()
+title = raw_title.title()
+age = current_year - year
+
+citation = f"{author}. *{title}*. {year}. {place}."
+print(citation)
+print(f"This work is {age} years old.")
+```
+
+That's a tiny but real program. Every line uses something you've learned. Nothing in it is fake — researchers really do write helpers like this for their own bibliographies, and they really do reuse them for years.
+
+## Try it yourself
+
+Modify the program so it:
+
+- Prints the citation in two different styles (MLA *and* Chicago, say). What changes between them?
+- Handles a missing place — what do you want printed when `place` is the empty string?
+- Adds a translator field, but only includes it in the output if a translator is actually given.
+
+The third one will push you toward conditionals — which is exactly what Part 3 introduces. Hold the question in mind; you'll have the right tool for it shortly.
+
+## Where to next
+
+Part 2 introduces **data structures** — tuples, lists, and dictionaries. These are containers for *many* values at once, and they unlock most of what the rest of the course can do. A citation generator that handles a hundred books at a time, instead of one, is a list-and-dict problem.
+
+Continue to [Lesson 06: Python Tuples](/course/lesson-06-python-tuples/).
+
+## Running the code
+
+Save any snippet to a file — say `cite.py` — and run it from your project folder:
+
+```bash
+uv run cite.py
+```
+
+`uv run` uses the project's Python automatically; no virtualenv to activate. If you haven't set the project up yet, [Lesson 01](/course/lesson-01-introduction-to-python-for-dh/) walks through it.

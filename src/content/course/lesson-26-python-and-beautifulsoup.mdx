@@ -1,6 +1,6 @@
 ---
 title: "Python and BeautifulSoup"
-lessonNumber: 21
+lessonNumber: 26
 part: 6
 partTitle: "Web Data"
 description: "Parse HTML with BeautifulSoup and pull out the tags, text, and attributes you actually want."
@@ -127,7 +127,7 @@ A few habits in that snippet worth copying:
 
 - **Loop over the containers, then `select_one` inside each.** This guarantees every field belongs to the same record. If you instead `select` all names and all dates separately and zip them, one missing element shifts the whole rest of your data by one.
 - **Guard against missing optional fields** with `if link else None`. Real HTML is never as clean as the example.
-- **Build a list of dictionaries.** Same shape we used in the Excel lessons — easy to dump to JSON, write to a spreadsheet, or feed into pandas.
+- **Build a list of dictionaries.** Easy to dump to JSON, write to a spreadsheet, or pass to `pd.DataFrame()` for analysis.
 
 ## Getting just the text — `get_text` vs `.text`
 
@@ -207,7 +207,7 @@ That's the whole shape: session, fetch, parse, extract, append, sleep. Once it w
 - **Run JavaScript.** If the page is rendered client-side, BeautifulSoup sees the empty shell. Either find the JSON API the page is calling, or use Playwright/Selenium to render first.
 - **Fix invalid HTML perfectly.** Most pages parse cleanly with `html.parser` or `lxml`. Wildly broken pages may require trying multiple parsers and picking the cleanest tree.
 
-Once you have data in hand, you'll want to save it. We start that in [Lesson 22: Storing Data in Text Files](/course/lesson-22-python-and-storing-data-in-text-files/).
+Once you have data in hand, you'll want to save it. We start that in [Lesson 28: Storing Data in Text Files](/course/lesson-28-python-and-storing-data-in-text-files/).
 
 ## Running the code
 

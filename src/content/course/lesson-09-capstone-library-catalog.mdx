@@ -1,0 +1,192 @@
+---
+title: "Capstone — A Mini Library Catalog"
+lessonNumber: 9
+part: 2
+partTitle: "Data Structures"
+description: "Use tuples, lists, and dictionaries together to build a small library catalog — the data shape every DH project eventually adopts."
+---
+
+Part 2 introduced three containers — tuples, lists, dictionaries. Used alone, each is useful. Used together, they describe almost any dataset you'll meet in the digital humanities.
+
+This capstone builds a small library catalog. By the end you'll have the **list of dictionaries** pattern firmly in hand — the data shape that underlies every CSV, every spreadsheet, every JSON file you'll encounter for the rest of the course.
+
+## A single book as a dict
+
+One book has several attributes that go together: a title, an author, a year, a genre. A dictionary expresses that — keys for the attribute names, values for the attribute values:
+
+```python
+book = {
+    "title": "Candide",
+    "author": "Voltaire",
+    "year": 1759,
+    "genre": "satire",
+}
+
+print(book["title"])
+print(book["author"])
+```
+
+This is more readable than putting four loose variables in your script. The dict says clearly: these four things describe one book.
+
+## Many books as a list of dicts
+
+A catalog is many books. The natural container for "many things of the same shape" is a list:
+
+```python
+catalog = [
+    {"title": "Candide",    "author": "Voltaire",            "year": 1759, "genre": "satire"},
+    {"title": "Émile",      "author": "Rousseau",            "year": 1762, "genre": "philosophy"},
+    {"title": "Jacques",    "author": "Diderot",             "year": 1796, "genre": "novel"},
+    {"title": "Discours",   "author": "Émilie du Châtelet",  "year": 1740, "genre": "philosophy"},
+    {"title": "Treatise",   "author": "Hume",                "year": 1739, "genre": "philosophy"},
+]
+
+print(len(catalog), "books in the catalog")
+print(catalog[0])
+```
+
+That's the **list-of-dicts** pattern. Every research dataset you'll write to a file or load from a CSV is shaped this way. Memorize it.
+
+## Looking up one book
+
+Lists are accessed by position; the first book is `catalog[0]`. From there, dict access pulls out one field:
+
+```python
+catalog = [
+    {"title": "Candide",  "author": "Voltaire", "year": 1759},
+    {"title": "Émile",    "author": "Rousseau", "year": 1762},
+]
+
+first = catalog[0]
+print(first["title"], "by", first["author"])
+```
+
+## Adding a book
+
+To grow the catalog, append a new dict:
+
+```python
+catalog = [
+    {"title": "Candide", "author": "Voltaire", "year": 1759},
+]
+
+catalog.append({"title": "Émile", "author": "Rousseau", "year": 1762})
+print(len(catalog), "books")
+print(catalog[-1])
+```
+
+`append` adds to the end. `catalog[-1]` is the last item — a handy way to look at the most recently added.
+
+## Counting genres with a dict
+
+Suppose you want to know how many books of each genre you have. The pattern is: walk the catalog, increment a counter dict by genre. (Yes, this is a loop — and you've met loops in Lesson 11.)
+
+```python
+catalog = [
+    {"title": "Candide",   "genre": "satire"},
+    {"title": "Émile",     "genre": "philosophy"},
+    {"title": "Jacques",   "genre": "novel"},
+    {"title": "Discours",  "genre": "philosophy"},
+    {"title": "Treatise",  "genre": "philosophy"},
+]
+
+counts = {}
+for book in catalog:
+    g = book["genre"]
+    counts[g] = counts.get(g, 0) + 1
+
+print(counts)
+```
+
+`counts.get(g, 0)` returns the current count for that genre, or `0` if we haven't seen it yet. This *get-or-default* pattern is one of the most-used habits in DH Python. You'll see it again in the regex and pandas lessons.
+
+## Filtering — books by one author
+
+A list comprehension reads almost like English: *give me every book in the catalog whose author is Voltaire.*
+
+```python
+catalog = [
+    {"title": "Candide",     "author": "Voltaire"},
+    {"title": "Zadig",       "author": "Voltaire"},
+    {"title": "Émile",       "author": "Rousseau"},
+    {"title": "Letters",     "author": "Voltaire"},
+]
+
+voltaire_books = [b for b in catalog if b["author"] == "Voltaire"]
+print(len(voltaire_books), "books by Voltaire")
+for b in voltaire_books:
+    print("-", b["title"])
+```
+
+A real catalog has thousands of entries; this one-liner doesn't change. That's the power of using a consistent shape: the same expression works at any scale.
+
+## A coordinate as a tuple
+
+Sometimes a value is naturally two-or-three pieces glued together — a coordinate, a date triple, a name and a year. Tuples are the clean way to hold that:
+
+```python
+catalog = [
+    {"title": "Candide", "published": ("Geneva", 1759)},
+    {"title": "Émile",   "published": ("Paris",  1762)},
+]
+
+for book in catalog:
+    place, year = book["published"]
+    print(f"{book['title']} — {place}, {year}")
+```
+
+The line `place, year = book["published"]` is **tuple unpacking** — you assign two variables in one go from a two-item tuple. Lists support it too; tuples are just the conventional choice when the items are naturally a fixed pair.
+
+## A small "search the catalog" program
+
+Putting it together — a program that asks a question and answers it from the data:
+
+```python
+catalog = [
+    {"title": "Candide",   "author": "Voltaire",            "year": 1759, "genre": "satire"},
+    {"title": "Émile",     "author": "Rousseau",            "year": 1762, "genre": "philosophy"},
+    {"title": "Jacques",   "author": "Diderot",             "year": 1796, "genre": "novel"},
+    {"title": "Discours",  "author": "Émilie du Châtelet",  "year": 1740, "genre": "philosophy"},
+    {"title": "Treatise",  "author": "Hume",                "year": 1739, "genre": "philosophy"},
+]
+
+# Question 1: which books were published before 1760?
+early = [b for b in catalog if b["year"] < 1760]
+print("Before 1760:")
+for b in early:
+    print(f"  {b['title']} ({b['year']})")
+
+# Question 2: which authors do we have, no duplicates?
+authors = {b["author"] for b in catalog}   # set comprehension!
+print("Authors:", sorted(authors))
+
+# Question 3: average year of philosophy books
+phil = [b["year"] for b in catalog if b["genre"] == "philosophy"]
+print(f"Average year (philosophy): {sum(phil) / len(phil):.0f}")
+```
+
+Three different questions, all answered against the same list-of-dicts. Once your data is in this shape, almost anything you want to know is a one- or two-line expression away.
+
+## Try it yourself
+
+- Add a `pages` field to each book and find the longest one.
+- Group books by author into a dict whose keys are author names and whose values are lists of titles.
+- Pretty-print the catalog with each book on its own line, aligned columns, and the year in parentheses.
+
+The third one starts to feel like a function — taking the catalog and returning a string. That's exactly where Part 3 picks up.
+
+## Where to next
+
+Part 3 introduces **control flow and code organization** — conditionals, loops, functions, and classes. With these you can wrap repeated work into named, reusable pieces and start writing programs that grow with you instead of getting longer and longer.
+
+Continue to [Lesson 10: Python Conditionals](/course/lesson-10-python-conditionals/).
+
+## Running the code
+
+Save any snippet to a file — say `library.py` — and run it from your project folder:
+
+```bash
+uv run library.py
+```
+
+`uv run` uses the project's Python automatically; no virtualenv to activate. If you haven't set the project up yet, [Lesson 01](/course/lesson-01-introduction-to-python-for-dh/) walks through it.

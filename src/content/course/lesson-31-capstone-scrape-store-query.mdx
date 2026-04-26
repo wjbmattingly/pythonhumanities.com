@@ -1,0 +1,306 @@
+---
+title: "Capstone — Scrape, Clean, Store, Query"
+lessonNumber: 31
+part: 7
+partTitle: "Storing Data"
+description: "The final capstone: build a tiny end-to-end research pipeline — parse HTML, clean with pandas, store in SQLite, and query the database for answers."
+---
+
+This is the last lesson in the course. By now you've built every piece of a research pipeline in isolation. This capstone wires them together into a single end-to-end project: take messy HTML, turn it into a clean dataset, store it in a real database, and ask it questions.
+
+Every part of what follows uses tools you already know. Nothing new is introduced. The lesson is the **assembly** — the demonstration that a real DH pipeline is just the basic moves in the right order.
+
+## What we're building
+
+A four-stage pipeline:
+
+1. **Scrape.** Parse a structured HTML listing into records.
+2. **Clean.** Load the records into pandas, handle missing values, normalise types.
+3. **Store.** Write the cleaned data to a SQLite database, with one table per entity.
+4. **Query.** Use SQL — and pandas-on-SQL — to answer real questions.
+
+We'll use a hardcoded HTML payload to keep the lesson reproducible, but every step transfers verbatim to a live site. The point is the architecture, not the data.
+
+## Stage 1 — Parse the HTML
+
+```python
+from bs4 import BeautifulSoup
+
+html = """
+<html><body>
+<article class="letter">
+  <h2 class="letter-title">To Frederick II</h2>
+  <p class="meta">
+    <span class="date">1750-08-23</span>
+    <span class="sender">Voltaire</span>
+    <span class="recipient">Frederick II</span>
+    <span class="place">Potsdam</span>
+  </p>
+</article>
+<article class="letter">
+  <h2 class="letter-title">To Madame du Deffand</h2>
+  <p class="meta">
+    <span class="date">1759-04-07</span>
+    <span class="sender">Voltaire</span>
+    <span class="recipient">Madame du Deffand</span>
+    <span class="place">Geneva</span>
+  </p>
+</article>
+<article class="letter">
+  <h2 class="letter-title">From Émilie</h2>
+  <p class="meta">
+    <span class="date">1740-06-12</span>
+    <span class="sender">Émilie du Châtelet</span>
+    <span class="recipient">Voltaire</span>
+    <span class="place"></span>
+  </p>
+</article>
+<article class="letter">
+  <h2 class="letter-title">To Diderot</h2>
+  <p class="meta">
+    <span class="date">1762-11-02</span>
+    <span class="sender">Voltaire</span>
+    <span class="recipient">Diderot</span>
+    <span class="place">Ferney</span>
+  </p>
+</article>
+</body></html>
+"""
+
+def get(article, sel):
+    el = article.select_one(sel)
+    return el.get_text(strip=True) if el else None
+
+soup = BeautifulSoup(html, "html.parser")
+records = []
+for article in soup.select("article.letter"):
+    records.append({
+        "title":     get(article, ".letter-title"),
+        "date":      get(article, ".date"),
+        "sender":    get(article, ".sender"),
+        "recipient": get(article, ".recipient"),
+        "place":     get(article, ".place") or None,   # empty string -> None
+    })
+
+for r in records:
+    print(r)
+```
+
+A small `get(article, selector)` helper makes the per-field reads safe — never assume the element is there. The `or None` on `place` rewrites empty strings as missing, so the cleaning stage doesn't have to special-case them.
+
+## Stage 2 — Clean with pandas
+
+Drop into a DataFrame and do the standard cleaning pass:
+
+```python
+import pandas as pd
+
+records = [
+    {"title": "To Frederick II",      "date": "1750-08-23", "sender": "Voltaire",            "recipient": "Frederick II",     "place": "Potsdam"},
+    {"title": "To Madame du Deffand", "date": "1759-04-07", "sender": "Voltaire",            "recipient": "Madame du Deffand","place": "Geneva"},
+    {"title": "From Émilie",          "date": "1740-06-12", "sender": "Émilie du Châtelet",  "recipient": "Voltaire",         "place": None},
+    {"title": "To Diderot",           "date": "1762-11-02", "sender": "Voltaire",            "recipient": "Diderot",          "place": "Ferney"},
+]
+
+df = pd.DataFrame(records)
+
+# Parse the date column properly.
+df["date"] = pd.to_datetime(df["date"])
+df["year"] = df["date"].dt.year
+
+# Strip whitespace and normalise case.
+for col in ("sender", "recipient", "place"):
+    df[col] = df[col].str.strip()
+
+# Fill missing places.
+df["place"] = df["place"].fillna("Unknown")
+
+print(df)
+print(df.dtypes)
+```
+
+By the end, every column is the correct type, missing values have an explicit policy, and the data is ready for storage.
+
+## Stage 3 — Store in SQLite
+
+Two tables: one for `places`, one for `letters` referring to a place by id. Splitting them this way is the easiest taste of *normalisation*: a place name appears once in `places`, then is referred to many times from `letters` by its `id`.
+
+```python
+import sqlite3
+import pandas as pd
+
+df = pd.DataFrame([
+    {"title": "To Frederick II",      "date": "1750-08-23", "sender": "Voltaire", "recipient": "Frederick II",     "place": "Potsdam"},
+    {"title": "To Madame du Deffand", "date": "1759-04-07", "sender": "Voltaire", "recipient": "Madame du Deffand","place": "Geneva"},
+    {"title": "From Émilie",          "date": "1740-06-12", "sender": "Émilie du Châtelet", "recipient": "Voltaire", "place": "Unknown"},
+    {"title": "To Diderot",           "date": "1762-11-02", "sender": "Voltaire", "recipient": "Diderot",          "place": "Ferney"},
+])
+
+with sqlite3.connect("pipeline.db") as conn:
+    cur = conn.cursor()
+
+    # Schema.
+    cur.executescript("""
+        DROP TABLE IF EXISTS letters;
+        DROP TABLE IF EXISTS places;
+
+        CREATE TABLE places (
+            id    INTEGER PRIMARY KEY,
+            name  TEXT UNIQUE NOT NULL
+        );
+
+        CREATE TABLE letters (
+            id         INTEGER PRIMARY KEY,
+            title      TEXT,
+            date       TEXT,
+            sender     TEXT,
+            recipient  TEXT,
+            place_id   INTEGER,
+            FOREIGN KEY (place_id) REFERENCES places(id)
+        );
+    """)
+
+    # Insert unique places, get back a name -> id map.
+    unique_places = sorted(df["place"].unique())
+    cur.executemany(
+        "INSERT INTO places (name) VALUES (?)",
+        [(p,) for p in unique_places],
+    )
+    place_id = {p: pid for pid, p in cur.execute("SELECT id, name FROM places")}
+
+    # Insert letters with the right place_id.
+    rows = [
+        (r["title"], r["date"], r["sender"], r["recipient"], place_id[r["place"]])
+        for _, r in df.iterrows()
+    ]
+    cur.executemany(
+        "INSERT INTO letters (title, date, sender, recipient, place_id) VALUES (?, ?, ?, ?, ?)",
+        rows,
+    )
+
+    print("inserted", cur.execute("SELECT COUNT(*) FROM letters").fetchone()[0], "letters")
+    print("places:", [name for (name,) in cur.execute("SELECT name FROM places ORDER BY name")])
+```
+
+Three habits from Lesson 30 are on display: `executescript` for multi-statement DDL, `executemany` for bulk insert, and parameterised queries (`?`) instead of f-string interpolation.
+
+## Stage 4 — Query the database
+
+Now ask the database real questions. SQL handles the join; pandas turns the answer into a DataFrame:
+
+```python
+import sqlite3
+import pandas as pd
+
+# (Re-create the database for this snippet to be self-contained.)
+with sqlite3.connect("pipeline.db") as conn:
+    conn.executescript("""
+        DROP TABLE IF EXISTS letters;
+        DROP TABLE IF EXISTS places;
+        CREATE TABLE places (id INTEGER PRIMARY KEY, name TEXT UNIQUE);
+        CREATE TABLE letters (id INTEGER PRIMARY KEY, sender TEXT, recipient TEXT,
+                              date TEXT, place_id INTEGER REFERENCES places(id));
+        INSERT INTO places (name) VALUES ('Potsdam'), ('Geneva'), ('Ferney'), ('Unknown');
+        INSERT INTO letters (sender, recipient, date, place_id) VALUES
+            ('Voltaire', 'Frederick II',     '1750-08-23', 1),
+            ('Voltaire', 'Madame du Deffand','1759-04-07', 2),
+            ('Émilie du Châtelet', 'Voltaire','1740-06-12', 4),
+            ('Voltaire', 'Diderot',          '1762-11-02', 3);
+    """)
+
+    # Q1: How many letters per place?
+    print("Letters per place:")
+    print(pd.read_sql_query(
+        """
+        SELECT places.name AS place, COUNT(*) AS n
+        FROM letters
+        JOIN places ON letters.place_id = places.id
+        GROUP BY places.name
+        ORDER BY n DESC
+        """,
+        conn,
+    ))
+
+    # Q2: Voltaire's correspondents over time.
+    print("\nVoltaire's correspondents:")
+    print(pd.read_sql_query(
+        """
+        SELECT recipient, date
+        FROM letters
+        WHERE sender = ?
+        ORDER BY date
+        """,
+        conn,
+        params=("Voltaire",),
+    ))
+
+    # Q3: All letters sent before 1760.
+    print("\nBefore 1760:")
+    print(pd.read_sql_query(
+        """
+        SELECT letters.sender, letters.recipient, letters.date, places.name AS place
+        FROM letters
+        JOIN places ON letters.place_id = places.id
+        WHERE letters.date < ?
+        ORDER BY letters.date
+        """,
+        conn,
+        params=("1760-01-01",),
+    ))
+```
+
+Three different questions, three SQL queries, three DataFrames. The pipeline is now an answer machine.
+
+## What you've actually built
+
+Look at the code you've written across this single file:
+
+- A function that takes HTML and returns structured records.
+- A pandas pass that cleans, types, and validates that data.
+- A schema with two tables and a foreign key.
+- A bulk-insert that respects the schema.
+- Three SQL queries that answer real research questions.
+
+That's not a toy. That's a small, complete research data pipeline. Replace the hardcoded HTML with `requests.get(url).text`, point it at a real site you have permission to scrape, and you've got a project.
+
+## What's beyond this course
+
+Where to go from here, in roughly the order most DH researchers reach for them:
+
+- **NLP at scale.** spaCy and BookNLP turn raw text into entity-annotated, parsed structures. The [free textbooks](/textbooks/) on this site walk through both.
+- **Topic modeling.** `gensim` or BERTopic for "what are the themes across this corpus?" questions.
+- **Network analysis.** `networkx` and `pyvis` for relationships — exactly the kind of question your sender/recipient data is asking for.
+- **Plotting.** `matplotlib` and `seaborn` for static plots, `plotly` for interactive ones, `altair` for grammar-of-graphics style.
+- **Larger storage.** PostgreSQL when SQLite stops fitting. DuckDB if your queries are mostly analytical.
+
+Each of those builds on the same shape: read data → clean it → analyse it → present or store the result. You already know how to do that. Everything else is variations.
+
+## Try it yourself
+
+- Modify the pipeline to also extract a `senders` table, with each unique sender as a row. Make `letters.sender` reference `senders.id` the same way `place_id` works.
+- Add a `--limit N` argument to the script that only processes the first N HTML records — handy when developing against a large source.
+- Save the parsed-but-unstored records to a JSON file (Lesson 28) as an intermediate cache. Re-running the script should read the JSON instead of re-parsing the HTML.
+
+## Last words
+
+You finished the course.
+
+Pick a small project — a corpus of one author's letters, a finding aid you've always wanted searchable, a dataset of book metadata from your own field — and walk this same pipeline against it. Most of what you learn from here will be from that, not from another tutorial.
+
+Whatever you build, the shape is the same as what you wrote in the last hour. You're ready.
+
+## Running the code
+
+This lesson uses BeautifulSoup, pandas, and Python's built-in sqlite3:
+
+```bash
+uv add beautifulsoup4 pandas
+```
+
+Save any snippet to a file — say `pipeline.py` — and run it from your project folder:
+
+```bash
+uv run pipeline.py
+```
+
+`uv run` uses the project's Python and dependencies automatically; no virtualenv to activate. If you haven't set the project up yet, [Lesson 01](/course/lesson-01-introduction-to-python-for-dh/) walks through it.

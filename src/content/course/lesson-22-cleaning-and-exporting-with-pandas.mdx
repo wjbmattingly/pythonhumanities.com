@@ -1,0 +1,401 @@
+---
+title: "Cleaning and Exporting with Pandas"
+lessonNumber: 22
+part: 5
+partTitle: "Working with Tabular Data"
+description: "Real data is messy. Handle missing values, clean up stringy columns, rename and drop, merge two tables, and write the result back out as CSV or Excel."
+---
+
+The data you actually receive — from a colleague, an archive, a scraped page — is never as tidy as the examples in the last two lessons. Names have stray whitespace. Numbers are stored as strings because somebody typed `"n/a"` in one cell. Two spreadsheets need to be joined on a column whose values *almost* match.
+
+This lesson is about the unglamorous middle of every project: cleaning the data so the analysis is trustworthy, and exporting the result so somebody else can use it.
+
+## A messy starting point
+
+We'll work with a deliberately ugly CSV throughout this lesson — the kind of thing a research assistant might hand you:
+
+```python
+import pandas as pd
+
+sample = """name,born,died,letters,place
+Voltaire ,1694,1778,21000,Paris
+Émilie du Châtelet,1706,1749,,Cirey
+Diderot,1713,1784,3500,Paris
+ d'Alembert,1717,1783,1200,Paris
+Rousseau,n/a,1778,?,Geneva
+"""
+with open("messy.csv", "w", encoding="utf-8") as f:
+    f.write(sample)
+
+df = pd.read_csv("messy.csv")
+print(df)
+print(df.dtypes)
+```
+
+Three problems are visible already: stray spaces in `name`, the string `"n/a"` and `"?"` masquerading as missing values, and (because of those strings) `born` and `letters` come in as `object` instead of integers.
+
+## Telling pandas what counts as missing
+
+The cleanest fix is at read time. `na_values` accepts any extra strings to treat as missing:
+
+```python
+import pandas as pd
+
+sample = """name,born,died,letters,place
+Voltaire ,1694,1778,21000,Paris
+Émilie du Châtelet,1706,1749,,Cirey
+Diderot,1713,1784,3500,Paris
+ d'Alembert,1717,1783,1200,Paris
+Rousseau,n/a,1778,?,Geneva
+"""
+with open("messy.csv", "w", encoding="utf-8") as f:
+    f.write(sample)
+
+df = pd.read_csv("messy.csv", na_values=["n/a", "?", "—"])
+print(df)
+print(df.dtypes)
+```
+
+Now `born` and `letters` are numeric (with `NaN` where the bad strings were), and you can do math on them.
+
+## Detecting missing values
+
+`NaN` (Not a Number) is pandas's stand-in for "no value here." Two methods do the bulk of the work:
+
+```python
+import pandas as pd
+
+sample = """name,born,died,letters,place
+Voltaire ,1694,1778,21000,Paris
+Émilie du Châtelet,1706,1749,,Cirey
+Diderot,1713,1784,3500,Paris
+ d'Alembert,1717,1783,1200,Paris
+Rousseau,n/a,1778,?,Geneva
+"""
+with open("messy.csv", "w", encoding="utf-8") as f:
+    f.write(sample)
+df = pd.read_csv("messy.csv", na_values=["n/a", "?", "—"])
+
+print(df.isna())              # boolean DataFrame, True where missing
+print(df.isna().sum())        # count of missing per column
+print(df.isna().sum().sum())  # total missing across the whole table
+```
+
+`df.isna().sum()` is the single most useful one-liner you'll write when you open a new dataset. Run it before anything else.
+
+## Filling missing values
+
+Sometimes you have a sensible default. Sometimes you don't. `fillna` handles both:
+
+```python
+import pandas as pd
+
+sample = """name,born,died,letters,place
+Voltaire ,1694,1778,21000,Paris
+Émilie du Châtelet,1706,1749,,Cirey
+Diderot,1713,1784,3500,Paris
+ d'Alembert,1717,1783,1200,Paris
+Rousseau,n/a,1778,?,Geneva
+"""
+with open("messy.csv", "w", encoding="utf-8") as f:
+    f.write(sample)
+df = pd.read_csv("messy.csv", na_values=["n/a", "?", "—"])
+
+# Fill one column with a constant.
+df["letters"] = df["letters"].fillna(0)
+
+# Fill several columns with different defaults at once.
+df = df.fillna({"place": "Unknown", "born": -1})
+
+print(df)
+```
+
+Be honest about what you're doing. Filling missing letter counts with `0` says "we have no record" — that's a real claim. Filling missing birth years with the column mean is dangerous: it invents data. When in doubt, leave `NaN` in place and let downstream code skip those rows.
+
+## Dropping missing values
+
+When a row is unusable, drop it:
+
+```python
+import pandas as pd
+
+sample = """name,born,died,letters,place
+Voltaire ,1694,1778,21000,Paris
+Émilie du Châtelet,1706,1749,,Cirey
+Diderot,1713,1784,3500,Paris
+ d'Alembert,1717,1783,1200,Paris
+Rousseau,n/a,1778,?,Geneva
+"""
+with open("messy.csv", "w", encoding="utf-8") as f:
+    f.write(sample)
+df = pd.read_csv("messy.csv", na_values=["n/a", "?", "—"])
+
+# Drop any row with at least one NaN.
+print(df.dropna())
+
+# Drop rows missing a specific column.
+print(df.dropna(subset=["born"]))
+
+# Drop columns that are entirely empty.
+print(df.dropna(axis=1, how="all"))
+```
+
+`dropna(subset=[...])` is the version you'll reach for most. It says: "I need these specific columns to be present; throw out rows that don't have them."
+
+## Cleaning text columns with `.str`
+
+The `.str` accessor on a Series exposes string methods that work element-wise. Stripping whitespace, fixing case, and replacing substrings are one line each:
+
+```python
+import pandas as pd
+
+sample = """name,born,died,letters,place
+Voltaire ,1694,1778,21000,Paris
+Émilie du Châtelet,1706,1749,,Cirey
+Diderot,1713,1784,3500,Paris
+ d'Alembert,1717,1783,1200,Paris
+Rousseau,n/a,1778,?,Geneva
+"""
+with open("messy.csv", "w", encoding="utf-8") as f:
+    f.write(sample)
+df = pd.read_csv("messy.csv", na_values=["n/a", "?", "—"])
+
+df["name"] = df["name"].str.strip()             # remove leading/trailing whitespace
+df["place"] = df["place"].str.title()           # "paris" → "Paris"
+df["name"] = df["name"].str.replace("d'", "D'") # consistent capitalization
+
+print(df)
+```
+
+`.str.strip()` is the one you'll do reflexively on every text column. CSV exports from Excel are notorious for trailing spaces.
+
+## Renaming columns
+
+Column names from the wild are inconsistent: `Birth Year`, `birth_year`, `BORN`. Get them into one style early:
+
+```python
+import pandas as pd
+
+sample = """name,born,died,letters,place
+Voltaire,1694,1778,21000,Paris
+Émilie du Châtelet,1706,1749,,Cirey
+"""
+with open("messy.csv", "w", encoding="utf-8") as f:
+    f.write(sample)
+df = pd.read_csv("messy.csv")
+
+# Rename specific columns.
+df = df.rename(columns={"born": "birth_year", "died": "death_year"})
+
+# Or normalize the whole header in one shot.
+df.columns = df.columns.str.lower().str.replace(" ", "_")
+
+print(df.columns)
+```
+
+`snake_case` for column names will save you. Spaces and capital letters make every later filter expression three characters longer and much easier to typo.
+
+## Dropping columns and rows you don't need
+
+```python
+import pandas as pd
+
+sample = """name,born,died,letters,place
+Voltaire,1694,1778,21000,Paris
+Émilie du Châtelet,1706,1749,430,Cirey
+Diderot,1713,1784,3500,Paris
+"""
+with open("messy.csv", "w", encoding="utf-8") as f:
+    f.write(sample)
+df = pd.read_csv("messy.csv")
+
+# Drop a column.
+df = df.drop(columns=["place"])
+
+# Drop a row by index label.
+df = df.drop(index=0)
+
+print(df)
+```
+
+`drop` returns a new DataFrame; reassign to keep the result. (You'll occasionally see `inplace=True` in older code — modern pandas style is to reassign.)
+
+## Sorting
+
+Two patterns cover almost everything you'll want:
+
+```python
+import pandas as pd
+
+sample = """name,born,died,letters,place
+Voltaire,1694,1778,21000,Paris
+Émilie du Châtelet,1706,1749,430,Cirey
+Diderot,1713,1784,3500,Paris
+d'Alembert,1717,1783,1200,Paris
+"""
+with open("messy.csv", "w", encoding="utf-8") as f:
+    f.write(sample)
+df = pd.read_csv("messy.csv")
+
+# Sort ascending by one column.
+print(df.sort_values("born"))
+
+# Sort descending.
+print(df.sort_values("letters", ascending=False))
+
+# Sort by two columns — primary, then tiebreaker.
+print(df.sort_values(["place", "born"], ascending=[True, True]))
+```
+
+`sort_values` doesn't change `df` in place — it returns a new sorted DataFrame. Assign back if you want the change to stick.
+
+## Removing duplicates
+
+```python
+import pandas as pd
+
+sample = """name,born,letters
+Voltaire,1694,21000
+Voltaire,1694,21000
+Diderot,1713,3500
+"""
+with open("dups.csv", "w", encoding="utf-8") as f:
+    f.write(sample)
+df = pd.read_csv("dups.csv")
+
+print(df.duplicated())           # True for every row that's a repeat of an earlier one
+print(df.drop_duplicates())      # keeps the first occurrence
+```
+
+Duplicates often hide in joined datasets. `drop_duplicates(subset=["name"])` keeps the first row for each unique name — useful when you only want one row per entity.
+
+## Merging two DataFrames
+
+When you have two related tables — writers and the cities they lived in, say — `merge` joins them on a shared column. It's pandas's version of a SQL join:
+
+```python
+import pandas as pd
+
+writers = pd.DataFrame({
+    "name": ["Voltaire", "Diderot", "Rousseau"],
+    "place": ["Paris", "Paris", "Geneva"],
+})
+
+cities = pd.DataFrame({
+    "place": ["Paris", "Geneva", "London"],
+    "country": ["France", "Switzerland", "England"],
+})
+
+joined = writers.merge(cities, on="place", how="left")
+print(joined)
+```
+
+`how="left"` keeps every row in the left DataFrame, filling with `NaN` where the right doesn't match — the same behavior as a SQL `LEFT JOIN`. The other useful values are `"inner"` (only matching rows), `"right"`, and `"outer"` (everything from both, with `NaN` where missing).
+
+If the column names don't match, use `left_on=` and `right_on=`:
+
+```python
+import pandas as pd
+
+writers = pd.DataFrame({
+    "name": ["Voltaire", "Diderot"],
+    "city": ["Paris", "Paris"],
+})
+
+cities = pd.DataFrame({
+    "place": ["Paris", "Geneva"],
+    "country": ["France", "Switzerland"],
+})
+
+joined = writers.merge(cities, left_on="city", right_on="place", how="left")
+print(joined)
+```
+
+For most research tasks, that's enough merging. The full `merge` API has more knobs — read the docs when you need them.
+
+## Writing CSV
+
+The mirror of `read_csv`:
+
+```python
+import pandas as pd
+
+df = pd.DataFrame({
+    "name": ["Voltaire", "Diderot"],
+    "letters": [21000, 3500],
+})
+
+df.to_csv("out.csv", index=False, encoding="utf-8")
+print("wrote out.csv")
+```
+
+The flag worth knowing about is **`index=False`**. By default, pandas writes the row index as the first column — usually you don't want that. `index=False` is the right call 95% of the time when sharing a file with someone who isn't using pandas.
+
+## Writing Excel
+
+Same shape, different extension:
+
+```python
+import pandas as pd
+
+df = pd.DataFrame({
+    "name": ["Voltaire", "Diderot"],
+    "letters": [21000, 3500],
+})
+
+df.to_excel("out.xlsx", index=False, sheet_name="writers")
+print("wrote out.xlsx")
+```
+
+For multi-sheet workbooks, use `ExcelWriter`:
+
+```python
+import pandas as pd
+
+writers = pd.DataFrame({"name": ["Voltaire"], "letters": [21000]})
+places = pd.DataFrame({"place": ["Paris", "Cirey"]})
+
+with pd.ExcelWriter("out.xlsx") as writer:
+    writers.to_excel(writer, sheet_name="writers", index=False)
+    places.to_excel(writer, sheet_name="places", index=False)
+
+print("wrote multi-sheet out.xlsx")
+```
+
+That's the full read → clean → analyze → write loop, end to end. Three lessons in, you can do real work with real spreadsheets.
+
+## A practical cleaning checklist
+
+When you open a new dataset, run through this list before doing any analysis:
+
+1. `df.shape` — how big is it?
+2. `df.head()` — what does a row look like?
+3. `df.dtypes` — are the types what you'd expect?
+4. `df.isna().sum()` — where are the missing values?
+5. `df.duplicated().sum()` — any duplicates?
+6. For text columns: `df["col"].str.strip()`, check `value_counts()` for typos.
+7. For numeric columns that came in as `object`: figure out *why*. Usually a stray string in one cell.
+
+Doing this for ten minutes at the start of a project saves hours of "why is my mean wrong?" later.
+
+## Where to next
+
+You've finished Part 5 — three lessons that take you from "what is a DataFrame" to filtering, grouping, cleaning, and exporting real data. That's the working core of pandas. Everything beyond is variations on these moves.
+
+Next up: **Part 6 — Working with the Web**. The web is where most public data actually lives. You'll learn to make HTTP requests, parse HTML, and scrape pages politely.
+
+## Running the code
+
+This lesson uses pandas and openpyxl. Add them to your project once:
+
+```bash
+uv add pandas openpyxl
+```
+
+Save any snippet to a file — say `try.py` — and run it from your project folder:
+
+```bash
+uv run try.py
+```
+
+`uv run` uses the project's Python and dependencies automatically; no virtualenv to activate. If you haven't set the project up yet, [Lesson 01](/course/lesson-01-introduction-to-python-for-dh/) walks through it.

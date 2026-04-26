@@ -1,0 +1,224 @@
+---
+title: "Capstone — A Word Frequency Counter"
+lessonNumber: 14
+part: 3
+partTitle: "Interacting with Data Structures"
+description: "Combine conditionals, loops, functions, and classes to build a real text-analysis tool — the foundational move behind every distant-reading project."
+---
+
+You've now seen the four core moves that make Python a programming language rather than a glorified calculator: conditionals (deciding what to do), loops (doing something many times), functions (naming a chunk of work), and classes (bundling data with behavior). This capstone uses all four.
+
+We'll build a **word frequency counter** — a program that takes a passage of text, breaks it into words, and tallies how often each word appears. It's the smallest serious tool in computational humanities: stylometry, topic modeling, and basic distant reading all start here.
+
+## A first try with a loop
+
+The simplest version is a few lines:
+
+```python
+text = """
+The wonderful adventures of Voltaire began in Paris.
+Voltaire wrote Candide. Candide is a satire.
+"""
+
+words = text.lower().split()
+counts = {}
+for word in words:
+    counts[word] = counts.get(word, 0) + 1
+
+print(counts)
+```
+
+That works, but the output is messy — `Paris.` and `Paris` count separately because of punctuation, and one-letter words fill the result with noise. Let's fix it properly.
+
+## Stripping punctuation
+
+Stripping punctuation off each word is a small loop:
+
+```python
+import string
+
+text = "Voltaire wrote Candide. Candide is a satire."
+
+cleaned = []
+for word in text.lower().split():
+    word = word.strip(string.punctuation)
+    if word:
+        cleaned.append(word)
+
+print(cleaned)
+```
+
+`string.punctuation` is a string of every ASCII punctuation character; `.strip(string.punctuation)` removes any of them from the start and end of the word. The `if word:` check throws out words that *became* empty after stripping (a leftover comma, say).
+
+## Wrap it in a function
+
+Once you've got a recipe that works, wrap it in a function so you can reuse it:
+
+```python
+import string
+
+def tokenize(text):
+    """Lowercase, split on whitespace, strip punctuation, drop empties."""
+    tokens = []
+    for word in text.lower().split():
+        word = word.strip(string.punctuation)
+        if word:
+            tokens.append(word)
+    return tokens
+
+passage = "Voltaire wrote Candide. Candide is a satire about an optimist."
+print(tokenize(passage))
+```
+
+Now `tokenize` is a black box: text in, list of clean tokens out. Anywhere in the rest of your program (or future programs) you need cleaned tokens, you call `tokenize`. That's the whole point of functions — turn a recipe into a tool.
+
+## Counting with another function
+
+Same pattern for the counting step:
+
+```python
+import string
+
+def tokenize(text):
+    tokens = []
+    for word in text.lower().split():
+        word = word.strip(string.punctuation)
+        if word:
+            tokens.append(word)
+    return tokens
+
+def count_words(text):
+    counts = {}
+    for word in tokenize(text):
+        counts[word] = counts.get(word, 0) + 1
+    return counts
+
+passage = "Voltaire wrote Candide. Candide is a satire."
+print(count_words(passage))
+```
+
+`count_words` *uses* `tokenize` — that's composition. Small functions stack into bigger ones.
+
+## Filtering stopwords
+
+The most common words in any English text are *the, of, and, to, a* — they swamp anything interesting. Filter them out:
+
+```python
+import string
+
+STOPWORDS = {"the", "of", "and", "to", "a", "in", "is", "it", "that", "an", "for"}
+
+def tokenize(text):
+    tokens = []
+    for word in text.lower().split():
+        word = word.strip(string.punctuation)
+        if word and word not in STOPWORDS:
+            tokens.append(word)
+    return tokens
+
+passage = "The wonderful Voltaire wrote Candide. Candide is a satire about an optimist."
+print(tokenize(passage))
+```
+
+`STOPWORDS` is a *set* — `in`-checks against a set are O(1). For lookup-only collections, sets are the right pick. You'll see this used everywhere once you start working with NLP libraries.
+
+## Top-N most frequent
+
+Once you have a counts dict, sorting by value gives you the most-used words:
+
+```python
+import string
+
+def tokenize(text):
+    tokens = []
+    for word in text.lower().split():
+        word = word.strip(string.punctuation)
+        if word:
+            tokens.append(word)
+    return tokens
+
+def count_words(text):
+    counts = {}
+    for word in tokenize(text):
+        counts[word] = counts.get(word, 0) + 1
+    return counts
+
+def top_n(counts, n=5):
+    return sorted(counts.items(), key=lambda kv: kv[1], reverse=True)[:n]
+
+passage = "Voltaire wrote Candide. Candide Candide is a satire. Voltaire is famous."
+print(top_n(count_words(passage), 3))
+```
+
+The `sorted(..., key=lambda kv: kv[1], reverse=True)` reads as: sort the (word, count) pairs by the second item, descending. The `[:n]` keeps only the first `n`.
+
+## Wrapping it as a class
+
+When several functions all share the same data, that's a hint that a **class** would tidy things up. Each `FrequencyCounter` instance holds its own counts; methods operate on them.
+
+```python
+import string
+
+class FrequencyCounter:
+    """Builds a word-frequency table from one or more passages."""
+
+    STOPWORDS = {"the", "of", "and", "to", "a", "in", "is", "it", "that", "an", "for"}
+
+    def __init__(self):
+        self.counts = {}
+
+    def add(self, text):
+        for word in text.lower().split():
+            word = word.strip(string.punctuation)
+            if word and word not in self.STOPWORDS:
+                self.counts[word] = self.counts.get(word, 0) + 1
+
+    def top(self, n=5):
+        return sorted(self.counts.items(), key=lambda kv: kv[1], reverse=True)[:n]
+
+    def total(self):
+        return sum(self.counts.values())
+
+
+fc = FrequencyCounter()
+fc.add("Voltaire wrote Candide. Candide is a satire.")
+fc.add("Voltaire was famous. Voltaire wrote letters.")
+
+print(fc.top(3))
+print("total kept tokens:", fc.total())
+```
+
+Notice how the *behavior* now lives where the *data* lives. You don't pass a `counts` dict around between functions — it's an attribute on the object. This is the core upgrade in moving from procedural to object-oriented code: state and operations are bundled.
+
+## What this is the start of
+
+A frequency counter feels small, but it's the first move in a long line of techniques:
+
+- **Stylometry.** Authors have characteristic word frequencies — if you compare counts across two passages, you can guess at attribution.
+- **Topic modeling.** Algorithms like LDA build on the same word-counts-per-document idea.
+- **TF-IDF.** Term-frequency × inverse-document-frequency, the workhorse of search engines, is a frequency counter with a twist.
+- **Distant reading.** Franco Moretti's whole approach to literary history rests on counting things across thousands of texts.
+
+Every one of those is just *more* of what you wrote in this lesson.
+
+## Try it yourself
+
+- Add a method that returns the **rare** words (count of 1).
+- Make `STOPWORDS` configurable in `__init__` so callers can pass their own list.
+- Add a `from_file(path)` class method that reads a `.txt` file and returns a `FrequencyCounter` already populated. (You'll learn the file part in the next lesson — but try sketching the signature now.)
+
+## Where to next
+
+You can now write real Python programs. Part 4 takes the next step: **Working with Text Data**. You'll read files, parse them with regex, and turn unstructured text into structured records.
+
+Continue to [Lesson 15: Python and Text Files](/course/lesson-15-python-and-text-files/).
+
+## Running the code
+
+Save any snippet to a file — say `freq.py` — and run it from your project folder:
+
+```bash
+uv run freq.py
+```
+
+`uv run` uses the project's Python automatically; no virtualenv to activate. If you haven't set the project up yet, [Lesson 01](/course/lesson-01-introduction-to-python-for-dh/) walks through it.

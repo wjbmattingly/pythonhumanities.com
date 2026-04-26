@@ -1,0 +1,201 @@
+---
+title: "Capstone — Mining a Public-Domain Text"
+lessonNumber: 19
+part: 4
+partTitle: "Working with Text Data"
+description: "Pull a chapter of Frankenstein into a script, extract structured information with regex, and write the results back out — the loop every text-mining project follows."
+---
+
+You've got the moves: read files, import libraries, write regex, save results. This capstone strings them into a single small project — the kind of thing you'd actually do in a research notebook on day one of a corpus study.
+
+We'll work with a passage from Mary Shelley's *Frankenstein* (public domain, 1818). The questions are the kind humanists actually ask:
+
+- Where does the narrator name a place? How often, and which ones?
+- When are dates mentioned, and in what form?
+- Which sentences contain dialogue?
+
+By the end, you'll have a small script that answers all three from a single text file and writes the findings out to a CSV.
+
+## Setup — a real passage
+
+We'll start by writing the passage to disk. In a real project this would be a `.txt` file you downloaded from Project Gutenberg.
+
+```python
+from pathlib import Path
+
+passage = """
+You will rejoice to hear that no disaster has accompanied the commencement
+of an enterprise which you have regarded with such evil forebodings.
+I arrived here yesterday, and my first task is to assure my dear sister
+of my welfare and increasing confidence in the success of my undertaking.
+
+I am already far north of London, and as I walk in the streets of Petersburgh,
+I feel a cold northern breeze play upon my cheeks, which braces my nerves
+and fills me with delight. Do you understand this feeling?
+
+This breeze, which has travelled from the regions towards which I am advancing,
+gives me a foretaste of those icy climes. Inspirited by this wind of promise,
+my daydreams become more fervent and vivid. I try in vain to be persuaded
+that the pole is the seat of frost and desolation; it ever presents itself
+to my imagination as the region of beauty and delight.
+
+"There," I said, "is the visible embodiment of all that is sublime."
+
+St. Petersburgh, Dec. 11th, 17—.
+"""
+
+Path("frankenstein.txt").write_text(passage, encoding="utf-8")
+print("wrote frankenstein.txt")
+```
+
+## Reading it back in
+
+The file-reading habit from Lesson 15 — open it, read it, close it cleanly:
+
+```python
+from pathlib import Path
+
+text = Path("frankenstein.txt").read_text(encoding="utf-8")
+print(len(text), "characters")
+print(text[:80])
+```
+
+`Path.read_text` is the modern one-liner. The whole file lands in memory as one big string.
+
+## Finding place names
+
+A simple heuristic for proper nouns: capitalised words that aren't at the start of a sentence. Imperfect, but enough for a first pass — and you'll improve it as you read.
+
+```python
+import re
+from pathlib import Path
+
+text = Path("frankenstein.txt").read_text(encoding="utf-8")
+
+# Words starting with a capital, not preceded by a period+space
+# (which would indicate sentence start). The (?<!\. ) is a negative
+# lookbehind — "not preceded by '. '".
+pattern = r"(?<!\. )(?<!^)\b([A-Z][a-zA-Z]+)\b"
+
+candidates = re.findall(pattern, text)
+print("candidates:", candidates[:20])
+
+# Crude filter — drop short ones and obvious filler.
+SKIP = {"I", "Do", "You", "This", "Inspirited"}
+places = [c for c in candidates if len(c) > 2 and c not in SKIP]
+print("filtered:", places)
+```
+
+`re.findall` returns a list of every match. The lookbehind in the pattern is a regex feature you may not have used yet — it lets the regex *check* the preceding context without including it in the match. Read the regex docs when you have time; lookbehind/lookahead solve a lot of "almost but not quite" matching problems.
+
+## Counting which places appear most
+
+Once you have a list, the count-with-a-dict pattern from earlier lessons takes over:
+
+```python
+import re
+from pathlib import Path
+from collections import Counter
+
+text = Path("frankenstein.txt").read_text(encoding="utf-8")
+places = re.findall(r"(?<!\. )(?<!^)\b([A-Z][a-zA-Z]+)\b", text)
+
+counts = Counter(places)
+print(counts.most_common(5))
+```
+
+`collections.Counter` is a dict subclass that does exactly the count-or-default pattern, with a `.most_common(n)` method built in. It's worth knowing — you'll reach for it constantly.
+
+## Extracting dates
+
+Dates in 19th-century texts are notoriously inconsistent. *Dec. 11th, 17—.* uses an em-dash where the year was either redacted or unknown. A flexible regex catches that and other plausible forms:
+
+```python
+import re
+from pathlib import Path
+
+text = Path("frankenstein.txt").read_text(encoding="utf-8")
+
+# Month abbreviation, optional period, day with optional ordinal,
+# optional comma, optional year (digits or em-dash).
+pattern = r"\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\.?\s+\d{1,2}(?:st|nd|rd|th)?,?\s*(?:\d{2,4}|[—-]+)?"
+
+dates = re.findall(pattern, text)
+print("date headings:", dates)
+
+# To get the full match, not just the captured group, use finditer:
+for m in re.finditer(pattern, text):
+    print("→", m.group(0))
+```
+
+Notice how `findall` only gives back what's *captured* in `( )` — in this pattern only the month. To get the whole match, use `finditer` and call `.group(0)` on each match object. That distinction trips up everybody once.
+
+## Pulling out dialogue
+
+A line of dialogue in this passage is wrapped in straight quotes. A regex that matches anything between `"` and `"` does the trick:
+
+```python
+import re
+from pathlib import Path
+
+text = Path("frankenstein.txt").read_text(encoding="utf-8")
+
+quoted = re.findall(r'"([^"]+)"', text)
+for q in quoted:
+    print("—", q)
+```
+
+The character class `[^"]+` reads as "one or more characters that are *not* a quote." It stops the regex from gobbling everything between the first and last quote in the text.
+
+Real source texts often use curly quotes (`"…"`) too. A research-quality version of this would handle both — try expanding the pattern when you've finished the chapter.
+
+## Writing results to a CSV
+
+A capstone deserves a finished output. Save the place-counts to a CSV that any colleague could open in Excel:
+
+```python
+import csv
+import re
+from pathlib import Path
+from collections import Counter
+
+text = Path("frankenstein.txt").read_text(encoding="utf-8")
+places = re.findall(r"(?<!\. )(?<!^)\b([A-Z][a-zA-Z]+)\b", text)
+counts = Counter(places).most_common()
+
+with open("places.csv", "w", encoding="utf-8", newline="") as f:
+    writer = csv.writer(f)
+    writer.writerow(["place", "count"])
+    writer.writerows(counts)
+
+print("wrote places.csv with", len(counts), "rows")
+print(Path("places.csv").read_text(encoding="utf-8"))
+```
+
+Notice the `newline=""` in the `open` call — that's the standard incantation to keep `csv` from inserting blank lines on Windows. It's worth typing every time.
+
+## What you've just built
+
+Read in plain text → extract structured features with regex → tally and rank → save to a sharable file. That's the whole loop of basic text mining. Every more sophisticated tool — spaCy, NLTK, BookNLP — replaces parts of that loop with smarter components, but the **shape of the work** is the same.
+
+## Try it yourself
+
+- Replace the regex-based proper-noun finder with [spaCy's NER](/textbooks/) and compare. (The NER textbook walks through this end to end.)
+- Loop over a folder of `.txt` files and produce one places.csv per file. The `pathlib.Path.glob` pattern from Lesson 18 is exactly the right tool.
+- Add a column to `places.csv` showing the *first character offset* where each place is mentioned. Hint: `re.finditer` and `m.start()`.
+
+## Where to next
+
+You've worked with raw text. The next part — **Working with Tabular Data** — moves to the other dominant data shape in DH: spreadsheets and CSVs. You'll meet pandas, the library that turns "messy spreadsheet" into "queryable database in three lines."
+
+Continue to [Lesson 20: Introduction to Pandas](/course/lesson-20-introduction-to-pandas/).
+
+## Running the code
+
+Save any snippet to a file — say `mine.py` — and run it from your project folder:
+
+```bash
+uv run mine.py
+```
+
+`uv run` uses the project's Python automatically; no virtualenv to activate. If you haven't set the project up yet, [Lesson 01](/course/lesson-01-introduction-to-python-for-dh/) walks through it.

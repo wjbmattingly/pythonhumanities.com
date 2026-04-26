@@ -1,6 +1,6 @@
 ---
 title: "Python and the Requests Module"
-lessonNumber: 20
+lessonNumber: 25
 part: 6
 partTitle: "Web Data"
 description: "Use the requests library to fetch raw HTML from the web — and learn the small set of habits that make scraping reliable and polite."
@@ -235,7 +235,7 @@ You hit the network once per page; from then on, parsing is instant. This is the
 
 `requests` retrieves bytes. It doesn't parse HTML, doesn't run JavaScript, doesn't navigate forms. For parsing, that's BeautifulSoup, which is the next lesson. For JavaScript-rendered pages, it's Playwright or Selenium — out of scope for this course but worth knowing about.
 
-Try grabbing HTML from a few sites yourself. Look at `response.status_code`, `response.encoding`, and the first hundred characters of `response.text`. When that feels routine, continue to [Lesson 21: Python and BeautifulSoup](/course/lesson-21-python-and-beautifulsoup/).
+Try grabbing HTML from a few sites yourself. Look at `response.status_code`, `response.encoding`, and the first hundred characters of `response.text`. When that feels routine, continue to [Lesson 26: Python and BeautifulSoup](/course/lesson-26-python-and-beautifulsoup/).
 
 ## Running the code
 

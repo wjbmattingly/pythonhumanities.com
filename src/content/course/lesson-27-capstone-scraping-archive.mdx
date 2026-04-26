@@ -1,0 +1,279 @@
+---
+title: "Capstone — Scraping a Structured Archive Page"
+lessonNumber: 27
+part: 6
+partTitle: "Web Data"
+description: "Walk through fetching a structured archive listing, parsing it with BeautifulSoup, and turning every entry into a clean record — the workflow behind most DH datasets built from the open web."
+---
+
+You've seen the three pieces — HTML, requests, BeautifulSoup. This capstone fits them together on a realistic task: turning an archive's listing page into a structured dataset of records.
+
+We'll use a hardcoded HTML string for reproducibility (so the lesson works without an internet connection and won't break when a real site redesigns). The pattern transfers verbatim to any live page you'd actually scrape.
+
+## A realistic archive listing
+
+Here's what a finding-aid page often looks like — repeated `<article>` blocks, each describing one item:
+
+```python
+html = """
+<!DOCTYPE html>
+<html>
+<head><title>Voltaire Correspondence — Listing</title></head>
+<body>
+  <h1>Voltaire Correspondence</h1>
+  <article class="letter">
+    <h2 class="letter-title">To Frederick II</h2>
+    <p class="letter-meta">
+      <span class="date">1750-08-23</span> ·
+      <span class="place">Potsdam</span>
+    </p>
+    <p class="letter-summary">A reply on the duties of a philosophical king.</p>
+    <a class="letter-link" href="/letters/voltaire-001">Read</a>
+  </article>
+  <article class="letter">
+    <h2 class="letter-title">To Madame du Deffand</h2>
+    <p class="letter-meta">
+      <span class="date">1759-04-07</span> ·
+      <span class="place">Geneva</span>
+    </p>
+    <p class="letter-summary">On the publication of Candide.</p>
+    <a class="letter-link" href="/letters/voltaire-002">Read</a>
+  </article>
+  <article class="letter">
+    <h2 class="letter-title">To Diderot</h2>
+    <p class="letter-meta">
+      <span class="date">1762-11-02</span> ·
+      <span class="place">Ferney</span>
+    </p>
+    <p class="letter-summary">Encouragement on the Encyclopédie.</p>
+    <!-- this entry has no link yet -->
+  </article>
+</body>
+</html>
+"""
+
+print(len(html), "chars of HTML")
+```
+
+This shape — repeated containers, each with the same structure — is what you'll see on virtually every well-built archive site, library catalog, or finding aid.
+
+## Loop over the containers, not the fields
+
+The single most important habit in scraping is on display in Lesson 26: loop over the *containers* (each `<article>`), then `select_one` inside each. That guarantees every field belongs to the same record. Loose `select` calls across the whole page will misalign the moment one record is missing a field.
+
+```python
+from bs4 import BeautifulSoup
+
+html = """
+<article class="letter">
+  <h2 class="letter-title">To Frederick II</h2>
+  <p class="letter-meta">
+    <span class="date">1750-08-23</span>
+    <span class="place">Potsdam</span>
+  </p>
+</article>
+<article class="letter">
+  <h2 class="letter-title">To Madame du Deffand</h2>
+  <p class="letter-meta">
+    <span class="date">1759-04-07</span>
+    <span class="place">Geneva</span>
+  </p>
+</article>
+"""
+
+soup = BeautifulSoup(html, "html.parser")
+for article in soup.select("article.letter"):
+    title = article.select_one(".letter-title").get_text(strip=True)
+    date = article.select_one(".date").get_text(strip=True)
+    place = article.select_one(".place").get_text(strip=True)
+    print(f"{date} — {title} ({place})")
+```
+
+`get_text(strip=True)` is the move from Lesson 26 — pull the text out of the element, with surrounding whitespace removed.
+
+## Building a list of dicts
+
+The output you want is the list-of-dicts shape from Lesson 09. Every entry is one record; pandas, JSON, and CSV all consume it cleanly.
+
+```python
+from bs4 import BeautifulSoup
+
+html = """
+<article class="letter">
+  <h2 class="letter-title">To Frederick II</h2>
+  <p class="letter-meta">
+    <span class="date">1750-08-23</span>
+    <span class="place">Potsdam</span>
+  </p>
+  <p class="letter-summary">A reply on the duties of a philosophical king.</p>
+  <a class="letter-link" href="/letters/voltaire-001">Read</a>
+</article>
+<article class="letter">
+  <h2 class="letter-title">To Diderot</h2>
+  <p class="letter-meta">
+    <span class="date">1762-11-02</span>
+    <span class="place">Ferney</span>
+  </p>
+  <p class="letter-summary">Encouragement on the Encyclopédie.</p>
+</article>
+"""
+
+soup = BeautifulSoup(html, "html.parser")
+
+records = []
+for article in soup.select("article.letter"):
+    link = article.select_one(".letter-link")
+    record = {
+        "title":   article.select_one(".letter-title").get_text(strip=True),
+        "date":    article.select_one(".date").get_text(strip=True),
+        "place":   article.select_one(".place").get_text(strip=True),
+        "summary": article.select_one(".letter-summary").get_text(strip=True),
+        "url":     link["href"] if link else None,
+    }
+    records.append(record)
+
+for r in records:
+    print(r)
+```
+
+Notice the **defensive read** for the link: `link["href"] if link else None`. That third article doesn't have a link element. Without the guard, `select_one` returns `None`, indexing it with `["href"]` raises `TypeError`, and your script dies on the third entry.
+
+This is the second-most-important habit: assume *every optional field will eventually be missing* and write the read defensively from the start.
+
+## A small reusable function
+
+Wrap the per-page logic in a function and you've got a tool you can call against any number of archive pages:
+
+```python
+from bs4 import BeautifulSoup
+
+def parse_listing(html):
+    soup = BeautifulSoup(html, "html.parser")
+    out = []
+    for article in soup.select("article.letter"):
+        link = article.select_one(".letter-link")
+        out.append({
+            "title":   article.select_one(".letter-title").get_text(strip=True),
+            "date":    article.select_one(".date").get_text(strip=True),
+            "place":   article.select_one(".place").get_text(strip=True),
+            "summary": article.select_one(".letter-summary").get_text(strip=True),
+            "url":     link["href"] if link else None,
+        })
+    return out
+
+
+sample = """
+<article class="letter">
+  <h2 class="letter-title">To Frederick II</h2>
+  <p class="letter-meta"><span class="date">1750-08-23</span><span class="place">Potsdam</span></p>
+  <p class="letter-summary">A reply.</p>
+  <a class="letter-link" href="/letters/voltaire-001">Read</a>
+</article>
+"""
+
+print(parse_listing(sample))
+```
+
+Now `parse_listing(html)` is your unit of work. Real archives have pagination — page 1, page 2, page 3 — and you'd call this function on each page's HTML and extend a master list.
+
+## Loading the result into pandas
+
+Once you have records, pandas takes one line:
+
+```python
+import pandas as pd
+from bs4 import BeautifulSoup
+
+html = """
+<article class="letter">
+  <h2 class="letter-title">To Frederick II</h2>
+  <p class="letter-meta"><span class="date">1750-08-23</span><span class="place">Potsdam</span></p>
+  <p class="letter-summary">Reply.</p>
+  <a class="letter-link" href="/letters/voltaire-001">Read</a>
+</article>
+<article class="letter">
+  <h2 class="letter-title">To Diderot</h2>
+  <p class="letter-meta"><span class="date">1762-11-02</span><span class="place">Ferney</span></p>
+  <p class="letter-summary">Encouragement.</p>
+</article>
+"""
+
+soup = BeautifulSoup(html, "html.parser")
+records = []
+for article in soup.select("article.letter"):
+    link = article.select_one(".letter-link")
+    records.append({
+        "title":   article.select_one(".letter-title").get_text(strip=True),
+        "date":    article.select_one(".date").get_text(strip=True),
+        "place":   article.select_one(".place").get_text(strip=True),
+        "summary": article.select_one(".letter-summary").get_text(strip=True),
+        "url":     link["href"] if link else None,
+    })
+
+df = pd.DataFrame(records)
+df["date"] = pd.to_datetime(df["date"])
+df["year"] = df["date"].dt.year
+
+print(df)
+print(df.dtypes)
+```
+
+Two extra lines turn the date strings into proper `datetime` values and pull out a `year` column. Now you can group, filter, and plot — every Part 5 trick is back on the menu.
+
+## Exporting the dataset
+
+A capstone deserves a final artefact:
+
+```python
+import pandas as pd
+
+df = pd.DataFrame([
+    {"title": "To Frederick II",      "date": "1750-08-23", "place": "Potsdam"},
+    {"title": "To Madame du Deffand", "date": "1759-04-07", "place": "Geneva"},
+    {"title": "To Diderot",           "date": "1762-11-02", "place": "Ferney"},
+])
+
+df.to_csv("voltaire_letters.csv", index=False, encoding="utf-8")
+df.to_excel("voltaire_letters.xlsx", index=False, sheet_name="letters")
+print("wrote voltaire_letters.csv and .xlsx")
+```
+
+Two formats from one DataFrame. Excel for the colleague who wants to skim it; CSV for the next script that'll consume it.
+
+## Real-world considerations
+
+When you go to do this on a live site — and you should — there are a few habits that separate a respectful scraper from a rude one:
+
+- **Read the site's `robots.txt`** before you start. Some sites disallow scraping; some allow it with rate limits.
+- **Identify yourself** with a `User-Agent` string that says who you are and how to contact you.
+- **Sleep between requests.** `time.sleep(1)` between page fetches is the polite default.
+- **Cache fetched pages to disk.** Re-running your script shouldn't re-hit the server. Save the raw HTML once, then iterate on the parsing locally.
+- **Check the site's data export options first.** Many archives publish CSV or JSON dumps that save you all of this work entirely. Always look.
+
+## Try it yourself
+
+- Add a second page of HTML and modify `parse_listing` to take a *list* of HTML strings, returning the combined records.
+- Use `requests` (Lesson 25) to fetch a real listing page from a site you have permission to scrape — your university's manuscript catalog, say — and feed it through `parse_listing`.
+- Add error handling: if a record is missing the title (the one field you require), log a warning and skip the record instead of crashing.
+
+## Where to next
+
+The final part covers **storing data** — taking everything you've collected and putting it somewhere durable. CSV and JSON for portability, XML for compliance with archival standards, and SQLite for when your data outgrows flat files.
+
+Continue to [Lesson 28: Storing Data — Text, CSV, and JSON](/course/lesson-28-python-and-storing-data-in-text-files/).
+
+## Running the code
+
+This lesson uses BeautifulSoup and pandas. Add them to your project once:
+
+```bash
+uv add beautifulsoup4 pandas openpyxl
+```
+
+Save any snippet to a file — say `scrape.py` — and run it from your project folder:
+
+```bash
+uv run scrape.py
+```
+
+`uv run` uses the project's Python and dependencies automatically; no virtualenv to activate. If you haven't set the project up yet, [Lesson 01](/course/lesson-01-introduction-to-python-for-dh/) walks through it.

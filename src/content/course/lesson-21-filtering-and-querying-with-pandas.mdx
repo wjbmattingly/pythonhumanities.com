@@ -1,0 +1,457 @@
+---
+title: "Filtering and Querying with Pandas"
+lessonNumber: 21
+part: 5
+partTitle: "Working with Tabular Data"
+description: "Pull the rows you want out of a DataFrame — Boolean masks, .query, sorting, and the GroupBy that does most analytics work."
+---
+
+A DataFrame you can't filter is just a CSV. The whole reason to load a table into pandas is to ask questions of it: *which rows match this condition?*, *what's the count by category?*, *what's the top 10?*. This lesson covers the four moves that answer most of those questions: Boolean masks, `.query`, `sort_values`, and `groupby`.
+
+We'll work with a slightly richer sample throughout the lesson:
+
+```python
+import pandas as pd
+
+sample = """name,born,died,letters,country
+Voltaire,1694,1778,21000,France
+Émilie du Châtelet,1706,1749,430,France
+Diderot,1713,1784,3500,France
+d'Alembert,1717,1783,1200,France
+Hume,1711,1776,800,Scotland
+Smith,1723,1790,360,Scotland
+Wollstonecraft,1759,1797,500,England
+Kant,1724,1804,1100,Germany
+"""
+with open("writers.csv", "w", encoding="utf-8") as f:
+    f.write(sample)
+
+df = pd.read_csv("writers.csv")
+print(df)
+```
+
+Every snippet below assumes that file exists. Each one re-creates it so you can run any of them in isolation.
+
+## Boolean masks
+
+The most fundamental filter in pandas is a **Boolean mask** — a Series of `True`/`False` values, one per row, that you use to pick which rows survive.
+
+A comparison on a column produces a mask:
+
+```python
+import pandas as pd
+
+sample = """name,born,died,letters,country
+Voltaire,1694,1778,21000,France
+Émilie du Châtelet,1706,1749,430,France
+Diderot,1713,1784,3500,France
+d'Alembert,1717,1783,1200,France
+Hume,1711,1776,800,Scotland
+Smith,1723,1790,360,Scotland
+Wollstonecraft,1759,1797,500,England
+Kant,1724,1804,1100,Germany
+"""
+with open("writers.csv", "w", encoding="utf-8") as f:
+    f.write(sample)
+df = pd.read_csv("writers.csv")
+
+mask = df["letters"] > 1000
+print(mask)
+```
+
+That mask, dropped back into `df[...]`, returns only the rows where it was `True`:
+
+```python
+import pandas as pd
+
+sample = """name,born,died,letters,country
+Voltaire,1694,1778,21000,France
+Émilie du Châtelet,1706,1749,430,France
+Diderot,1713,1784,3500,France
+d'Alembert,1717,1783,1200,France
+Hume,1711,1776,800,Scotland
+Smith,1723,1790,360,Scotland
+Wollstonecraft,1759,1797,500,England
+Kant,1724,1804,1100,Germany
+"""
+with open("writers.csv", "w", encoding="utf-8") as f:
+    f.write(sample)
+df = pd.read_csv("writers.csv")
+
+prolific = df[df["letters"] > 1000]
+print(prolific)
+```
+
+Combine masks with `&` (and), `|` (or), `~` (not). **Each comparison must be wrapped in parentheses** — Python's operator precedence will bite you otherwise:
+
+```python
+import pandas as pd
+
+sample = """name,born,died,letters,country
+Voltaire,1694,1778,21000,France
+Émilie du Châtelet,1706,1749,430,France
+Diderot,1713,1784,3500,France
+d'Alembert,1717,1783,1200,France
+Hume,1711,1776,800,Scotland
+Smith,1723,1790,360,Scotland
+Wollstonecraft,1759,1797,500,England
+Kant,1724,1804,1100,Germany
+"""
+with open("writers.csv", "w", encoding="utf-8") as f:
+    f.write(sample)
+df = pd.read_csv("writers.csv")
+
+# French writers born after 1700
+print(df[(df["country"] == "France") & (df["born"] > 1700)])
+
+# Anyone NOT in France
+print(df[~(df["country"] == "France")])
+
+# Anyone with at least 1000 letters or born after 1750
+print(df[(df["letters"] >= 1000) | (df["born"] > 1750)])
+```
+
+`and` and `or` (the Python keywords) don't work on Series. Use `&` and `|`. This is the single most common newcomer mistake; if you see `ValueError: The truth value of a Series is ambiguous`, that's what happened.
+
+## Membership filtering — `.isin`
+
+Filtering "rows where country is France or Germany" with masks works, but `.isin` is shorter and reads better:
+
+```python
+import pandas as pd
+
+sample = """name,born,died,letters,country
+Voltaire,1694,1778,21000,France
+Émilie du Châtelet,1706,1749,430,France
+Diderot,1713,1784,3500,France
+d'Alembert,1717,1783,1200,France
+Hume,1711,1776,800,Scotland
+Smith,1723,1790,360,Scotland
+Wollstonecraft,1759,1797,500,England
+Kant,1724,1804,1100,Germany
+"""
+with open("writers.csv", "w", encoding="utf-8") as f:
+    f.write(sample)
+df = pd.read_csv("writers.csv")
+
+continental = df[df["country"].isin(["France", "Germany"])]
+print(continental)
+```
+
+Negate it with `~`:
+
+```python
+import pandas as pd
+
+sample = """name,born,died,letters,country
+Voltaire,1694,1778,21000,France
+Émilie du Châtelet,1706,1749,430,France
+Diderot,1713,1784,3500,France
+d'Alembert,1717,1783,1200,France
+Hume,1711,1776,800,Scotland
+Smith,1723,1790,360,Scotland
+Wollstonecraft,1759,1797,500,England
+Kant,1724,1804,1100,Germany
+"""
+with open("writers.csv", "w", encoding="utf-8") as f:
+    f.write(sample)
+df = pd.read_csv("writers.csv")
+
+print(df[~df["country"].isin(["France", "Germany"])])
+```
+
+## Filtering by string content — `.str`
+
+Text columns expose a `.str` accessor with all the string methods you already know:
+
+```python
+import pandas as pd
+
+sample = """name,born,died,letters,country
+Voltaire,1694,1778,21000,France
+Émilie du Châtelet,1706,1749,430,France
+Diderot,1713,1784,3500,France
+d'Alembert,1717,1783,1200,France
+Hume,1711,1776,800,Scotland
+Smith,1723,1790,360,Scotland
+Wollstonecraft,1759,1797,500,England
+Kant,1724,1804,1100,Germany
+"""
+with open("writers.csv", "w", encoding="utf-8") as f:
+    f.write(sample)
+df = pd.read_csv("writers.csv")
+
+# Names containing a lowercase d
+print(df[df["name"].str.contains("d", case=True, na=False)])
+
+# Names starting with a vowel
+print(df[df["name"].str.match(r"^[AEIOUaeiou]")])
+
+# Country in lowercase
+print(df["country"].str.lower())
+```
+
+`na=False` says "treat any missing values as not-matching." Without it, a missing value in the column raises an error.
+
+## `.query` — readable filters as strings
+
+For longer conditions, `.query` reads better than nested masks:
+
+```python
+import pandas as pd
+
+sample = """name,born,died,letters,country
+Voltaire,1694,1778,21000,France
+Émilie du Châtelet,1706,1749,430,France
+Diderot,1713,1784,3500,France
+d'Alembert,1717,1783,1200,France
+Hume,1711,1776,800,Scotland
+Smith,1723,1790,360,Scotland
+Wollstonecraft,1759,1797,500,England
+Kant,1724,1804,1100,Germany
+"""
+with open("writers.csv", "w", encoding="utf-8") as f:
+    f.write(sample)
+df = pd.read_csv("writers.csv")
+
+print(df.query("country == 'France' and born > 1700"))
+print(df.query("letters > 1000 and country != 'France'"))
+```
+
+Inside `.query`, you write `and`/`or`/`not` (not `&`/`|`/`~`). Reference outside variables with `@`:
+
+```python
+import pandas as pd
+
+sample = """name,born,died,letters,country
+Voltaire,1694,1778,21000,France
+Émilie du Châtelet,1706,1749,430,France
+Diderot,1713,1784,3500,France
+d'Alembert,1717,1783,1200,France
+Hume,1711,1776,800,Scotland
+Smith,1723,1790,360,Scotland
+Wollstonecraft,1759,1797,500,England
+Kant,1724,1804,1100,Germany
+"""
+with open("writers.csv", "w", encoding="utf-8") as f:
+    f.write(sample)
+df = pd.read_csv("writers.csv")
+
+cutoff = 1000
+print(df.query("letters >= @cutoff"))
+```
+
+For one-condition filters, masks are still cleaner. For three or more conditions, `.query` wins on readability.
+
+## Sorting
+
+`sort_values` reorders rows by one or more columns:
+
+```python
+import pandas as pd
+
+sample = """name,born,died,letters,country
+Voltaire,1694,1778,21000,France
+Émilie du Châtelet,1706,1749,430,France
+Diderot,1713,1784,3500,France
+d'Alembert,1717,1783,1200,France
+Hume,1711,1776,800,Scotland
+Smith,1723,1790,360,Scotland
+Wollstonecraft,1759,1797,500,England
+Kant,1724,1804,1100,Germany
+"""
+with open("writers.csv", "w", encoding="utf-8") as f:
+    f.write(sample)
+df = pd.read_csv("writers.csv")
+
+print(df.sort_values("letters", ascending=False))
+print(df.sort_values(["country", "born"]))           # multi-key
+print(df.sort_values(["country", "letters"], ascending=[True, False]))
+```
+
+`sort_values` returns a new DataFrame — it does not modify `df` in place unless you pass `inplace=True`. For most analysis flows, you want the new copy.
+
+The `n`-largest and `n`-smallest are common enough to have their own shortcut:
+
+```python
+import pandas as pd
+
+sample = """name,born,died,letters,country
+Voltaire,1694,1778,21000,France
+Émilie du Châtelet,1706,1749,430,France
+Diderot,1713,1784,3500,France
+d'Alembert,1717,1783,1200,France
+Hume,1711,1776,800,Scotland
+Smith,1723,1790,360,Scotland
+Wollstonecraft,1759,1797,500,England
+Kant,1724,1804,1100,Germany
+"""
+with open("writers.csv", "w", encoding="utf-8") as f:
+    f.write(sample)
+df = pd.read_csv("writers.csv")
+
+print(df.nlargest(3, "letters"))     # top 3 most prolific
+print(df.nsmallest(3, "born"))       # 3 earliest-born
+```
+
+## Counting categories — `value_counts`
+
+When you want "how many rows of each value in this column?" — `value_counts` is the move:
+
+```python
+import pandas as pd
+
+sample = """name,born,died,letters,country
+Voltaire,1694,1778,21000,France
+Émilie du Châtelet,1706,1749,430,France
+Diderot,1713,1784,3500,France
+d'Alembert,1717,1783,1200,France
+Hume,1711,1776,800,Scotland
+Smith,1723,1790,360,Scotland
+Wollstonecraft,1759,1797,500,England
+Kant,1724,1804,1100,Germany
+"""
+with open("writers.csv", "w", encoding="utf-8") as f:
+    f.write(sample)
+df = pd.read_csv("writers.csv")
+
+print(df["country"].value_counts())
+```
+
+That's a one-line histogram. For categorical analysis it's the most useful method in pandas.
+
+## GroupBy — the workhorse
+
+`groupby` is the move that does most "real" analytics work. The recipe:
+
+1. **Split** the rows into groups by a column.
+2. **Apply** an aggregation to each group.
+3. **Combine** the results back into a DataFrame or Series.
+
+The shortest demonstration: total letters per country.
+
+```python
+import pandas as pd
+
+sample = """name,born,died,letters,country
+Voltaire,1694,1778,21000,France
+Émilie du Châtelet,1706,1749,430,France
+Diderot,1713,1784,3500,France
+d'Alembert,1717,1783,1200,France
+Hume,1711,1776,800,Scotland
+Smith,1723,1790,360,Scotland
+Wollstonecraft,1759,1797,500,England
+Kant,1724,1804,1100,Germany
+"""
+with open("writers.csv", "w", encoding="utf-8") as f:
+    f.write(sample)
+df = pd.read_csv("writers.csv")
+
+print(df.groupby("country")["letters"].sum())
+```
+
+Read it left to right: *group by `country`, take the `letters` column, sum each group.* The other one-shot aggregations work the same:
+
+```python
+import pandas as pd
+
+sample = """name,born,died,letters,country
+Voltaire,1694,1778,21000,France
+Émilie du Châtelet,1706,1749,430,France
+Diderot,1713,1784,3500,France
+d'Alembert,1717,1783,1200,France
+Hume,1711,1776,800,Scotland
+Smith,1723,1790,360,Scotland
+Wollstonecraft,1759,1797,500,England
+Kant,1724,1804,1100,Germany
+"""
+with open("writers.csv", "w", encoding="utf-8") as f:
+    f.write(sample)
+df = pd.read_csv("writers.csv")
+
+print(df.groupby("country")["letters"].mean())
+print(df.groupby("country")["letters"].count())
+print(df.groupby("country")["born"].min())
+print(df.groupby("country").size())          # rows per group
+```
+
+For multiple aggregates at once, `agg`:
+
+```python
+import pandas as pd
+
+sample = """name,born,died,letters,country
+Voltaire,1694,1778,21000,France
+Émilie du Châtelet,1706,1749,430,France
+Diderot,1713,1784,3500,France
+d'Alembert,1717,1783,1200,France
+Hume,1711,1776,800,Scotland
+Smith,1723,1790,360,Scotland
+Wollstonecraft,1759,1797,500,England
+Kant,1724,1804,1100,Germany
+"""
+with open("writers.csv", "w", encoding="utf-8") as f:
+    f.write(sample)
+df = pd.read_csv("writers.csv")
+
+result = df.groupby("country").agg(
+    n_writers=("name", "count"),
+    total_letters=("letters", "sum"),
+    earliest_birth=("born", "min"),
+)
+print(result)
+```
+
+`("name", "count")` reads as: *take the `name` column, apply `count`*. The keyword on the left becomes the new column name. This is the form that scales — for a real research dataset you'll often have a half-dozen aggregates in one call.
+
+## Chaining
+
+Operations return new DataFrames, so they chain. The result is something close to readable English:
+
+```python
+import pandas as pd
+
+sample = """name,born,died,letters,country
+Voltaire,1694,1778,21000,France
+Émilie du Châtelet,1706,1749,430,France
+Diderot,1713,1784,3500,France
+d'Alembert,1717,1783,1200,France
+Hume,1711,1776,800,Scotland
+Smith,1723,1790,360,Scotland
+Wollstonecraft,1759,1797,500,England
+Kant,1724,1804,1100,Germany
+"""
+with open("writers.csv", "w", encoding="utf-8") as f:
+    f.write(sample)
+df = pd.read_csv("writers.csv")
+
+result = (
+    df[df["letters"] >= 500]
+    .sort_values("letters", ascending=False)
+    .head(5)
+    [["name", "country", "letters"]]
+)
+print(result)
+```
+
+Read aloud: *take rows with at least 500 letters, sort by letters descending, keep the top five, show name/country/letters.* Once chaining clicks, you stop writing intermediate variables and the analysis fits on one screen.
+
+## Where to next
+
+You can now read a table, pick the rows you want, sort them, and summarize them by category. That's enough for most "what does this dataset look like?" workflows. The last lesson in this part — **Lesson 22 — Cleaning and Exporting** — handles missing values, text cleanup, and writing the result back out to CSV or Excel for sharing.
+
+## Running the code
+
+This lesson uses pandas. Add it to your project once:
+
+```bash
+uv add pandas openpyxl
+```
+
+Save any snippet to a file — say `try.py` — and run it from your project folder:
+
+```bash
+uv run try.py
+```
+
+`uv run` uses the project's Python and dependencies automatically; no virtualenv to activate. If you haven't set the project up yet, [Lesson 01](/course/lesson-01-introduction-to-python-for-dh/) walks through it.

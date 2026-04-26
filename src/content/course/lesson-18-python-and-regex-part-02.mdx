@@ -1,6 +1,6 @@
 ---
 title: "Python and Regex (Part 02)"
-lessonNumber: 15
+lessonNumber: 18
 part: 4
 partTitle: "Working with Text Data"
 description: "Apply regex to a text file — read it in, transform every match, and write the result back out."
@@ -8,7 +8,7 @@ sourceUrl: "https://pythonhumanities.com/lesson-15-python-and-regex-part-02/"
 videoId: "CR459J7TnKo"
 ---
 
-In [Lesson 14](/course/lesson-14-python-and-regex-part-01/) we ran regex against small strings defined inside the script. Real DH work usually means running regex against a **file** — a transcript, a corpus, a chunk of OCR'd text. This lesson walks the complete cycle: read a file in, run regex over its contents, and write the results back out.
+In [Lesson 17](/course/lesson-17-python-and-regex-part-01/) we ran regex against small strings defined inside the script. Real DH work usually means running regex against a **file** — a transcript, a corpus, a chunk of OCR'd text. This lesson walks the complete cycle: read a file in, run regex over its contents, and write the results back out.
 
 ## The example: extracting verse references
 
@@ -134,7 +134,7 @@ This is how you build sophisticated rewrites with regex — let the regex find t
 
 ## Running over a folder of files
 
-Most projects don't have one file; they have many. Combine the file-reading habit from Lesson 12 with a regex pass over each one:
+Most projects don't have one file; they have many. Combine the file-reading habit from Lesson 15 with a regex pass over each one:
 
 ```python
 import re
@@ -164,7 +164,7 @@ A couple of new habits worth adopting:
 - Modify the script so it *replaces* every reference in `scripture.txt` with `[ref]` and saves the result to `redacted.txt`.
 - Apply your pattern to a folder of `.txt` files and count how many references each file contains.
 
-Once you're comfortable with regex on real files, continue to [Lesson 16: Python and Excel](/course/lesson-16-python-excel-and-xlrd/).
+Once you're comfortable with regex on real files, continue to [Lesson 20: Introduction to Pandas](/course/lesson-20-introduction-to-pandas/).
 
 ## Running the code
 

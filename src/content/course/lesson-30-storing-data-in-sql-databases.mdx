@@ -1,0 +1,349 @@
+---
+title: "Storing Data in a SQL Database"
+lessonNumber: 30
+part: 7
+partTitle: "Storing Data"
+description: "Use Python's built-in sqlite3 to store, query, and grow a real database — the format that keeps working when your CSV outgrows itself."
+---
+
+Up to now, your "data store" has been a CSV, a JSON file, or a folder of XML. That works until it doesn't. The day your script needs to ask *"all letters by Voltaire to women correspondents, sent from Cirey, between 1735 and 1740"* — that's the day a flat file becomes painful and a database becomes obvious.
+
+This lesson covers the most beginner-friendly database in the world: **SQLite**. It's a single file. There's no server to install, no port to open, no admin to call. Python's standard library has a `sqlite3` module that talks to it directly. Everything in this lesson runs with no install.
+
+When your data outgrows SQLite, the same SQL you learn here works in PostgreSQL, MySQL, and DuckDB. The mental model transfers.
+
+## Why a humanist needs SQL
+
+A database does three things a CSV can't:
+
+- **Relations.** Letters belong to writers, who belong to places, who belong to periods. SQL lets you express that and ask questions across the relations in one query.
+- **Indexes.** A CSV with 100,000 rows has to be scanned every time you filter. A database with an index answers the same query in milliseconds.
+- **Concurrent integrity.** Two scripts can read and write the same database without corrupting each other (with caveats).
+
+You won't need all of that on day one. But the day you do need it, the cost of learning SQL is much lower than the cost of *not* having learned it.
+
+## sqlite3 — first look
+
+```python
+import sqlite3
+
+conn = sqlite3.connect("letters.db")
+cur = conn.cursor()
+print("connected")
+```
+
+What just happened:
+
+- **`sqlite3.connect("letters.db")`** opens (or creates) a database file. If `letters.db` doesn't exist, it's created empty.
+- **`conn.cursor()`** gives you a *cursor* — the object you actually run SQL through.
+
+When you're done, close both:
+
+```python
+import sqlite3
+conn = sqlite3.connect("letters.db")
+cur = conn.cursor()
+
+cur.close()
+conn.close()
+```
+
+For short scripts, the cleanest pattern is a `with` block. The connection commits and closes itself when you leave:
+
+```python
+import sqlite3
+
+with sqlite3.connect("letters.db") as conn:
+    cur = conn.cursor()
+    # do work
+    print("inside the with block")
+print("connection committed and closed")
+```
+
+## Creating a table
+
+A table has columns with types. Three SQLite types are the ones you'll use most: `TEXT`, `INTEGER`, and `REAL` (floating point). Add `PRIMARY KEY` to the column that uniquely identifies a row.
+
+```python
+import sqlite3
+
+with sqlite3.connect("letters.db") as conn:
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS writers (
+            id      INTEGER PRIMARY KEY,
+            name    TEXT NOT NULL,
+            born    INTEGER,
+            died    INTEGER
+        )
+    """)
+    print("table created")
+```
+
+Two habits worth adopting from the very first table:
+
+- **`IF NOT EXISTS`**. Without it, re-running your script raises an error because the table already exists. With it, the second run is a no-op.
+- **Triple-quoted SQL strings**. SQL likes to be readable. A multi-line string keeps the column definitions aligned and skimmable.
+
+## Inserting data — and why you must use placeholders
+
+The wrong way (please don't):
+
+```python
+name = "Voltaire'; DROP TABLE writers;--"
+cur.execute(f"INSERT INTO writers (name) VALUES ('{name}')")  # DON'T
+```
+
+That's how you get [Bobby Tables](https://xkcd.com/327/). Even with humanities data — names with apostrophes (`d'Alembert`), titles with quote marks — string-interpolating into SQL breaks. **Use placeholders.** `sqlite3` quotes and escapes for you:
+
+```python
+import sqlite3
+
+with sqlite3.connect("letters.db") as conn:
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS writers (
+            id INTEGER PRIMARY KEY, name TEXT, born INTEGER, died INTEGER
+        )
+    """)
+
+    cur.execute(
+        "INSERT INTO writers (name, born, died) VALUES (?, ?, ?)",
+        ("Voltaire", 1694, 1778),
+    )
+    cur.execute(
+        "INSERT INTO writers (name, born, died) VALUES (?, ?, ?)",
+        ("d'Alembert", 1717, 1783),
+    )
+    print("rows inserted:", cur.rowcount)
+```
+
+Each `?` is a placeholder; the tuple in the second argument supplies the values. The library handles quoting, types, and escaping. There is no shortcut around this — placeholders are how every grown-up SQL script is written.
+
+## Inserting many rows at once
+
+For bulk inserts, `executemany` is the move:
+
+```python
+import sqlite3
+
+writers = [
+    ("Voltaire",         1694, 1778),
+    ("d'Alembert",       1717, 1783),
+    ("Émilie du Châtelet", 1706, 1749),
+    ("Diderot",          1713, 1784),
+]
+
+with sqlite3.connect("letters.db") as conn:
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS writers (
+            id INTEGER PRIMARY KEY, name TEXT, born INTEGER, died INTEGER
+        )
+    """)
+    cur.executemany(
+        "INSERT INTO writers (name, born, died) VALUES (?, ?, ?)",
+        writers,
+    )
+    print("rows inserted:", cur.rowcount)
+```
+
+`executemany` is dramatically faster than calling `execute` in a loop — it batches the inserts in a single transaction.
+
+## Querying — SELECT
+
+Reading data is what you'll do most. The minimal pattern:
+
+```python
+import sqlite3
+
+with sqlite3.connect("letters.db") as conn:
+    cur = conn.cursor()
+    cur.execute("SELECT name, born FROM writers ORDER BY born")
+    rows = cur.fetchall()
+
+for row in rows:
+    print(row)
+```
+
+`fetchall()` returns a list of tuples — one tuple per row, columns in the order you asked for them.
+
+Filtering works the same way placeholders do for inserts:
+
+```python
+import sqlite3
+
+with sqlite3.connect("letters.db") as conn:
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT name FROM writers WHERE born >= ? AND born < ?",
+        (1700, 1750),
+    )
+    print(cur.fetchall())
+```
+
+## Getting dictionaries instead of tuples
+
+Tuples are fine for two-column results. For anything wider, addressing rows by name is far easier:
+
+```python
+import sqlite3
+
+with sqlite3.connect("letters.db") as conn:
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
+    cur.execute("SELECT name, born, died FROM writers")
+    for row in cur.fetchall():
+        print(f"{row['name']} ({row['born']}–{row['died']})")
+```
+
+`sqlite3.Row` is a thin wrapper that lets you index by column name. For larger result sets, this is one of the highest-leverage habits you'll pick up.
+
+## A second table — and why relations matter
+
+The whole point of a database is talking about more than one thing. Add a `letters` table that *refers to* writers:
+
+```python
+import sqlite3
+
+with sqlite3.connect("letters.db") as conn:
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS letters (
+            id        INTEGER PRIMARY KEY,
+            writer_id INTEGER NOT NULL,
+            year      INTEGER,
+            place     TEXT,
+            FOREIGN KEY (writer_id) REFERENCES writers(id)
+        )
+    """)
+    print("letters table created")
+```
+
+`writer_id` points at `writers.id`. Now you can JOIN them:
+
+```python
+import sqlite3
+
+with sqlite3.connect("letters.db") as conn:
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT writers.name, letters.year, letters.place
+        FROM letters
+        JOIN writers ON letters.writer_id = writers.id
+        WHERE letters.year BETWEEN 1735 AND 1740
+        ORDER BY letters.year
+    """)
+    for row in cur.fetchall():
+        print(row)
+```
+
+That single query asks: *for every letter sent between 1735 and 1740, give me the writer's name, the year, and the place.* In a flat CSV, that question takes pandas, a merge, and at least one bug. In SQL, it's six lines.
+
+## Updating and deleting
+
+```python
+import sqlite3
+
+with sqlite3.connect("letters.db") as conn:
+    cur = conn.cursor()
+    # Fix a typo in a name.
+    cur.execute(
+        "UPDATE writers SET name = ? WHERE name = ?",
+        ("Émilie du Châtelet", "Emilie du Chatelet"),
+    )
+    # Remove a duplicate row.
+    cur.execute("DELETE FROM writers WHERE id = ?", (42,))
+    print("update rows:", cur.rowcount)
+```
+
+`UPDATE` and `DELETE` always want a `WHERE` clause. Without one, they apply to *every* row in the table. (Not the kind of mistake you make twice.)
+
+## Transactions and `commit`
+
+When you write to a SQLite database, the change is held in a transaction until you commit. Inside a `with sqlite3.connect(...)` block, the commit happens automatically when you leave the block (and a rollback happens if there's an exception). Without the `with`, you commit yourself:
+
+```python
+import sqlite3
+
+conn = sqlite3.connect("letters.db")
+cur = conn.cursor()
+cur.execute("INSERT INTO writers (name) VALUES (?)", ("Rousseau",))
+conn.commit()       # data is now persisted
+conn.close()
+```
+
+Forgetting `commit` is the most common SQL bug in Python. The script seems to insert; you reopen the file and find nothing. It's because the insert was sitting in an uncommitted transaction.
+
+## SQL plus pandas — a useful combination
+
+Once a query gets interesting, you'll want a DataFrame for analysis. `pandas.read_sql_query` reads any SELECT directly into one:
+
+```python
+import sqlite3
+import pandas as pd
+
+with sqlite3.connect("letters.db") as conn:
+    df = pd.read_sql_query(
+        """
+        SELECT writers.name, COUNT(letters.id) AS n_letters
+        FROM writers
+        LEFT JOIN letters ON letters.writer_id = writers.id
+        GROUP BY writers.id
+        ORDER BY n_letters DESC
+        """,
+        conn,
+    )
+
+print(df.head())
+```
+
+That's the bridge you'll cross most often: SQL for filtering and joining, pandas for reshaping and plotting.
+
+## A few habits worth keeping
+
+- **Always use placeholders.** `?` for values, never f-strings.
+- **Always have a `WHERE` on UPDATE/DELETE.** Without one, you mutate every row in the table.
+- **Wrap inserts in a transaction.** `executemany` is fast because it batches; tens of thousands of rows in one transaction beat tens of thousands of single-row commits by orders of magnitude.
+- **Name your tables and columns in `snake_case`.** SQL is case-insensitive about keywords but case-sensitive about names in some engines. Lowercase is the default that always works.
+- **Back up your database file.** It's just a file. Copying `letters.db` to `letters.backup.db` is your version control until you're ready for something fancier.
+
+## When to graduate from SQLite
+
+SQLite handles tens of millions of rows and gigabytes of data without breaking a sweat. You probably won't outgrow it on a research project. The reasons to switch are:
+
+- **Many writers.** SQLite locks the whole database for writes. If multiple processes need to write concurrently, PostgreSQL is the move.
+- **Network access.** SQLite is local. If a colleague needs to query the database from another machine, you need a server (Postgres, MySQL).
+- **Heavy analytics.** For OLAP-style queries (lots of GROUP BY, lots of aggregation), [DuckDB](https://duckdb.org/) is a SQLite-shaped tool optimized for that.
+
+The SQL itself transfers to all three.
+
+## Where to next
+
+A capstone lesson follows that ties everything in this part together. By this point you have, in order:
+
+- Python the language (Lessons 01–14, with capstones).
+- Working with text and files (Lessons 15–19).
+- Tabular analysis with pandas (Lessons 20–23).
+- Web data and scraping (Lessons 24–27).
+- Persistent storage in flat files, structured files, and a database (Lessons 28–30).
+
+If you want to go deeper, the [free textbooks](/textbooks/) cover named entity recognition, spaCy, and BookNLP — natural next steps once your data is in shape.
+
+Beyond that: pick a project and finish it. A small one. Count something in a corpus, scrape one finding aid, build one searchable archive of letters. Everything you learn next, you'll learn faster than what you've learned so far.
+
+## Running the code
+
+`sqlite3` ships with Python — nothing to install. For the pandas integration in this lesson, add it to your project:
+
+```bash
+uv add pandas
+```
+
+Save any snippet from this lesson to a file — say `try.py` — and run it from your project folder:
+
+```bash
+uv run try.py
+```
+
+`uv run` uses the project's Python and dependencies automatically; no virtualenv to activate. If you haven't set the project up yet, [Lesson 01](/course/lesson-01-introduction-to-python-for-dh/) walks through it.
