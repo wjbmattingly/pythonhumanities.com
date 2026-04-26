@@ -31,7 +31,10 @@ def double(a):
 Use the name plus parentheses and the **arguments** that fill in the parameters:
 
 ```python
-double(3)            # 6
+def double(a):
+    return a * 2
+
+print(double(3))     # 6
 result = double(7)
 print(result)        # 14
 ```
@@ -39,6 +42,9 @@ print(result)        # 14
 You can call a function inside a loop — exactly the use case that makes them earn their keep:
 
 ```python
+def double(a):
+    return a * 2
+
 for n in [1, 2, 3]:
     print(double(n))
 ```
@@ -78,6 +84,7 @@ f, l = name_parts("Ada Lovelace")
 print(f, l)                       # Ada Lovelace
 ```
 
+
 ## Parameters with defaults
 
 A parameter can have a default value, used when the caller doesn't supply one:
@@ -86,8 +93,8 @@ A parameter can have a default value, used when the caller doesn't supply one:
 def greet(name, greeting="Hello"):
     return f"{greeting}, {name}."
 
-greet("Ada")                       # 'Hello, Ada.'
-greet("Ada", greeting="Bonjour")   # 'Bonjour, Ada.'
+print(greet("Ada"))                       # 'Hello, Ada.'
+print(greet("Ada", greeting="Bonjour"))   # 'Bonjour, Ada.'
 ```
 
 Defaults make a function easy to use for the common case without locking out the unusual one.
@@ -100,8 +107,8 @@ You can pass arguments by position (in the order the parameters were defined) or
 def slice_text(text, start, end):
     return text[start:end]
 
-slice_text("digital humanities", 0, 7)               # by position
-slice_text(text="digital humanities", start=0, end=7)  # by name
+print(slice_text("digital humanities", 0, 7))               # by position
+print(slice_text(text="digital humanities", start=0, end=7))  # by name
 ```
 
 For a function with two or three obvious parameters, positional is fine. As soon as a function has four or more, naming arguments makes calls vastly more readable — you can tell what `slice_text(text, 0, 7)` is doing at a glance.
@@ -152,7 +159,7 @@ def f():
     x = 10
     return x
 
-f()
+print(f())
 print(x)    # NameError: name 'x' is not defined
 ```
 
@@ -170,7 +177,7 @@ def normalize(text: str) -> str:
     no_punct = text.translate(str.maketrans("", "", string.punctuation))
     return no_punct.lower()
 
-normalize("The quality of mercy, is not strain'd.")
+print(normalize("The quality of mercy, is not strain'd."))
 # 'the quality of mercy is not straind'
 ```
 

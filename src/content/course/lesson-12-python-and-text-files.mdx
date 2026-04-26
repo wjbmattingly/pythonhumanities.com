@@ -57,13 +57,20 @@ The right way to read a file depends on what you want.
 **The whole file as one string** — for short documents:
 
 ```python
+with open("text.txt", "w", encoding="utf-8") as f:
+    f.write("Hello, world.\n")
+
 with open("text.txt", "r", encoding="utf-8") as f:
     text = f.read()
+print(text)
 ```
 
 **Line by line, lazy** — for files of any size, and the way you'll do this most often:
 
 ```python
+with open("text.txt", "w", encoding="utf-8") as f:
+    f.write("first line\nsecond line\n")
+
 with open("text.txt", "r", encoding="utf-8") as f:
     for line in f:
         line = line.rstrip("\n")    # strip the trailing newline
@@ -75,6 +82,9 @@ This iterates without ever loading the whole file into memory. A 5 GB file works
 **All lines as a list** — when you need random access:
 
 ```python
+with open("text.txt", "w", encoding="utf-8") as f:
+    f.write("first line\nsecond line\n")
+
 with open("text.txt", "r", encoding="utf-8") as f:
     lines = f.readlines()
 print(lines[0])
@@ -127,13 +137,15 @@ for file in corpus.glob("*.txt"):
 A few `pathlib` operations you'll use constantly:
 
 ```python
+from pathlib import Path
+
 p = Path("data") / "letters" / "1815.txt"   # forward slash joins paths
-p.exists()
-p.is_file()
-p.parent           # Path('data/letters')
-p.name             # '1815.txt'
-p.stem             # '1815'
-p.suffix           # '.txt'
+print(p.exists())
+print(p.is_file())
+print(p.parent)           # Path('data/letters')
+print(p.name)             # '1815.txt'
+print(p.stem)             # '1815'
+print(p.suffix)           # '.txt'
 p.read_text(encoding="utf-8")
 p.write_text("hello", encoding="utf-8")
 ```

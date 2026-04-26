@@ -17,9 +17,9 @@ A useful frame: **programming is problem-solving in a logical, structured way.**
 Before we look at conditionals, you need to know about the type they live and die on. A **Boolean** is a value that is either `True` or `False`. Capital T, capital F — Python is strict about this. The two Booleans are returned by every comparison operator (`==`, `<`, `>`, `!=`, etc.) and accepted by every conditional.
 
 ```python
-1815 < 1850        # True
-1815 == 1850       # False
-"war" in "warfare"  # True
+print(1815 < 1850)        # True
+print(1815 == 1850)       # False
+print("war" in "warfare")  # True
 ```
 
 ## `if`, `elif`, `else`
@@ -99,6 +99,8 @@ if not (year < 1700):
 Python lets you chain comparisons the way mathematics does, which often reads more cleanly than `and`:
 
 ```python
+year = 1815
+
 if 1789 <= year <= 1799:
     print("French Revolution era")
 ```
@@ -135,6 +137,7 @@ Two `if`/`elif`/`else` blocks doing two independent classifications. Each one is
 Here's a refactor worth knowing once. If your conditional is doing nothing but mapping one value to another:
 
 ```python
+status = "draft"
 if status == "draft":
     label = "Working copy"
 elif status == "review":
@@ -143,17 +146,20 @@ elif status == "published":
     label = "Live"
 else:
     label = "Unknown"
+print(label)
 ```
 
 …it's often clearer as a dictionary lookup with a default:
 
 ```python
+status = "draft"
 labels = {
     "draft": "Working copy",
     "review": "Under review",
     "published": "Live",
 }
 label = labels.get(status, "Unknown")
+print(label)
 ```
 
 You don't always want to do this — if each branch runs different *code*, not just produces a value, the `if`/`elif` is the right shape. But once you spot the pattern, the dictionary version is shorter and easier to extend.

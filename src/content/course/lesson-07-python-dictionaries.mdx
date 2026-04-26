@@ -21,6 +21,7 @@ person = {
     "died": 1852,
     "field": "mathematics",
 }
+print(person)
 ```
 
 The trailing comma after the last pair is optional — Python doesn't care, and including it makes diffs cleaner when you add another field later.
@@ -29,6 +30,7 @@ Keys are usually strings, but they can be any **immutable** type: strings, numbe
 
 ```python
 counts_by_year = {1815: 12, 1820: 23, 1825: 8}
+print(counts_by_year)
 ```
 
 ## Accessing values
@@ -36,15 +38,29 @@ counts_by_year = {1815: 12, 1820: 23, 1825: 8}
 To pull a value out, write the dictionary, square brackets, and the key:
 
 ```python
-person["name"]    # 'Ada Lovelace'
-person["born"]    # 1815
+person = {
+    "name": "Ada Lovelace",
+    "born": 1815,
+    "died": 1852,
+    "field": "mathematics",
+}
+
+print(person["name"])    # 'Ada Lovelace'
+print(person["born"])    # 1815
 ```
 
 If you ask for a key that isn't there, you get a `KeyError`. To avoid that, use `.get`, which returns `None` (or a default you supply) when the key is missing:
 
 ```python
-person.get("father")             # None
-person.get("father", "unknown")  # 'unknown'
+person = {
+    "name": "Ada Lovelace",
+    "born": 1815,
+    "died": 1852,
+    "field": "mathematics",
+}
+
+print(person.get("father"))             # None
+print(person.get("father", "unknown"))  # 'unknown'
 ```
 
 `.get` is the safer choice when you're working with data that might have missing fields — and almost all real humanities data does.
@@ -54,22 +70,48 @@ person.get("father", "unknown")  # 'unknown'
 To add a new key or change an existing one, just assign:
 
 ```python
+person = {
+    "name": "Ada Lovelace",
+    "born": 1815,
+    "died": 1852,
+    "field": "mathematics",
+}
+
 person["father"] = "Lord Byron"   # adds
 person["born"] = 1815             # overwrites (same key, same value, no change)
+print(person)
 ```
 
 To remove a key, use `del`:
 
 ```python
+person = {
+    "name": "Ada Lovelace",
+    "born": 1815,
+    "died": 1852,
+    "field": "mathematics",
+    "father": "Lord Byron",
+}
+
 del person["father"]
+print(person)
 ```
 
 To merge two dictionaries, use `update` or, in modern Python (3.9+), the `|` operator:
 
 ```python
+person = {
+    "name": "Ada Lovelace",
+    "born": 1815,
+    "died": 1852,
+    "field": "mathematics",
+}
+
 extra = {"died": 1852, "buried": "Hucknall"}
 person.update(extra)              # in place
 merged = person | extra           # new dict, leaves person alone
+print(person)
+print(merged)
 ```
 
 ## Looping through a dictionary
@@ -104,6 +146,7 @@ correspondents = [
     {"name": "Émilie",    "born": 1706, "letters":   430},
     {"name": "Diderot",   "born": 1713, "letters":  3500},
 ]
+print(correspondents)
 ```
 
 This shape — list of dicts — is what `csv.DictReader` produces when you read a spreadsheet, what most JSON APIs return, and what `pandas` calls a DataFrame under the hood. You'll see it in nearly every project.
@@ -111,20 +154,38 @@ This shape — list of dicts — is what `csv.DictReader` produces when you read
 To get the second person's name:
 
 ```python
-correspondents[1]["name"]   # 'Émilie'
+correspondents = [
+    {"name": "Voltaire",  "born": 1694, "letters": 21000},
+    {"name": "Émilie",    "born": 1706, "letters":   430},
+    {"name": "Diderot",   "born": 1713, "letters":  3500},
+]
+
+print(correspondents[1]["name"])   # 'Émilie'
 ```
 
 To get every name:
 
 ```python
-[c["name"] for c in correspondents]
+correspondents = [
+    {"name": "Voltaire",  "born": 1694, "letters": 21000},
+    {"name": "Émilie",    "born": 1706, "letters":   430},
+    {"name": "Diderot",   "born": 1713, "letters":  3500},
+]
+
+print([c["name"] for c in correspondents])
 # ['Voltaire', 'Émilie', 'Diderot']
 ```
 
 To filter:
 
 ```python
-[c for c in correspondents if c["letters"] > 1000]
+correspondents = [
+    {"name": "Voltaire",  "born": 1694, "letters": 21000},
+    {"name": "Émilie",    "born": 1706, "letters":   430},
+    {"name": "Diderot",   "born": 1713, "letters":  3500},
+]
+
+print([c for c in correspondents if c["letters"] > 1000])
 ```
 
 ## Counting with a dictionary
@@ -144,8 +205,10 @@ The standard library has a purpose-built tool for this — `collections.Counter`
 
 ```python
 from collections import Counter
+
+text = "the quick brown fox jumps over the lazy dog the fox"
 counts = Counter(text.split())
-counts.most_common(3)   # [('the', 3), ('fox', 2), ('quick', 1)]
+print(counts.most_common(3))   # [('the', 3), ('fox', 2), ('quick', 1)]
 ```
 
 We'll see `Counter` again in the modules lesson. For now, recognize the pattern: **dictionary keys are labels; dictionary values can be running totals.**

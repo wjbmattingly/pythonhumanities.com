@@ -18,6 +18,7 @@ Everything below uses the same pattern: a name on the left, an `=` sign, a value
 
 ```python
 year = 1988
+print(year)
 ```
 
 `year` is the variable. `1988` is the value. Python keeps a reference to the value under that name until you reassign it or the program ends. Variable names are case-sensitive — `year` and `Year` are two different things — and conventionally use `snake_case` (lowercase with underscores).
@@ -29,6 +30,7 @@ An **integer** is a whole number with no decimal point: `1`, `2`, `1988`, `-300`
 ```python
 an_integer = 1
 a_float = 1.1
+print(an_integer, a_float)
 ```
 
 Python doesn't care how big your integers get. `2 ** 1000` is fine — it returns the exact 302-digit number. Floats, on the other hand, follow IEEE-754 double precision, so very long decimals can be slightly imprecise (you'll see `0.1 + 0.2` print as `0.30000000000000004`). That rarely matters for humanities data, but it's worth knowing the rule: integers are exact, floats are approximate.
@@ -40,6 +42,7 @@ A **string** is a sequence of characters wrapped in quotation marks. Either sing
 ```python
 greeting = "Hello"
 farewell = 'Bye'
+print(greeting, farewell)
 ```
 
 Strings can hold any Unicode character — Greek, Arabic, Chinese, emoji, accented Latin — without any extra setup in Python 3. That matters for digital humanists working with non-English sources: `"αρετή"` and `"عَرَب"` are perfectly valid Python strings.
@@ -49,6 +52,7 @@ For text that spans multiple lines, use triple quotes:
 ```python
 passage = """The quality of mercy is not strain'd,
 It droppeth as the gentle rain from heaven."""
+print(passage)
 ```
 
 For strings that mix in the value of a variable, use an **f-string** — a string prefixed with the letter `f`, with variables in curly braces. We'll use these constantly:
@@ -65,6 +69,7 @@ A **list** is an ordered collection of items, written with square brackets. A **
 ```python
 a_list = [1, "one", 1.0]
 a_tuple = (1, "one", 1.0)
+print(a_list, a_tuple)
 ```
 
 The big difference between them: lists are **mutable** (you can add, remove, and replace items after creating the list) and tuples are **immutable** (once created, the contents are fixed). In practice, you'll reach for lists most of the time. Tuples come up when you want to signal that a small group of values belongs together and shouldn't change — coordinates, a (year, place) pair, a row from a database.
@@ -72,14 +77,18 @@ The big difference between them: lists are **mutable** (you can add, remove, and
 You access a single item by **index**, starting from 0:
 
 ```python
-a_list[0]  # 1
-a_list[2]  # 1.0
+a_list = [1, "one", 1.0]
+
+print(a_list[0])  # 1
+print(a_list[2])  # 1.0
 ```
 
 Negative indexes count from the end, which is handy for grabbing the last item:
 
 ```python
-a_list[-1]  # 1.0
+a_list = [1, "one", 1.0]
+
+print(a_list[-1])  # 1.0
 ```
 
 ## Dictionaries — labeled collections
@@ -88,13 +97,16 @@ A **dictionary** stores **key–value pairs** in curly braces. The key is the la
 
 ```python
 person = {"name": "Ada Lovelace", "born": 1815, "field": "mathematics"}
+print(person)
 ```
 
 You access a value by its key, the same way you'd index a list — except the key is whatever you defined, not a position:
 
 ```python
-person["name"]   # "Ada Lovelace"
-person["born"]   # 1815
+person = {"name": "Ada Lovelace", "born": 1815, "field": "mathematics"}
+
+print(person["name"])   # "Ada Lovelace"
+print(person["born"])   # 1815
 ```
 
 Dictionaries are the workhorse data structure for humanities research. A row from a CSV becomes a dictionary. A JSON record from an API is already a dictionary. A row in a spreadsheet, a manuscript with metadata, an entry from a person's correspondence — all natural fits.
@@ -104,6 +116,9 @@ Dictionaries are the workhorse data structure for humanities research. A row fro
 To show a value, pass it to the built-in `print` function:
 
 ```python
+a_list = [1, "one", 1.0]
+person = {"name": "Ada Lovelace", "born": 1815, "field": "mathematics"}
+
 print(a_list)
 print(person["name"])
 ```
@@ -111,6 +126,8 @@ print(person["name"])
 `print` accepts any of the types above, plus several at once separated by commas:
 
 ```python
+person = {"name": "Ada Lovelace", "born": 1815, "field": "mathematics"}
+
 print("Born in:", person["born"])
 ```
 

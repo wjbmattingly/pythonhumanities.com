@@ -27,11 +27,15 @@ The model is straightforward: build a tree of `Element` objects, then serialize 
 Every XML document has a single **root** element. Create it, then add children:
 
 ```python
+import xml.etree.ElementTree as ET
+
 root = ET.Element("biographies")
 
 person = ET.SubElement(root, "person", attrib={"id": "theuderic-iv"})
 ET.SubElement(person, "name").text = "Theuderic IV"
 ET.SubElement(person, "reign", attrib={"start": "721", "end": "737"})
+
+print(ET.tostring(root, encoding="unicode"))
 ```
 
 Two important moves there:
@@ -59,6 +63,8 @@ for p in people:
     person = ET.SubElement(root, "person", attrib={"id": p["id"]})
     ET.SubElement(person, "name").text = p["name"]
     ET.SubElement(person, "reign", attrib={"start": p["start"], "end": p["end"]})
+
+print(ET.tostring(root, encoding="unicode"))
 ```
 
 ## Saving to disk — pretty-printed
@@ -66,9 +72,24 @@ for p in people:
 Wrap the root in an `ElementTree`, indent it (Python 3.9+), and write:
 
 ```python
+import xml.etree.ElementTree as ET
+
+people = [
+    {"id": "theuderic-iv",  "name": "Theuderic IV",  "start": "721", "end": "737"},
+    {"id": "childeric-iii", "name": "Childeric III", "start": "743", "end": "751"},
+]
+
+root = ET.Element("biographies")
+for p in people:
+    person = ET.SubElement(root, "person", attrib={"id": p["id"]})
+    ET.SubElement(person, "name").text = p["name"]
+    ET.SubElement(person, "reign", attrib={"start": p["start"], "end": p["end"]})
+
 tree = ET.ElementTree(root)
 ET.indent(tree, space="  ")
 tree.write("biographies.xml", encoding="utf-8", xml_declaration=True)
+
+print(open("biographies.xml", encoding="utf-8").read())
 ```
 
 The result:
@@ -94,6 +115,23 @@ The result:
 Reverse direction — parse a file, then walk the tree:
 
 ```python
+import xml.etree.ElementTree as ET
+
+people = [
+    {"id": "theuderic-iv",  "name": "Theuderic IV",  "start": "721", "end": "737"},
+    {"id": "childeric-iii", "name": "Childeric III", "start": "743", "end": "751"},
+]
+
+root = ET.Element("biographies")
+for p in people:
+    person = ET.SubElement(root, "person", attrib={"id": p["id"]})
+    ET.SubElement(person, "name").text = p["name"]
+    ET.SubElement(person, "reign", attrib={"start": p["start"], "end": p["end"]})
+
+tree = ET.ElementTree(root)
+ET.indent(tree, space="  ")
+tree.write("biographies.xml", encoding="utf-8", xml_declaration=True)
+
 tree = ET.parse("biographies.xml")
 root = tree.getroot()
 
@@ -129,6 +167,11 @@ Real-world XML usually has namespaces, and that changes how you query it. A TEI 
 In ElementTree, you have to qualify your queries with the namespace URI:
 
 ```python
+import xml.etree.ElementTree as ET
+
+with open("tei-doc.xml", "w", encoding="utf-8") as f:
+    f.write('<TEI xmlns="http://www.tei-c.org/ns/1.0"><teiHeader/><text><body><div type="chapter"/><div type="section"/></body></text></TEI>')
+
 ns = {"tei": "http://www.tei-c.org/ns/1.0"}
 
 tree = ET.parse("tei-doc.xml")

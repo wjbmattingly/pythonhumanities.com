@@ -60,6 +60,14 @@ The script reads `scripture.txt`, finds every match, and writes each on its own 
 `findall` with a pattern containing **groups** returns tuples instead of strings — one item per group:
 
 ```python
+import re
+
+text = (
+    "Genesis 1:1 In the beginning God created the heavens and the earth.\n"
+    "Genesis 1:2 And the earth was without form, and void.\n"
+    "Exodus 3:14 And God said, I AM THAT I AM.\n"
+)
+
 pattern = r"([A-Z][a-z]+) (\d+):(\d+)"
 for book, chapter, verse in re.findall(pattern, text):
     print(book, chapter, verse)
@@ -87,19 +95,39 @@ That matches an optional leading digit-and-space (`1 `, `2 `, `3 `), one capital
 If, instead of extracting references, you wanted to **redact** them — replace each one with `[ref]`:
 
 ```python
+import re
+from pathlib import Path
+
+text = (
+    "Genesis 1:1 In the beginning God created the heavens and the earth.\n"
+    "Genesis 1:2 And the earth was without form, and void.\n"
+    "Exodus 3:14 And God said, I AM THAT I AM.\n"
+)
+target = Path("references.txt")
+
 redacted = re.sub(r"[A-Z][a-z]+ \d+:\d+", "[ref]", text)
+print(redacted)
 target.write_text(redacted, encoding="utf-8")
 ```
 
 `re.sub` returns a new string with every match replaced. It can also take a **function** as the replacement, which runs once per match and returns the replacement string:
 
 ```python
+import re
+
+text = (
+    "Genesis 1:1 In the beginning God created the heavens and the earth.\n"
+    "Genesis 1:2 And the earth was without form, and void.\n"
+    "Exodus 3:14 And God said, I AM THAT I AM.\n"
+)
+
 def to_link(match: re.Match) -> str:
     book, chapter, verse = match.groups()
     slug = book.lower().replace(" ", "-")
     return f"[{book} {chapter}:{verse}](#/{slug}/{chapter}/{verse})"
 
 linked = re.sub(r"([A-Z][a-z]+) (\d+):(\d+)", to_link, text)
+print(linked)
 ```
 
 This is how you build sophisticated rewrites with regex — let the regex find the candidates and the function decide what to do with each.

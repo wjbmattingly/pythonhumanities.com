@@ -72,6 +72,12 @@ workbook.close()
 Formats give Excel cells the visual treatment that makes a generated file feel finished:
 
 ```python
+import xlsxwriter
+
+workbook = xlsxwriter.Workbook("letters.xlsx")
+worksheet = workbook.add_worksheet("Letters")
+header = ["sender", "recipient", "year"]
+
 header_fmt = workbook.add_format({
     "bold": True,
     "bg_color": "#1f1f1f",
@@ -82,6 +88,8 @@ header_fmt = workbook.add_format({
 
 for c, label in enumerate(header):
     worksheet.write(0, c, label, header_fmt)
+
+workbook.close()
 ```
 
 A few of the format options you'll reach for:
@@ -101,10 +109,17 @@ A few of the format options you'll reach for:
 Two small touches that go a long way:
 
 ```python
+import xlsxwriter
+
+workbook = xlsxwriter.Workbook("letters.xlsx")
+worksheet = workbook.add_worksheet("Letters")
+
 worksheet.set_column(0, 0, 15)   # column A: 15 chars
 worksheet.set_column(1, 1, 15)
 worksheet.set_column(2, 2, 8)
 worksheet.freeze_panes(1, 0)     # keep the first row visible while scrolling
+
+workbook.close()
 ```
 
 ## Writing dates correctly
@@ -112,10 +127,16 @@ worksheet.freeze_panes(1, 0)     # keep the first row visible while scrolling
 Excel stores dates as a special number with date formatting on top. To write a Python `datetime` and have Excel display it as a date, use a date format:
 
 ```python
+import xlsxwriter
 from datetime import date
+
+workbook = xlsxwriter.Workbook("letters.xlsx")
+worksheet = workbook.add_worksheet("Letters")
 
 date_fmt = workbook.add_format({"num_format": "yyyy-mm-dd"})
 worksheet.write_datetime(1, 2, date(1735, 6, 1), date_fmt)
+
+workbook.close()
 ```
 
 Without the format, the cell will show as a serial number like `42835`.
@@ -125,12 +146,20 @@ Without the format, the cell will show as a serial number like `42835`.
 `xlsxwriter` writes nothing to disk until you call `workbook.close()`. Forgetting this is the most common reason a script appears to "do nothing":
 
 ```python
+import xlsxwriter
+
+workbook = xlsxwriter.Workbook("output.xlsx")
+worksheet = workbook.add_worksheet("Results")
+worksheet.write(0, 0, "Hello")
+
 workbook.close()
 ```
 
 For the safer pattern, wrap your work in a `with` block — `xlsxwriter` supports it:
 
 ```python
+import xlsxwriter
+
 with xlsxwriter.Workbook("output.xlsx") as workbook:
     worksheet = workbook.add_worksheet("Results")
     worksheet.write(0, 0, "Hello")
@@ -143,6 +172,12 @@ If you want to **edit an existing** workbook — preserve its other sheets, add 
 
 ```python
 from openpyxl import Workbook
+
+records = [
+    {"sender": "Voltaire", "recipient": "Émilie",   "year": 1735},
+    {"sender": "Voltaire", "recipient": "Diderot",  "year": 1759},
+    {"sender": "Émilie",   "recipient": "Voltaire", "year": 1740},
+]
 
 wb = Workbook()
 ws = wb.active
@@ -162,6 +197,12 @@ wb.save("letters.xlsx")
 For simple "write this data to a spreadsheet" needs, both pandas and polars do it in one line:
 
 ```python
+records = [
+    {"sender": "Voltaire", "recipient": "Émilie",   "year": 1735},
+    {"sender": "Voltaire", "recipient": "Diderot",  "year": 1759},
+    {"sender": "Émilie",   "recipient": "Voltaire", "year": 1740},
+]
+
 import polars as pl
 pl.DataFrame(records).write_excel("letters.xlsx")
 

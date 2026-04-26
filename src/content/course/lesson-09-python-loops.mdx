@@ -36,6 +36,8 @@ The choice of variable name (`name` here, often `i` or `item` in toy examples) i
 Sometimes you want both the item and its position. Don't track a counter manually; use `enumerate`:
 
 ```python
+correspondents = ["Voltaire", "Émilie", "Diderot"]
+
 for i, name in enumerate(correspondents):
     print(f"{i}: {name}")
 # 0: Voltaire
@@ -111,6 +113,8 @@ These two keywords let you fine-tune the flow inside a loop.
 `break` exits the loop immediately:
 
 ```python
+correspondents = ["Voltaire", "Émilie", "Diderot"]
+
 for name in correspondents:
     if name == "Diderot":
         print("found him")
@@ -121,6 +125,8 @@ for name in correspondents:
 `continue` skips the rest of *this* iteration and moves to the next:
 
 ```python
+correspondents = ["Voltaire", "Émilie", "Diderot"]
+
 for name in correspondents:
     if name.startswith("É"):     # skip names with diacritics
         continue
@@ -152,7 +158,14 @@ print(big_writers)
 For this exact pattern — "filter a list and collect what passes" — Python has a more compact form, the **list comprehension**:
 
 ```python
+correspondents = [
+    {"name": "Voltaire", "letters": 21000},
+    {"name": "Émilie",   "letters":   430},
+    {"name": "Diderot",  "letters":  3500},
+]
+
 big_writers = [p["name"] for p in correspondents if p["letters"] > 1000]
+print(big_writers)
 ```
 
 Comprehensions and explicit `for` loops are interchangeable for one-line transformations. Use the comprehension when it fits on one readable line; use the explicit loop when there's logic worth showing or when you want to do several things per iteration.
@@ -166,14 +179,17 @@ words = "the quick brown fox jumped over the lazy dog the fox".split()
 counts = {}
 for word in words:
     counts[word] = counts.get(word, 0) + 1
+print(counts)
 ```
 
 Or with `collections.Counter`, which we'll meet again in Lesson 13:
 
 ```python
 from collections import Counter
+
+words = "the quick brown fox jumped over the lazy dog the fox".split()
 counts = Counter(words)
-counts.most_common(2)   # [('the', 3), ('fox', 2)]
+print(counts.most_common(2))   # [('the', 3), ('fox', 2)]
 ```
 
 ## Loops and large datasets — a note on performance

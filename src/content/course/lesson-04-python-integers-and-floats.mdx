@@ -29,19 +29,24 @@ There is no special syntax. Type a number on the right of an `=` sign and Python
 year = 1988          # int
 average = 0.42       # float
 zero_decimal = 1.0   # still a float — the .0 is enough
+print(year, average, zero_decimal)
 ```
 
 You can check the type at any time with `type`:
 
 ```python
-type(year)      # <class 'int'>
-type(average)   # <class 'float'>
+year = 1988
+average = 0.42
+
+print(type(year))      # <class 'int'>
+print(type(average))   # <class 'float'>
 ```
 
 For long literals, Python lets you sprinkle in underscores as visual separators:
 
 ```python
 million = 1_000_000   # same as 1000000, just easier to read
+print(million)
 ```
 
 ## Converting between types
@@ -49,9 +54,9 @@ million = 1_000_000   # same as 1000000, just easier to read
 Three built-in conversion functions cover almost all cases: `int`, `float`, and `str`.
 
 ```python
-int(1.7)        # 1   — drops the decimal, does NOT round
-float(1)        # 1.0
-str(1988)       # "1988"
+print(int(1.7))        # 1   — drops the decimal, does NOT round
+print(float(1))        # 1.0
+print(str(1988))       # "1988"
 ```
 
 A few things worth pinning down:
@@ -85,6 +90,7 @@ You can also combine an operator with assignment to update a variable in place:
 total = 0
 total += 1     # same as total = total + 1
 total *= 10    # same as total = total * 10
+print(total)
 ```
 
 ## Comparison
@@ -101,9 +107,9 @@ Comparisons return a Boolean — `True` or `False`. You'll use these constantly 
 | Less than or equal | `<=` |
 
 ```python
-1815 < 1850        # True
-1815 == 1850       # False
-1815 != 1850       # True
+print(1815 < 1850)        # True
+print(1815 == 1850)       # False
+print(1815 != 1850)       # True
 ```
 
 The single-most common mistake for new Python users: writing `=` (assignment) when you mean `==` (comparison). The first changes a variable, the second asks a question.
@@ -113,7 +119,7 @@ The single-most common mistake for new Python users: writing `=` (assignment) wh
 This last point trips everyone up at least once. Run this in the console:
 
 ```python
-0.1 + 0.2
+print(0.1 + 0.2)
 ```
 
 Python returns `0.30000000000000004`, not `0.3`. This isn't a bug — it's how floating-point numbers work in every modern language. They use binary fractions, which can't represent some decimal numbers exactly.
@@ -121,7 +127,7 @@ Python returns `0.30000000000000004`, not `0.3`. This isn't a bug — it's how f
 For humanities data this rarely matters — you're not splitting hairs at the fifteenth decimal. But it does mean: never compare two floats with `==`. Compare them with a tolerance instead:
 
 ```python
-abs((0.1 + 0.2) - 0.3) < 1e-9   # True
+print(abs((0.1 + 0.2) - 0.3) < 1e-9)   # True
 ```
 
 Or, when you're storing money or any value that has to be exact, use `decimal.Decimal` from the standard library.

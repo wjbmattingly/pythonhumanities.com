@@ -28,6 +28,7 @@ import requests
 url = "https://en.wikipedia.org/wiki/Theuderic_IV"
 response = requests.get(url)
 html = response.text
+print(html)
 ```
 
 What each line does:
@@ -55,9 +56,13 @@ A failed request still returns a `Response` object — `requests.get(...)` doesn
 The terse way:
 
 ```python
+import requests
+
+url = "https://en.wikipedia.org/wiki/Theuderic_IV"
 response = requests.get(url)
 response.raise_for_status()
 html = response.text
+print(html)
 ```
 
 `raise_for_status()` raises an `HTTPError` for any 4xx or 5xx status. If the request succeeded, it does nothing. This is the line of defense that turns "the script silently scraped 404 pages for two hours" into a clean failure.
@@ -65,11 +70,15 @@ html = response.text
 The explicit way, when you want to handle errors yourself:
 
 ```python
+import requests
+
+url = "https://en.wikipedia.org/wiki/Theuderic_IV"
 response = requests.get(url)
 if response.status_code != 200:
     print(f"Got {response.status_code} for {url}")
 else:
     html = response.text
+    print(html)
 ```
 
 ## Identifying yourself with a User-Agent
@@ -77,10 +86,14 @@ else:
 By default `requests` sends a User-Agent like `python-requests/2.32.0`. Many servers either block that or treat it differently. Set a polite, descriptive header:
 
 ```python
+import requests
+
+url = "https://en.wikipedia.org/wiki/Theuderic_IV"
 headers = {
     "User-Agent": "DH-research-bot/1.0 (your-email@example.org)",
 }
 response = requests.get(url, headers=headers)
+print(response.status_code)
 ```
 
 The format isn't strict. The norm is: name of your tool, version, and a contact (email or URL) so a server admin can reach you if there's a problem.
@@ -90,10 +103,13 @@ The format isn't strict. The norm is: name of your tool, version, and a contact 
 To hit a URL like `https://example.org/search?q=voltaire&year=1750`, don't build the query string by hand. Pass `params`:
 
 ```python
+import requests
+
 response = requests.get(
     "https://example.org/search",
     params={"q": "voltaire", "year": 1750},
 )
+print(response.url)
 ```
 
 `requests` URL-encodes everything correctly, including spaces and Unicode.
@@ -103,7 +119,11 @@ response = requests.get(
 By default `requests` will wait *forever* for a server to respond. In a long scraping loop, one slow server can hang the whole script. Always set a timeout:
 
 ```python
+import requests
+
+url = "https://en.wikipedia.org/wiki/Theuderic_IV"
 response = requests.get(url, timeout=10)   # 10 seconds
+print(response.status_code)
 ```
 
 You'll catch a `requests.exceptions.Timeout` if the server doesn't answer in time, which is a clean signal to skip and move on.
@@ -114,6 +134,13 @@ When you scrape many pages from the same host, slow yourself down:
 
 ```python
 import time
+import requests
+
+urls = ["https://en.wikipedia.org/wiki/Theuderic_IV"]
+headers = {"User-Agent": "DH-research-bot/1.0"}
+
+def save(text):
+    print(len(text))
 
 for url in urls:
     response = requests.get(url, headers=headers, timeout=10)
@@ -143,6 +170,9 @@ def fetch(url: str, headers: dict, attempts: int = 4) -> str:
             print(f"  attempt {i + 1} failed ({e}); sleeping {wait}s")
             time.sleep(wait)
     raise RuntimeError(f"gave up on {url}")
+
+html = fetch("https://en.wikipedia.org/wiki/Theuderic_IV", {"User-Agent": "DH-research-bot/1.0"})
+print(len(html))
 ```
 
 `2 ** i` doubles the wait each time: 1, 2, 4, 8 seconds. After four tries the script gives up rather than hanging forever.
@@ -152,6 +182,14 @@ def fetch(url: str, headers: dict, attempts: int = 4) -> str:
 For a long scrape, create a `Session` once and reuse it. It keeps the underlying TCP connection open and reapplies your headers automatically:
 
 ```python
+import time
+import requests
+
+urls = ["https://en.wikipedia.org/wiki/Theuderic_IV"]
+
+def save(text):
+    print(len(text))
+
 session = requests.Session()
 session.headers.update({"User-Agent": "DH-research-bot/1.0"})
 
@@ -169,7 +207,11 @@ A session is faster (no reconnecting between requests) and tidier (headers in on
 For any scrape that takes more than a minute, save the raw HTML to disk before parsing. Then if your parser changes, you don't have to refetch:
 
 ```python
+import requests
 from pathlib import Path
+
+session = requests.Session()
+session.headers.update({"User-Agent": "DH-research-bot/1.0"})
 
 cache = Path("html-cache")
 cache.mkdir(exist_ok=True)
@@ -182,6 +224,9 @@ def fetch_cached(url: str, name: str) -> str:
     response.raise_for_status()
     f.write_text(response.text, encoding="utf-8")
     return response.text
+
+html = fetch_cached("https://en.wikipedia.org/wiki/Theuderic_IV", "theuderic")
+print(len(html))
 ```
 
 You hit the network once per page; from then on, parsing is instant. This is the single biggest quality-of-life upgrade for any scraper.

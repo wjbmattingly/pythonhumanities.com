@@ -133,10 +133,11 @@
     }
 
     function attachButtons() {
-      const pres = document.querySelectorAll(".prose-content pre[data-language='python']");
+      const pres = document.querySelectorAll(".prose-content pre");
+      const snippets = [];
       pres.forEach((pre) => {
-        if (pre.dataset.playgroundReady === "1") return;
-        pre.dataset.playgroundReady = "1";
+        if (pre.dataset.codeReady === "1") return;
+        pre.dataset.codeReady = "1";
 
         const codeEl = pre.querySelector("code");
         const originalCode = (codeEl ? codeEl.textContent : pre.textContent) || "";
@@ -144,20 +145,182 @@
         // Skip empty blocks.
         if (!originalCode.trim()) return;
 
-        // Wrap the pre so the button can position relative to it.
+        const lang = pre.getAttribute("data-language") || "";
+
+        // Wrap the pre so action buttons can position relative to it.
         const wrap = document.createElement("div");
-        wrap.className = "py-playground-wrap";
+        wrap.className = "code-block-wrap";
         pre.parentNode.insertBefore(wrap, pre);
         wrap.appendChild(pre);
 
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "py-playground-toggle";
-        btn.textContent = "▶ Try it";
-        btn.title = "Run this snippet in the browser";
-        btn.addEventListener("click", () => openPlayground(pre, originalCode));
-        wrap.appendChild(btn);
+        const actions = document.createElement("div");
+        actions.className = "code-block-actions";
+        wrap.appendChild(actions);
+
+        const copyBtn = makeCopyButton(() => originalCode);
+        actions.appendChild(copyBtn);
+
+        if (lang === "python") {
+          snippets.push(originalCode);
+          const tryBtn = document.createElement("button");
+          tryBtn.type = "button";
+          tryBtn.className = "code-action-btn code-try-btn";
+          tryBtn.textContent = "▶ Try it";
+          tryBtn.title = "Run this snippet in the browser";
+          tryBtn.addEventListener("click", () => openPlayground(pre, originalCode));
+          actions.appendChild(tryBtn);
+        }
       });
+
+      attachLessonLauncher(snippets);
+    }
+
+    function makeCopyButton(getCode) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "code-action-btn code-copy-btn";
+      btn.title = "Copy to clipboard";
+      btn.innerHTML = '<span class="code-copy-label">Copy</span>';
+      const label = btn.querySelector(".code-copy-label");
+      let resetTimer = null;
+      btn.addEventListener("click", async () => {
+        const code = getCode();
+        let ok = false;
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(code);
+            ok = true;
+          }
+        } catch (_) {}
+        if (!ok) {
+          const ta = document.createElement("textarea");
+          ta.value = code;
+          ta.setAttribute("readonly", "");
+          ta.style.position = "fixed";
+          ta.style.left = "-9999px";
+          document.body.appendChild(ta);
+          ta.select();
+          try {
+            ok = document.execCommand("copy");
+          } catch (_) {}
+          document.body.removeChild(ta);
+        }
+        btn.classList.toggle("copied", ok);
+        label.textContent = ok ? "Copied" : "Failed";
+        if (resetTimer) clearTimeout(resetTimer);
+        resetTimer = setTimeout(() => {
+          btn.classList.remove("copied");
+          label.textContent = "Copy";
+        }, 1600);
+      });
+      return btn;
+    }
+
+    function buildCombinedCode(snippets) {
+      return snippets
+        .map((code, i) => `# === Snippet ${i + 1} ===\n${code.replace(/\s+$/, "")}`)
+        .join("\n\n");
+    }
+
+    function attachLessonLauncher(snippets) {
+      if (snippets.length < 2) return;
+
+      const prose = document.querySelector(".prose-content");
+      if (!prose || prose.dataset.lessonLauncherReady === "1") return;
+      prose.dataset.lessonLauncherReady = "1";
+
+      const combined = buildCombinedCode(snippets);
+
+      const launcher = document.createElement("aside");
+      launcher.className = "lesson-launcher";
+      launcher.innerHTML = `
+        <div class="lesson-launcher-bar">
+          <div class="lesson-launcher-text">
+            <p class="lesson-launcher-eyebrow">Lesson playground</p>
+            <p class="lesson-launcher-blurb">Open all ${snippets.length} snippets from this lesson in one editor — runs in your browser, no install. Edit, re-run, experiment.</p>
+          </div>
+          <button type="button" class="lesson-launcher-button">▶ Open lesson playground</button>
+        </div>
+      `;
+
+      // Insert at the top of the prose content, after any video embed.
+      const video = prose.querySelector("iframe, .video-embed, [class*='video']");
+      if (video && prose.firstElementChild === video) {
+        video.insertAdjacentElement("afterend", launcher);
+      } else {
+        prose.insertBefore(launcher, prose.firstChild);
+      }
+
+      const button = launcher.querySelector(".lesson-launcher-button");
+      button.addEventListener("click", () => {
+        if (launcher.dataset.open === "1") {
+          // Toggle: close the playground.
+          launcher.querySelector(".py-playground")?.remove();
+          launcher.dataset.open = "0";
+          button.textContent = "▶ Open lesson playground";
+          return;
+        }
+        launcher.dataset.open = "1";
+        button.textContent = "Close playground";
+        const playground = buildPlaygroundElement(combined, { large: true });
+        launcher.appendChild(playground);
+        requestAnimationFrame(() => autoResize(playground.querySelector(".py-playground-editor")));
+      });
+    }
+
+    function buildPlaygroundElement(code, options) {
+      const opts = options || {};
+      const playground = document.createElement("div");
+      playground.className = "py-playground" + (opts.large ? " py-playground-large" : "");
+      playground.innerHTML = `
+        <div class="py-playground-toolbar">
+          <button type="button" class="py-playground-run">▶ Run</button>
+          <button type="button" class="py-playground-reset">Reset</button>
+          <button type="button" class="py-playground-clear">Clear output</button>
+          <span class="py-playground-status" aria-live="polite"></span>
+        </div>
+        <textarea class="py-playground-editor" spellcheck="false" autocomplete="off" autocapitalize="off"></textarea>
+        <pre class="py-playground-output" hidden></pre>
+      `;
+      const editor = playground.querySelector(".py-playground-editor");
+      const output = playground.querySelector(".py-playground-output");
+      const status = playground.querySelector(".py-playground-status");
+      const runBtn = playground.querySelector(".py-playground-run");
+      const resetBtn = playground.querySelector(".py-playground-reset");
+      const clearBtn = playground.querySelector(".py-playground-clear");
+
+      editor.value = code;
+
+      runBtn.addEventListener("click", () => runInEditor(editor, output, status, runBtn));
+      resetBtn.addEventListener("click", () => {
+        editor.value = code;
+        autoResize(editor);
+        output.hidden = true;
+        output.textContent = "";
+        status.textContent = "";
+      });
+      clearBtn.addEventListener("click", () => {
+        output.hidden = true;
+        output.textContent = "";
+        status.textContent = "";
+      });
+
+      editor.addEventListener("input", () => autoResize(editor));
+      editor.addEventListener("keydown", (e) => {
+        if (e.key === "Tab") {
+          e.preventDefault();
+          const start = editor.selectionStart;
+          const end = editor.selectionEnd;
+          editor.value = editor.value.slice(0, start) + "    " + editor.value.slice(end);
+          editor.selectionStart = editor.selectionEnd = start + 4;
+        }
+        if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+          e.preventDefault();
+          runBtn.click();
+        }
+      });
+
+      return playground;
     }
 
     if (document.readyState === "loading") {
@@ -169,20 +332,25 @@
 </script>
 
 <style is:global>
-  .py-playground-wrap {
+  .code-block-wrap {
     position: relative;
     margin: var(--space-5) 0;
   }
 
-  .py-playground-wrap > pre {
+  .code-block-wrap > pre {
     margin: 0;
   }
 
-  .py-playground-toggle {
+  .code-block-actions {
     position: absolute;
     top: 0.55rem;
     right: 0.6rem;
     z-index: 2;
+    display: flex;
+    gap: 0.35rem;
+  }
+
+  .code-action-btn {
     font-family: var(--font-sans);
     font-size: 0.72rem;
     font-weight: 500;
@@ -195,22 +363,29 @@
     color: var(--ink-soft);
     cursor: pointer;
     opacity: 0;
-    transition: opacity 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    transition: opacity 0.15s ease, border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
   }
 
-  .py-playground-wrap:hover .py-playground-toggle,
-  .py-playground-wrap:focus-within .py-playground-toggle,
-  .py-playground-toggle:focus {
+  .code-block-wrap:hover .code-action-btn,
+  .code-block-wrap:focus-within .code-action-btn,
+  .code-action-btn:focus {
     opacity: 1;
   }
 
-  .py-playground-toggle:hover {
+  .code-action-btn:hover {
     border-color: var(--gold);
     color: var(--oxblood);
   }
 
+  .code-copy-btn.copied {
+    opacity: 1;
+    border-color: var(--oxblood);
+    color: var(--oxblood);
+    background: var(--parchment);
+  }
+
   @media (max-width: 720px) {
-    .py-playground-toggle { opacity: 1; }
+    .code-action-btn { opacity: 1; }
   }
 
   .py-playground {
@@ -304,5 +479,92 @@
     box-shadow: none !important;
     max-height: 18rem;
     overflow: auto;
+  }
+
+  .py-playground-large .py-playground-editor {
+    min-height: 22rem;
+    font-size: 0.9rem;
+  }
+
+  .py-playground-large .py-playground-output {
+    max-height: 24rem;
+  }
+
+  .lesson-launcher {
+    margin: 0 0 var(--space-6);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    background: var(--parchment-light);
+    overflow: hidden;
+    max-width: var(--measure-wide);
+  }
+
+  .lesson-launcher-bar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-5);
+    padding: var(--space-4) var(--space-5);
+  }
+
+  .lesson-launcher-text {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .lesson-launcher-eyebrow {
+    font-family: var(--font-sans);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--gold-dark);
+    font-weight: 600;
+    margin: 0 0 0.25rem;
+  }
+
+  .lesson-launcher-blurb {
+    font-family: var(--font-serif);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: var(--ink-soft);
+    margin: 0;
+  }
+
+  .lesson-launcher-button {
+    flex-shrink: 0;
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    padding: 0.55rem 1rem;
+    border: 1px solid var(--oxblood);
+    border-radius: 3px;
+    background: var(--oxblood);
+    color: var(--parchment);
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  }
+
+  .lesson-launcher-button:hover {
+    background: var(--ink);
+    border-color: var(--ink);
+  }
+
+  .lesson-launcher[data-open='1'] .py-playground {
+    border: none;
+    border-top: 1px solid var(--rule);
+    border-radius: 0;
+    box-shadow: none;
+    max-width: none;
+  }
+
+  @media (max-width: 720px) {
+    .lesson-launcher-bar {
+      flex-direction: column;
+      align-items: stretch;
+      gap: var(--space-3);
+    }
+    .lesson-launcher-button {
+      width: 100%;
+    }
   }
 </style>

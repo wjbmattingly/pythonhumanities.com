@@ -15,14 +15,18 @@ You write a list with square brackets, items separated by commas:
 ```python
 a_list = [1, 1.0, "one"]
 nested = [[1, 2], [2, 3], [4, 2]]
+print(a_list, nested)
 ```
 
 Indexing and slicing work exactly as they do on tuples (see [Lesson 05](/course/lesson-05-python-tuples/)):
 
 ```python
-a_list[0]     # 1
-a_list[-1]    # "one"
-nested[0][1]  # 2
+a_list = [1, 1.0, "one"]
+nested = [[1, 2], [2, 3], [4, 2]]
+
+print(a_list[0])     # 1
+print(a_list[-1])    # "one"
+print(nested[0][1])  # 2
 ```
 
 The interesting part is what you can do *after* the list exists.
@@ -44,7 +48,9 @@ Notice that `append` modifies the list in place and returns nothing. Don't write
 If you want to add several items at once, use `extend`:
 
 ```python
+correspondents = ["Voltaire", "Émilie du Châtelet"]
 correspondents.extend(["d'Alembert", "Diderot"])
+print(correspondents)
 ```
 
 `extend` takes an iterable (another list, a tuple, a generator) and tacks each item on. Compare:
@@ -52,8 +58,10 @@ correspondents.extend(["d'Alembert", "Diderot"])
 ```python
 a = [1, 2]
 a.append([3, 4])    # [1, 2, [3, 4]]   — one item, which happens to be a list
+print(a)
 a = [1, 2]
 a.extend([3, 4])    # [1, 2, 3, 4]     — two new items
+print(a)
 ```
 
 ## Removing items — `remove`, `pop`, `del`
@@ -64,9 +72,11 @@ There are three ways to take something out, and they answer slightly different q
 items = ["a", "b", "c", "b"]
 
 items.remove("b")     # removes the first matching value: ['a', 'c', 'b']
-items.pop()           # removes and returns the LAST item: 'b' → ['a', 'c']
-items.pop(0)          # removes and returns the item at index 0: 'a' → ['c']
+print(items)
+print(items.pop())           # removes and returns the LAST item: 'b' → ['a', 'c']
+print(items.pop(0))          # removes and returns the item at index 0: 'a' → ['c']
 del items[0]          # removes by index, returns nothing
+print(items)
 ```
 
 `remove` is for "I know the value." `pop` is for "I want it out and I want a copy of it." `del` is for "I know the position and don't need it back."
@@ -78,11 +88,13 @@ A few more methods you'll use almost daily:
 ```python
 items = [3, 1, 4, 1, 5, 9, 2, 6]
 
-len(items)            # 8 — how many items
-items.count(1)        # 2 — how many times 1 appears
+print(len(items))            # 8 — how many items
+print(items.count(1))        # 2 — how many times 1 appears
 items.sort()          # sorts in place: [1, 1, 2, 3, 4, 5, 6, 9]
-sorted(items)         # returns a NEW sorted list, leaves items alone
+print(items)
+print(sorted(items))         # returns a NEW sorted list, leaves items alone
 items.reverse()       # reverses in place
+print(items)
 ```
 
 Both `sort` and `sorted` accept a `key` argument — a function that says how to compare items. To sort a list of strings by length, regardless of alphabet:
@@ -90,6 +102,7 @@ Both `sort` and `sorted` accept a `key` argument — a function that says how to
 ```python
 words = ["the", "quality", "of", "mercy"]
 words.sort(key=len)
+print(words)
 # ['of', 'the', 'mercy', 'quality']
 ```
 
@@ -98,14 +111,17 @@ For case-insensitive sorting:
 ```python
 names = ["Voltaire", "diderot", "Émilie"]
 names.sort(key=str.lower)
+print(names)
 ```
 
 ## Checking membership and finding positions
 
 ```python
-"Voltaire" in correspondents    # True
-"Newton" not in correspondents  # True
-correspondents.index("Diderot") # the position of the first match
+correspondents = ["Voltaire", "Émilie du Châtelet", "d'Alembert", "Diderot"]
+
+print("Voltaire" in correspondents)    # True
+print("Newton" not in correspondents)  # True
+print(correspondents.index("Diderot")) # the position of the first match
 ```
 
 `in` is fast to write and reads naturally — prefer it to `count(x) > 0` when you only care whether something is present.
@@ -116,9 +132,9 @@ This one comes up constantly when you've split a string apart, processed each pi
 
 ```python
 words = ["the", "quality", "of", "mercy"]
-" ".join(words)        # 'the quality of mercy'
-", ".join(words)       # 'the, quality, of, mercy'
-"\n".join(words)       # one word per line
+print(" ".join(words))        # 'the quality of mercy'
+print(", ".join(words))       # 'the, quality, of, mercy'
+print("\n".join(words))       # one word per line
 ```
 
 Note the order: it's the *separator* that has the `join` method, and the list is the argument. This catches everyone the first time.
@@ -130,9 +146,11 @@ Once you're comfortable with the basics, the most idiomatic way to build a new l
 ```python
 words = ["the", "quality", "of", "mercy"]
 upper = [w.upper() for w in words]
+print(upper)
 # ['THE', 'QUALITY', 'OF', 'MERCY']
 
 long_only = [w for w in words if len(w) > 3]
+print(long_only)
 # ['quality', 'mercy']
 ```
 

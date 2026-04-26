@@ -37,8 +37,18 @@ Once your data is in this shape, the rest of the lesson is just list-of-dictiona
 ## Exact match
 
 ```python
+from openpyxl import load_workbook
+
+wb = load_workbook("letters.xlsx", data_only=True)
+sheet = wb.active
+
+rows = list(sheet.iter_rows(values_only=True))
+header, *body = rows
+records = [dict(zip(header, r)) for r in body]
+
 target = "Paris"
 matches = [r for r in records if r["place"] == target]
+print(matches)
 ```
 
 That's a list comprehension (Lesson 06): for each row in `records`, keep it if its `place` field equals `target`. The result is a list of full row-dictionaries — same shape as `records` itself, just shorter.
@@ -48,11 +58,21 @@ That's a list comprehension (Lesson 06): for each row in `records`, keep it if i
 Real searches are rarely exact. Lowercase both sides and use `in`:
 
 ```python
+from openpyxl import load_workbook
+
+wb = load_workbook("letters.xlsx", data_only=True)
+sheet = wb.active
+
+rows = list(sheet.iter_rows(values_only=True))
+header, *body = rows
+records = [dict(zip(header, r)) for r in body]
+
 needle = "paris"
 matches = [
     r for r in records
     if needle in str(r["place"]).lower()
 ]
+print(matches)
 ```
 
 `str(...)` is a guard against `None` values (empty cells) and numeric cells that don't have a `.lower()` method. Always wrap a cell value in `str` before doing string operations on it.
@@ -62,10 +82,20 @@ matches = [
 Combine conditions with `and`/`or`. Letters from Voltaire after 1750:
 
 ```python
+from openpyxl import load_workbook
+
+wb = load_workbook("letters.xlsx", data_only=True)
+sheet = wb.active
+
+rows = list(sheet.iter_rows(values_only=True))
+header, *body = rows
+records = [dict(zip(header, r)) for r in body]
+
 matches = [
     r for r in records
     if r["sender"] == "Voltaire" and r["year"] and r["year"] > 1750
 ]
+print(matches)
 ```
 
 The middle `r["year"]` check handles rows where `year` is missing — `None > 1750` would raise a `TypeError`, but `None and …` short-circuits before we get there.
@@ -75,7 +105,15 @@ The middle `r["year"]` check handles rows where `year` is missing — `None > 17
 `Counter` (from Lesson 13) turns a list of values into a frequency table:
 
 ```python
+from openpyxl import load_workbook
 from collections import Counter
+
+wb = load_workbook("letters.xlsx", data_only=True)
+sheet = wb.active
+
+rows = list(sheet.iter_rows(values_only=True))
+header, *body = rows
+records = [dict(zip(header, r)) for r in body]
 
 senders = Counter(r["sender"] for r in records if r["sender"])
 print(senders.most_common(5))
@@ -92,12 +130,23 @@ For aggregations beyond counts (sums, means, group-bys with multiple stats), thi
 `sorted` with a `key` function (Lesson 06) does the heavy lifting:
 
 ```python
+from openpyxl import load_workbook
+
+wb = load_workbook("letters.xlsx", data_only=True)
+sheet = wb.active
+
+rows = list(sheet.iter_rows(values_only=True))
+header, *body = rows
+records = [dict(zip(header, r)) for r in body]
+
 top_senders = sorted(records, key=lambda r: r["sender"] or "")
 top_letters = sorted(
     [r for r in records if r["year"]],
     key=lambda r: r["year"],
     reverse=True,
 )[:10]
+print(top_senders)
+print(top_letters)
 ```
 
 `lambda r: r["year"]` is a one-line anonymous function — equivalent to writing a named function that returns `r["year"]`. Use lambdas when the function is throwaway and tiny. For anything more complex, `def` it.
@@ -107,9 +156,24 @@ top_letters = sorted(
 Once you have the filtered list, you can write it to a new spreadsheet (Lesson 18), to a CSV, or to a JSON file:
 
 ```python
+from openpyxl import load_workbook
 import json
+
+wb = load_workbook("letters.xlsx", data_only=True)
+sheet = wb.active
+
+rows = list(sheet.iter_rows(values_only=True))
+header, *body = rows
+records = [dict(zip(header, r)) for r in body]
+
+matches = [
+    r for r in records
+    if r["sender"] == "Voltaire" and r["year"] and r["year"] > 1750
+]
+
 with open("voltaire-after-1750.json", "w", encoding="utf-8") as f:
     json.dump(matches, f, indent=2, default=str)
+print(matches)
 ```
 
 The `default=str` is a useful trick — it tells `json` to call `str()` on anything it doesn't natively know how to serialize, which catches `datetime` objects from Excel automatically.

@@ -48,6 +48,10 @@ Two important details in that one call:
 `{m,n}` means "between *m* and *n* of the preceding thing":
 
 ```python
+import re
+
+description = "I have 1 cat, 2 dogs, and 3 birds. There are 5 of each. So 5 + 5 + 5 = 15."
+
 print(re.findall(r"[0-9]{1,2}", description))
 # ['1', '2', '3', '5', '5', '5', '15']
 ```
@@ -120,15 +124,19 @@ Two more pieces show up in nearly every real pattern.
 | `\b` | word boundary |
 
 ```python
-re.findall(r"^\w+", "Once upon a time")    # ['Once']
-re.findall(r"\bthe\b", "the other theory") # ['the']  — not 'theory'
+import re
+
+print(re.findall(r"^\w+", "Once upon a time"))    # ['Once']
+print(re.findall(r"\bthe\b", "the other theory")) # ['the']  — not 'theory'
 ```
 
 **Groups** wrap part of a pattern in parentheses to capture it:
 
 ```python
+import re
+
 text = "5/3/1989 and 11/12/95"
-re.findall(r"([0-9]{1,2})/([0-9]{1,2})/([0-9]{2,4})", text)
+print(re.findall(r"([0-9]{1,2})/([0-9]{1,2})/([0-9]{2,4})", text))
 # [('5', '3', '1989'), ('11', '12', '95')]
 ```
 
@@ -149,14 +157,19 @@ When the pattern has groups, `findall` returns tuples of the captured pieces —
 `re.sub` is especially useful for cleanup. To collapse runs of whitespace into single spaces:
 
 ```python
-re.sub(r"\s+", " ", "foo    bar\n\nbaz").strip()
+import re
+
+print(re.sub(r"\s+", " ", "foo    bar\n\nbaz").strip())
 # 'foo bar baz'
 ```
 
 To redact dates while keeping the surrounding text intact:
 
 ```python
-re.sub(r"[0-9]{1,2}/[0-9]{1,2}/[0-9]{2,4}", "[date]", text)
+import re
+
+text = "The event happened on 5/3/1989 and again on 11/12/95."
+print(re.sub(r"[0-9]{1,2}/[0-9]{1,2}/[0-9]{2,4}", "[date]", text))
 # 'The event happened on [date] and again on [date].'
 ```
 

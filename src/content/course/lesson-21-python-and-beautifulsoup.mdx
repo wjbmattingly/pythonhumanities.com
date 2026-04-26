@@ -29,6 +29,7 @@ from bs4 import BeautifulSoup
 url = "https://en.wikipedia.org/wiki/Theuderic_IV"
 html = requests.get(url, timeout=10).text
 soup = BeautifulSoup(html, "html.parser")
+print(soup.title)
 ```
 
 `soup` now represents the parsed page. Everything else in this lesson is methods on `soup` (or on tags inside it).
@@ -41,6 +42,13 @@ The two methods that do most of the work:
 - `soup.find_all(tag, attrs)` — returns a **list** of every matching tag.
 
 ```python
+import requests
+from bs4 import BeautifulSoup
+
+url = "https://en.wikipedia.org/wiki/Theuderic_IV"
+html = requests.get(url, timeout=10).text
+soup = BeautifulSoup(html, "html.parser")
+
 title = soup.find("h1")
 print(title.text)
 
@@ -56,12 +64,19 @@ Two safe-defaults you should adopt:
 ## Filtering by class, id, or attribute
 
 ```python
-soup.find("div", class_="biography")
-soup.find("div", id="main-content")
-soup.find_all("p", class_="lede")
+import requests
+from bs4 import BeautifulSoup
+
+url = "https://en.wikipedia.org/wiki/Theuderic_IV"
+html = requests.get(url, timeout=10).text
+soup = BeautifulSoup(html, "html.parser")
+
+print(soup.find("div", class_="biography"))
+print(soup.find("div", id="main-content"))
+print(soup.find_all("p", class_="lede"))
 
 # more general — any attribute
-soup.find_all("a", attrs={"data-track": "biography-link"})
+print(soup.find_all("a", attrs={"data-track": "biography-link"}))
 ```
 
 Note the trailing underscore on `class_`. `class` is a Python keyword, so BeautifulSoup uses `class_` to avoid the conflict.
@@ -71,9 +86,16 @@ Note the trailing underscore on `class_`. `class` is a Python keyword, so Beauti
 `soup.select(selector)` accepts the same selectors you'd use in CSS or in devtools' "Copy selector":
 
 ```python
-soup.select("div.biography h2")
-soup.select("a[href^='/king/']")
-soup.select_one("div#main-content > p")
+import requests
+from bs4 import BeautifulSoup
+
+url = "https://en.wikipedia.org/wiki/Theuderic_IV"
+html = requests.get(url, timeout=10).text
+soup = BeautifulSoup(html, "html.parser")
+
+print(soup.select("div.biography h2"))
+print(soup.select("a[href^='/king/']"))
+print(soup.select_one("div#main-content > p"))
 ```
 
 For nested queries (one element inside another), CSS selectors are usually shorter than chained `find` calls. Pick the form that reads better.
@@ -83,6 +105,13 @@ For nested queries (one element inside another), CSS selectors are usually short
 The standard scraping pattern: locate a container, then drill into it for fields.
 
 ```python
+import requests
+from bs4 import BeautifulSoup
+
+url = "https://en.wikipedia.org/wiki/Theuderic_IV"
+html = requests.get(url, timeout=10).text
+soup = BeautifulSoup(html, "html.parser")
+
 records = []
 for box in soup.select("div.biography"):
     name = box.select_one(".biography-name").get_text(strip=True)
@@ -91,6 +120,7 @@ for box in soup.select("div.biography"):
     href = link.get("href") if link else None
 
     records.append({"name": name, "dates": dates, "href": href})
+print(records)
 ```
 
 A few habits in that snippet worth copying:
@@ -104,9 +134,17 @@ A few habits in that snippet worth copying:
 These look interchangeable but `get_text` has options that frequently save you a second pass:
 
 ```python
-tag.get_text()                   # default: just like .text
-tag.get_text(strip=True)         # collapse leading/trailing whitespace
-tag.get_text(separator=" ", strip=True)   # join inner tags with a space
+import requests
+from bs4 import BeautifulSoup
+
+url = "https://en.wikipedia.org/wiki/Theuderic_IV"
+html = requests.get(url, timeout=10).text
+soup = BeautifulSoup(html, "html.parser")
+tag = soup.find("h1")
+
+print(tag.get_text())                   # default: just like .text
+print(tag.get_text(strip=True))         # collapse leading/trailing whitespace
+print(tag.get_text(separator=" ", strip=True))   # join inner tags with a space
 ```
 
 The third form is what you almost always want for paragraphs that contain inline tags like `<em>` or `<a>`. Without `separator=" "`, the words on either side of those inline tags get jammed together.
@@ -116,11 +154,18 @@ The third form is what you almost always want for paragraphs that contain inline
 You can also walk the tree relative to a tag you already have:
 
 ```python
+import requests
+from bs4 import BeautifulSoup
+
+url = "https://en.wikipedia.org/wiki/Theuderic_IV"
+html = requests.get(url, timeout=10).text
+soup = BeautifulSoup(html, "html.parser")
+
 header = soup.find("h2", class_="biography-name")
-header.parent          # the enclosing element
-header.find_next("p")  # the next <p> after this header
-header.find_previous_sibling("h2")
-header.find_all_next("p", limit=3)
+print(header.parent)          # the enclosing element
+print(header.find_next("p"))  # the next <p> after this header
+print(header.find_previous_sibling("h2"))
+print(header.find_all_next("p", limit=3))
 ```
 
 These are useful when classes are unhelpful and the only structure is positional ("the paragraph right after this heading").
@@ -131,6 +176,8 @@ These are useful when classes are unhelpful and the only structure is positional
 import time
 import requests
 from bs4 import BeautifulSoup
+
+URLS = ["https://en.wikipedia.org/wiki/Theuderic_IV"]
 
 session = requests.Session()
 session.headers.update({"User-Agent": "DH-research-bot/1.0"})

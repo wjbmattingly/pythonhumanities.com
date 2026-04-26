@@ -23,6 +23,9 @@ The pattern is the same one we used to read text files in [Lesson 12](/course/le
 ```python
 with open("output.txt", "w", encoding="utf-8") as f:
     f.write("Hello, file!\n")
+
+with open("output.txt", "r", encoding="utf-8") as f:
+    print(f.read())
 ```
 
 A few points worth pinning down:
@@ -40,20 +43,32 @@ names = ["Theuderic IV", "Pippin the Short", "Charlemagne"]
 with open("names.txt", "w", encoding="utf-8") as f:
     for name in names:
         f.write(name + "\n")
+
+with open("names.txt", "r", encoding="utf-8") as f:
+    print(f.read())
 ```
 
 `pathlib` has a one-liner equivalent that's even cleaner:
 
 ```python
 from pathlib import Path
+
+names = ["Theuderic IV", "Pippin the Short", "Charlemagne"]
 Path("names.txt").write_text("\n".join(names) + "\n", encoding="utf-8")
+print(Path("names.txt").read_text(encoding="utf-8"))
 ```
 
 Reading it back is symmetrical:
 
 ```python
+from pathlib import Path
+
+names = ["Theuderic IV", "Pippin the Short", "Charlemagne"]
+Path("names.txt").write_text("\n".join(names) + "\n", encoding="utf-8")
+
 text = Path("names.txt").read_text(encoding="utf-8")
 lines = text.splitlines()
+print(lines)
 ```
 
 `splitlines` handles `\n`, `\r\n`, and `\r` uniformly and drops the trailing newlines, which is almost always what you want.
@@ -77,6 +92,9 @@ with open("writers.csv", "w", encoding="utf-8", newline="") as f:
     writer = csv.DictWriter(f, fieldnames=list(records[0].keys()))
     writer.writeheader()
     writer.writerows(records)
+
+with open("writers.csv", "r", encoding="utf-8") as f:
+    print(f.read())
 ```
 
 Two non-obvious arguments to `open` you need every time you work with CSV:
@@ -87,6 +105,19 @@ Two non-obvious arguments to `open` you need every time you work with CSV:
 Reading it back with the same shape:
 
 ```python
+import csv
+
+records = [
+    {"name": "Voltaire", "born": 1694, "letters": 21000},
+    {"name": "Émilie",   "born": 1706, "letters":   430},
+    {"name": "Diderot",  "born": 1713, "letters":  3500},
+]
+
+with open("writers.csv", "w", encoding="utf-8", newline="") as f:
+    writer = csv.DictWriter(f, fieldnames=list(records[0].keys()))
+    writer.writeheader()
+    writer.writerows(records)
+
 with open("writers.csv", "r", encoding="utf-8", newline="") as f:
     reader = csv.DictReader(f)
     records = [row for row in reader]
@@ -115,6 +146,9 @@ records = [
 
 with open("writers.json", "w", encoding="utf-8") as f:
     json.dump(records, f, indent=2, ensure_ascii=False)
+
+with open("writers.json", "r", encoding="utf-8") as f:
+    print(f.read())
 ```
 
 Three useful arguments to `json.dump`:
@@ -126,8 +160,23 @@ Three useful arguments to `json.dump`:
 Reading is even simpler:
 
 ```python
+import json
+
+records = [
+    {
+        "name": "Voltaire",
+        "born": 1694,
+        "places": ["Paris", "Cirey", "Ferney"],
+        "correspondents": {"Émilie": 192, "Diderot": 8},
+    },
+]
+
+with open("writers.json", "w", encoding="utf-8") as f:
+    json.dump(records, f, indent=2, ensure_ascii=False)
+
 with open("writers.json", "r", encoding="utf-8") as f:
     records = json.load(f)
+print(records)
 ```
 
 You get back the same list of dictionaries you wrote.
@@ -139,16 +188,34 @@ For long-running scrapers and large datasets, **JSONL** (also called **NDJSON**)
 ```python
 import json
 
+records = [
+    {"name": "Voltaire", "born": 1694},
+    {"name": "Émilie",   "born": 1706},
+]
+
 with open("scraped.jsonl", "a", encoding="utf-8") as f:
     for record in records:
         f.write(json.dumps(record, ensure_ascii=False) + "\n")
+print("wrote", len(records), "records")
 ```
 
 Reading streams the file:
 
 ```python
+import json
+
+records = [
+    {"name": "Voltaire", "born": 1694},
+    {"name": "Émilie",   "born": 1706},
+]
+
+with open("scraped.jsonl", "w", encoding="utf-8") as f:
+    for record in records:
+        f.write(json.dumps(record, ensure_ascii=False) + "\n")
+
 with open("scraped.jsonl", "r", encoding="utf-8") as f:
     records = [json.loads(line) for line in f]
+print(records)
 ```
 
 This is the format every modern data pipeline uses for logs and scrape outputs. Tools like `jq`, `polars`, and `pandas` all read it natively. Once a scrape gets past a few hundred records, JSONL is a much better choice than a single growing JSON list.
