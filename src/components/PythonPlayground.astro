@@ -74,7 +74,7 @@
       if (pre.dataset.playgroundOpen === "1") return;
       pre.dataset.playgroundOpen = "1";
 
-      const wrap = pre.closest(".py-playground-wrap");
+      const wrap = pre.closest(".code-block-wrap");
 
       const playground = document.createElement("div");
       playground.className = "py-playground";
