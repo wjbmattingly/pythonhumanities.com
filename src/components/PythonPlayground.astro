@@ -11,6 +11,10 @@
     const PYODIDE_INDEX = `https://cdn.jsdelivr.net/pyodide/${PYODIDE_VERSION}/full/`;
 
     let pyodidePromise = null;
+    // Tracks which third-party packages have been installed via micropip so
+    // we don't repeat the network round-trip on every Run.
+    const installed = new Set();
+    let micropipPromise = null;
 
     function loadPyodideOnce() {
       if (pyodidePromise) return pyodidePromise;
@@ -29,6 +33,78 @@
       return pyodidePromise;
     }
 
+    function loadMicropipOnce(pyodide) {
+      if (micropipPromise) return micropipPromise;
+      micropipPromise = (async () => {
+        await pyodide.loadPackage("micropip");
+        return pyodide.pyimport("micropip");
+      })();
+      return micropipPromise;
+    }
+
+    // Returns the set of top-level package names imported by `code`.
+    function detectImports(code) {
+      const out = new Set();
+      const lines = code.split("\n");
+      const importRe = /^\s*import\s+([a-zA-Z_][\w]*)/;
+      const fromRe = /^\s*from\s+([a-zA-Z_][\w]*)/;
+      for (const line of lines) {
+        const m = line.match(importRe) || line.match(fromRe);
+        if (m) out.add(m[1]);
+      }
+      return out;
+    }
+
+    // Loads the packages a snippet needs. Called before runPythonAsync.
+    // - Bundled Pyodide packages (pandas, numpy, beautifulsoup4, lxml,
+    //   openpyxl, matplotlib, ...) are handled by loadPackagesFromImports.
+    // - Pure-Python packages we ship via micropip (requests, etc.) are
+    //   installed once and remembered.
+    async function preparePackages(pyodide, code, status) {
+      const imports = detectImports(code);
+
+      // Map import name -> pyodide bundled package name (where the import
+      // name and the package name differ).
+      const PACKAGE_ALIASES = { bs4: "beautifulsoup4", PIL: "pillow", sklearn: "scikit-learn" };
+
+      // First pass: load every bundled package whose import name appears in
+      // the source. We resolve aliases by hand because loadPackagesFromImports
+      // doesn't always know about them.
+      const bundled = [];
+      for (const name of imports) {
+        bundled.push(PACKAGE_ALIASES[name] || name);
+      }
+      if (bundled.length) {
+        try {
+          await pyodide.loadPackage(bundled, { errorCallback: () => {} });
+        } catch (_) {
+          // Silently fall through — unknown packages just won't be installed,
+          // and the real ImportError surfaces at run time.
+        }
+      }
+
+      // Second pass: things that need micropip.
+      const needsRequests = imports.has("requests");
+      const needsPyodideHttp = needsRequests; // requests in browser needs the patch.
+
+      if (needsRequests || needsPyodideHttp) {
+        status.textContent = "Installing requests…";
+        const micropip = await loadMicropipOnce(pyodide);
+        if (!installed.has("pyodide-http")) {
+          await micropip.install("pyodide-http");
+          installed.add("pyodide-http");
+        }
+        if (!installed.has("requests")) {
+          await micropip.install("requests");
+          installed.add("requests");
+        }
+        // Patch urllib + requests to use the browser's fetch API.
+        await pyodide.runPythonAsync(
+          "import pyodide_http\npyodide_http.patch_all()\n"
+        );
+      }
+    }
+
     function autoResize(t) {
       t.style.height = "auto";
       t.style.height = Math.min(t.scrollHeight + 4, 600) + "px";
@@ -45,8 +121,10 @@
           let buf = "";
           pyodide.setStdout({ batched: (s) => { buf += s + "\n"; } });
           pyodide.setStderr({ batched: (s) => { buf += s + "\n"; } });
-          status.textContent = "Running…";
+          status.textContent = "Loading packages…";
           try {
+            await preparePackages(pyodide, editor.value, status);
+            status.textContent = "Running…";
             const result = await pyodide.runPythonAsync(editor.value);
             if (result !== undefined && result !== null) {
               const r = String(result);
