@@ -1,6 +1,7 @@
 ---
 import SiteLayout from "../../components/SiteLayout.astro";
 import VideoEmbed from "../../components/VideoEmbed.astro";
+import PythonPlayground from "../../components/PythonPlayground.astro";
 import { getCollection, render } from "astro:content";
 import { url } from "../../lib/url";
 
@@ -114,6 +115,7 @@ const parts = [...partsMap.values()].sort((a, b) => a.number - b.number);
       </nav>
     </div>
   </article>
+  <PythonPlayground />
 </SiteLayout>
 
 <style>

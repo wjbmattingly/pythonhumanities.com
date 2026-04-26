@@ -15,16 +15,4 @@ const course = defineCollection({
   }),
 });
 
-const blog = defineCollection({
-  loader: glob({ base: "./src/content/blog", pattern: "**/*.{md,mdx}" }),
-  schema: z.object({
-    title: z.string(),
-    date: z.coerce.date(),
-    author: z.string().default("William Mattingly"),
-    category: z.string().optional(),
-    description: z.string().optional(),
-    sourceUrl: z.string().url().optional(),
-  }),
-});
-
-export const collections = { course, blog };
+export const collections = { course };
