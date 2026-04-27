@@ -37,7 +37,11 @@ export default defineConfig({
   markdown: {
     remarkPlugins: [remarkBaseUrl],
     shikiConfig: {
-      theme: "github-light",
+      themes: {
+        light: "github-light",
+        dark: "github-dark",
+      },
+      defaultColor: false,
       wrap: true,
     },
   },

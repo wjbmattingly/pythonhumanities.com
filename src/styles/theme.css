@@ -42,8 +42,13 @@
   --container: 1200px;
 }
 
+/* Dark theme tokens. Applied in two cases:
+   - The system prefers dark AND the user has not explicitly chosen a theme
+     (no [data-theme] on <html>).
+   - The user has explicitly chosen dark via the header toggle
+     ([data-theme="dark"] on <html>). */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme]) {
     --parchment: #1a1612;
     --parchment-light: #221d16;
     --parchment-dark: #13100c;
@@ -60,4 +65,22 @@
     --code-bg: #201b14;
     --code-border: #3a3227;
   }
+}
+
+:root[data-theme="dark"] {
+  --parchment: #1a1612;
+  --parchment-light: #221d16;
+  --parchment-dark: #13100c;
+  --ink: #efe6d2;
+  --ink-soft: #d9cdb3;
+  --ink-muted: #9e9178;
+  --rule: #3a3227;
+  --rule-soft: #2a2319;
+  --oxblood: #d87a62;
+  --oxblood-dark: #eb8a72;
+  --gold: #d4a968;
+  --gold-dark: #e6bd82;
+  --highlight: #3a321f;
+  --code-bg: #201b14;
+  --code-border: #3a3227;
 }
