@@ -1,0 +1,139 @@
+---
+title: "Counter from Collections"
+lessonNumber: 40
+part: 9
+partTitle: "Functional Python"
+description: "A dictionary subclass that counts things for you — the cleanest answer to every frequency question in DH work."
+sourceUrl: "https://intermediate-python.pythonhumanities.com/notebooks/07-collector.html"
+videoId: ""
+---
+
+Frequency counts are everywhere in digital humanities work. How often does each word appear in a corpus? Which correspondents send the most letters? Which years show up most in a dataset? You can build any of these with a plain dictionary — and you've seen the idiom several times in this course — but the standard library ships with a purpose-built tool that does it cleaner: `Counter`, from the `collections` module.
+
+A `Counter` is a dictionary subclass. Everything you can do with a regular dictionary, you can do with a `Counter`. What it adds: automatic counting, missing-key safety, and a couple of methods that make summary work trivial.
+
+## The import
+
+`Counter` lives in the `collections` module of the standard library. No installation, just an import:
+
+```python
+from collections import Counter
+```
+
+You'll write that line at the top of dozens of scripts.
+
+## Creating a Counter
+
+Pass any iterable — list, tuple, string, generator — and `Counter` returns a dictionary keyed by each unique element, with the count as the value:
+
+```python
+from collections import Counter
+
+words = ['to', 'be', 'or', 'not', 'to', 'be', 'that', 'is', 'the', 'question']
+word_counter = Counter(words)
+print(word_counter)
+# Counter({'to': 2, 'be': 2, 'or': 1, 'not': 1, 'that': 1, 'is': 1, 'the': 1, 'question': 1})
+```
+
+That single line replaces five lines of `if word in counts: counts[word] += 1 else: counts[word] = 1`. The result is sorted internally with the most common keys first, which makes it easy to read.
+
+## Accessing counts
+
+Index into a `Counter` exactly like a dictionary:
+
+```python
+to_count = word_counter['to']
+print(to_count)   # 2
+```
+
+The one nice difference: missing keys return `0` instead of raising `KeyError`. That alone makes `Counter` worth using over a plain dict for counting work.
+
+```python
+print(word_counter["and"])   # 0
+```
+
+No `KeyError`, no `.get(key, 0)` boilerplate. The default is exactly the right default for the kind of work you're doing.
+
+## Updating a Counter
+
+Add more items at any time with `.update`. Unlike `dict.update`, which *replaces* values, `Counter.update` *adds* to them:
+
+```python
+more_words = ['to', 'be', 'or', 'not', 'to', 'be']
+word_counter.update(more_words)
+print(word_counter)
+# Counter({'to': 4, 'be': 4, 'or': 2, 'not': 2, 'that': 1, 'is': 1, 'the': 1, 'question': 1})
+```
+
+This is exactly what you want when you're processing a corpus in chunks: read a file, update the counter, read the next file, update again, repeat. The counter accumulates across all the inputs.
+
+## Most common — the killer feature
+
+`Counter.most_common(n)` returns the top `n` keys as a list of `(key, count)` tuples, ordered by frequency:
+
+```python
+top_three_words = word_counter.most_common(3)
+print(top_three_words)
+# [('to', 4), ('be', 4), ('or', 2)]
+```
+
+Call without an argument to get every key, sorted from most to least frequent. This single method replaces the `sorted(counts.items(), key=lambda x: -x[1])[:n]` you'd otherwise have to remember.
+
+## A worked example: counting words in a passage
+
+Pulling everything you've learned in Parts 8 and 9 together — read a passage, normalise it, count the words:
+
+```python
+from collections import Counter
+
+text = """
+To be, or not to be, that is the question:
+Whether 'tis nobler in the mind to suffer
+The slings and arrows of outrageous fortune,
+Or to take Arms against a Sea of troubles,
+And by opposing end them.
+"""
+
+words = [w.lower().strip(".,:;'") for w in text.split()]
+words = list(filter(None, words))   # drop blanks
+
+counts = Counter(words)
+print(counts.most_common(5))
+# [('to', 4), ('the', 3), ('or', 2), ('be', 2), ('and', 2)]
+```
+
+A list comprehension to lowercase and strip punctuation, `filter(None, ...)` to drop empties, `Counter` to tally, `.most_common` to summarise. Five lines, four ideas, and you have the most-used word frequency snippet in the field.
+
+## A few honest gotchas
+
+A handful of things to remember:
+
+- **A `Counter` is still a dictionary.** Anywhere you can pass a dict, you can pass a `Counter`. That includes JSON serialisation, dict comprehensions, `for key, value in counter.items()`, everything.
+- **Missing keys return 0, not None.** That's the point — but be aware if you're checking `if word_counter[word]`, since both `0` and "absent" will be falsy.
+- **`update` adds, doesn't replace.** Different from `dict.update`. If you want to overwrite a count, assign to it directly: `counter[word] = 5`.
+- **Counters subtract too.** `c1 - c2` gives you a counter where every key's value is `c1[key] - c2[key]`, with negatives clamped to zero. Useful for "what's in this corpus that wasn't in the other?"
+- **Don't sort by hand.** If you find yourself writing `sorted(counter.items(), key=...)`, you almost certainly want `most_common` instead.
+
+## Try it yourself
+
+1. Take a paragraph of your own text, lowercase it, strip basic punctuation, and use `Counter` to find the five most common words.
+2. Given the `correspondents` list from earlier lessons, use `Counter` on the *first letters* of their names. Which initial is most common?
+3. Read a small text file line by line (use a generator from [Lesson 36](/course/lesson-36-generators/) if you like), tokenise it, and accumulate counts with `Counter.update`. Confirm that the totals match what you'd get from counting the whole file at once.
+
+## Where to next
+
+That's both Iteration Tools (Part 8) and Functional Python (Part 9) finished. There's no Lesson 41 — by design. From here the way to get fluent isn't to read another lesson, it's to apply these tools to a real project.
+
+Pick something from the [textbooks list](/textbooks/) — the kind of project where you'll be reading files, walking corpora, and counting things — and use what you've learned in Parts 8 and 9 to make the code shorter and clearer. Comprehensions where you would have written explicit loops; generators where you would have built lists; `Counter` where you would have counted by hand; `sorted` with a `lambda key` where you would have written a comparator.
+
+These tools only really click after you've used each of them three or four times in code that actually matters to you. That's the next step.
+
+## Running the code
+
+Save any snippet from this lesson to a file — say `try.py` — and run it from your project folder:
+
+```bash
+uv run try.py
+```
+
+`uv run` uses the project's Python and dependencies automatically; no virtualenv to activate. If you haven't set the project up yet, [Lesson 01](/course/lesson-01-introduction-to-python-for-dh/) walks through it.

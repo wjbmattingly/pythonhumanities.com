@@ -1,0 +1,125 @@
+---
+title: "Lambda Functions"
+lessonNumber: 37
+part: 9
+partTitle: "Functional Python"
+description: "Anonymous one-line functions you write inline — perfect for sort keys, filter conditions, and small transformations that don't deserve their own def."
+sourceUrl: "https://intermediate-python.pythonhumanities.com/notebooks/04-lambda.html"
+videoId: ""
+---
+
+A **lambda function** is a small, anonymous function you can create on the fly without giving it a name. You write it where you use it. They're not a replacement for `def` — they're a tool for the moments when defining a whole named function would be overkill.
+
+The classic case: you want to pass a tiny "how to compare these" or "how to transform this" function as an argument to something like `sorted`, `map`, or `filter`. Writing a three-line `def` for a one-line idea hurts readability. A lambda lets you tuck the logic inline.
+
+## The syntax
+
+```python
+lambda arguments: expression
+```
+
+The keyword `lambda`, then comma-separated parameters, then a colon, then a single expression that becomes the return value. No `def`, no `return`, no name. The whole thing is itself an expression — it evaluates to a function object you can use immediately or assign to a variable.
+
+A first example, kept deliberately small:
+
+```python
+add_name = lambda x, y: x + " " + y
+full_name = add_name("William", "Mattingly")
+print(full_name)
+# 'William Mattingly'
+```
+
+That assignment — `add_name = lambda ...` — is technically legal but stylistically discouraged. If you want to give a function a name, use `def`. The point of `lambda` is the times you *don't* want a name.
+
+## Where lambdas earn their keep — sort keys
+
+The most common, most useful place for a lambda is the `key` argument to `sorted` (or `list.sort`, or `min`, or `max`). The `key` parameter takes a one-argument function that converts each item into the value you want to sort by:
+
+```python
+lines = [
+    "Once upon a midnight dreary, while I pondered, weak and weary,",
+    "Over many a quaint and curious volume of forgotten lore—",
+    "While I nodded, nearly napping, suddenly there came a tapping,",
+    "As of some one gently rapping, rapping at my chamber door.",
+]
+
+sorted_lines = sorted(lines, key=lambda line: len(line))
+for line in sorted_lines:
+    print(line)
+```
+
+Each line is converted to its length for the sort, but the result is still the lines themselves, just reordered shortest-to-longest. Compare with the alternative:
+
+```python
+def line_length(line):
+    return len(line)
+
+sorted_lines = sorted(lines, key=line_length)
+```
+
+Both work. The lambda version is a single line and you don't have to invent a name (`line_length`, `get_length`, `length_of`?) for a function you'll use exactly once. For sort keys, the lambda is almost always the right call.
+
+The same pattern works for sorting records by a field:
+
+```python
+correspondents = [
+    {"name": "Voltaire",  "letters": 21000},
+    {"name": "Émilie",    "letters":   430},
+    {"name": "Diderot",   "letters":  3500},
+]
+
+by_letter_count = sorted(correspondents, key=lambda c: c["letters"], reverse=True)
+print(by_letter_count[0]["name"])   # 'Voltaire'
+```
+
+This idiom — `sorted(records, key=lambda r: r["field"])` — is one you'll write hundreds of times.
+
+## Lambdas with `map`
+
+`map` (covered in detail in [Lesson 38](/course/lesson-38-the-map-function/)) applies a function to every item in an iterable. The function it needs is often small enough to be a lambda:
+
+```python
+lines = [
+    "Once upon a midnight dreary, while I pondered, weak and weary,",
+    "Over many a quaint and curious volume of forgotten lore—",
+    "While I nodded, nearly napping, suddenly there came a tapping,",
+    "As of some one gently rapping, rapping at my chamber door.",
+]
+
+word_count = map(lambda line: len(line.split()), lines)
+print(list(word_count))
+# [11, 10, 10, 11]
+```
+
+Read it as: "for each `line`, compute `len(line.split())`." Without the lambda, you'd write a one-line function called something like `count_words` — fine, but extra noise.
+
+## A few honest gotchas
+
+Lambdas are easy to overuse. The cases where they hurt readability:
+
+- **One expression, period.** A lambda body is a single expression. No `if` statements (the *expression* form `a if cond else b` is fine), no loops, no assignments, no `print`. If you need any of those, use `def`.
+- **No type hints.** A lambda can't be annotated. Once a function is complex enough that you'd want types on it, write `def`.
+- **They have no name in tracebacks.** When a lambda raises an error, the traceback says `<lambda>`, which is useless. For anything that might fail in production, `def` is kinder to your future debugging self.
+- **Don't write a lambda when you mean a function.** `f = lambda x: x * 2` is strictly worse than `def f(x): return x * 2`. Same length, less informative, no docstring, no name in tracebacks. The whole point of `lambda` is to *not* assign it.
+
+A useful rule of thumb: if the lambda is the argument to another function (like `sorted`, `map`, `filter`, or a pandas method), you're probably using it well. If the lambda is being assigned to a variable, you probably want `def` instead.
+
+## Try it yourself
+
+1. Sort the list `["Voltaire", "Émilie", "Diderot", "Rousseau"]` by name length, shortest first, using a lambda.
+2. Given the `correspondents` list above, use `sorted` with a lambda to sort by name (alphabetically).
+3. Use `max(correspondents, key=...)` with a lambda to find the correspondent with the most letters. (`max` accepts a `key` exactly like `sorted` does.)
+
+## Where to next
+
+[Lesson 38: The Map Function](/course/lesson-38-the-map-function/) is the natural next stop — you've already seen how a lambda fits inside `map`; the next lesson goes deeper.
+
+## Running the code
+
+Save any snippet from this lesson to a file — say `try.py` — and run it from your project folder:
+
+```bash
+uv run try.py
+```
+
+`uv run` uses the project's Python and dependencies automatically; no virtualenv to activate. If you haven't set the project up yet, [Lesson 01](/course/lesson-01-introduction-to-python-for-dh/) walks through it.

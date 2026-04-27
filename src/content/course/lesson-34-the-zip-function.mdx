@@ -1,0 +1,135 @@
+---
+title: "The Zip Function"
+lessonNumber: 34
+part: 8
+partTitle: "Iteration Tools"
+description: "Walk two or more sequences in parallel, one tuple at a time — the cleanest way to pair authors with works, names with dates, or any two related lists."
+sourceUrl: "https://intermediate-python.pythonhumanities.com/notebooks/02-zip.html"
+videoId: "Ek49cGiAOwo"
+---
+
+`zip` is a small, sharp tool for a recurring problem: you have two (or more) sequences whose items correspond to each other, and you want to walk them in parallel. The names of authors in one list, their best-known works in another. Correspondents in one column, dates of birth in another. Years in one list, page counts in another.
+
+You can do this with `enumerate` and an index, but `zip` is what an experienced Python programmer reaches for first.
+
+## What `zip` does
+
+Given two iterables, `zip` returns an iterator that yields a tuple from each — the first item of each, then the second of each, then the third, until the shorter one runs out.
+
+```python
+zip(sequence1, sequence2, ...)
+```
+
+The output is a `zip` object. In a `for` loop, you unpack each tuple into named variables and you're off:
+
+```python
+authors = ["Jane Austen", "George Orwell", "F. Scott Fitzgerald", "Harper Lee"]
+books = ["Pride and Prejudice", "1984", "The Great Gatsby", "To Kill a Mockingbird"]
+
+for author, book in zip(authors, books):
+    print(author, ":", book)
+```
+
+```
+Jane Austen : Pride and Prejudice
+George Orwell : 1984
+F. Scott Fitzgerald : The Great Gatsby
+Harper Lee : To Kill a Mockingbird
+```
+
+That's the whole tool. No counter, no `len`, no indexing into either list. Two parallel walks, one statement.
+
+## Zipping anything iterable
+
+`zip` doesn't care what kind of iterable you pass in. Strings, tuples, lists, generators — all fine. Two strings of the same length pair character by character:
+
+```python
+string1 = "abcde"
+string2 = "12345"
+
+for char1, char2 in zip(string1, string2):
+    print(char1, char2)
+```
+
+```
+a 1
+b 2
+c 3
+d 4
+e 5
+```
+
+That's a useful trick when you're doing alignment work — comparing two romanisations of a name, lining up two columns of a parallel text, walking a token list against its part-of-speech tags.
+
+## Building a dictionary from two lists
+
+A common DH pattern: you've extracted two parallel lists from a CSV or scrape — one of keys, one of values — and you want them as a dictionary. Pass `zip` straight to `dict`:
+
+```python
+correspondents = ["Voltaire", "Émilie", "Diderot"]
+born =          [1694,        1706,     1713]
+
+birth_years = dict(zip(correspondents, born))
+print(birth_years)
+# {'Voltaire': 1694, 'Émilie': 1706, 'Diderot': 1713}
+```
+
+This is one of the most useful one-liners in the language. Whenever you see a function returning two parallel lists, `dict(zip(...))` is how you collapse them into a lookup table.
+
+## Three or more sequences
+
+`zip` accepts any number of arguments. Pass three lists, get tuples of three:
+
+```python
+correspondents = ["Voltaire", "Émilie", "Diderot"]
+born =          [1694,        1706,     1713]
+letters =       [21000,        430,     3500]
+
+for name, year, count in zip(correspondents, born, letters):
+    print(f"{name} (b. {year}): {count} letters")
+```
+
+This scales to whatever shape your data is — as long as the lists run in parallel, `zip` handles them.
+
+## A few honest gotchas
+
+A handful of things to watch:
+
+- **`zip` stops at the shortest sequence.** If your lists are different lengths, the extra items in the longer one are silently dropped. That's a feature when you're iterating, but a bug if you didn't expect it. Check `len(...)` first if you're not sure.
+- **The result is an iterator, not a list.** Once you've looped over a `zip` object, it's exhausted — looping again gives you nothing. If you need the pairs more than once, wrap them in `list(zip(...))`.
+- **It's not a join.** `zip` pairs by position, not by any shared key. If your two lists aren't already in the same order, you'll pair the wrong things together. For key-based joining, use a dictionary or, eventually, pandas.
+- **Use `itertools.zip_longest` if you need the longer sequence.** It pads the shorter side with a fill value (default `None`) so nothing gets dropped.
+
+## Unzipping — the same trick in reverse
+
+A neat property: `zip(*pairs)` undoes a `zip`. If you have a list of `(name, year)` tuples and want them as two parallel lists again:
+
+```python
+pairs = [("Voltaire", 1694), ("Émilie", 1706), ("Diderot", 1713)]
+
+names, years = zip(*pairs)
+print(names)   # ('Voltaire', 'Émilie', 'Diderot')
+print(years)   # (1694, 1706, 1713)
+```
+
+The result is tuples, not lists; wrap in `list(...)` if you need the latter. This trick comes up often when you're feeding data to a plotting library that wants two columns instead of a list of points.
+
+## Try it yourself
+
+1. Given the lists `correspondents = ["Voltaire", "Émilie", "Diderot"]` and `letters = [21000, 430, 3500]`, build a dictionary mapping each name to its letter count using `dict(zip(...))`.
+2. Take two short strings of equal length and use `zip` to print whether each corresponding pair of characters is the same or different.
+3. Using the three-list example above, find every correspondent born after 1700 and print their name and letter count. (You can do this with `zip` alone — no comprehension yet.)
+
+## Where to next
+
+[Lesson 35: Comprehension with Sequences](/course/lesson-35-comprehension-with-sequences/) introduces the most compact iteration form Python has — and you'll use it constantly alongside `zip` and `enumerate`.
+
+## Running the code
+
+Save any snippet from this lesson to a file — say `try.py` — and run it from your project folder:
+
+```bash
+uv run try.py
+```
+
+`uv run` uses the project's Python and dependencies automatically; no virtualenv to activate. If you haven't set the project up yet, [Lesson 01](/course/lesson-01-introduction-to-python-for-dh/) walks through it.

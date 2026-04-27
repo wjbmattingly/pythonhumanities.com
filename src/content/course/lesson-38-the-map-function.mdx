@@ -1,0 +1,130 @@
+---
+title: "The Map Function"
+lessonNumber: 38
+part: 9
+partTitle: "Functional Python"
+description: "Apply a function to every item in an iterable in one line — a tidy alternative to a for loop when all you're doing is transforming each element."
+sourceUrl: "https://intermediate-python.pythonhumanities.com/notebooks/03-map.html"
+videoId: "tb5edLIe6Uw"
+---
+
+`map` takes a function and an iterable, and applies the function to every item in the iterable. The result is an iterator of the transformed values. That's it — one job, done well.
+
+The shape of the syntax:
+
+```python
+map(function, iterable)
+```
+
+The first argument is *the function itself*, not a call to it — no parentheses. `map(len, lines)` not `map(len(), lines)`. The second argument is anything iterable. The return value is a `map` object (a kind of iterator), which you can loop over directly or convert to a list.
+
+## A first example with built-in functions
+
+The simplest case: pass `len` to count the characters in each line of a poem.
+
+```python
+lines = [
+    "Once upon a midnight dreary, while I pondered, weak and weary,",
+    "Over many a quaint and curious volume of forgotten lore—",
+    "While I nodded, nearly napping, suddenly there came a tapping,",
+    "As of some one gently rapping, rapping at my chamber door.",
+]
+
+line_lengths = map(len, lines)
+line_lengths_list = list(line_lengths)
+print(line_lengths_list)
+# [62, 56, 62, 58]
+```
+
+`map(len, lines)` is the same as a list comprehension `[len(line) for line in lines]`, just expressed differently. Two compact ways to say the same thing — most experienced Python programmers will reach for the comprehension first these days, but `map` is everywhere in older code and reads well when the function you're applying is *already named*.
+
+## Map with a custom function
+
+You can pass any function. Here's a small one that counts the words on a line:
+
+```python
+def count_words(line):
+    words = line.split()
+    num_words = len(words)
+    return num_words
+
+word_counts = list(map(count_words, lines))
+print(word_counts)
+# [11, 10, 10, 11]
+```
+
+Pass `count_words` (the function), not `count_words()` (a call to it). `map` calls the function once per item and gives you the iterator of return values.
+
+## Map with a lambda
+
+When the function is a one-liner you don't otherwise need, [a lambda](/course/lesson-37-lambda-functions/) keeps the whole expression on one line:
+
+```python
+word_counts = list(map(lambda line: len(line.split()), lines))
+print(word_counts)
+# [11, 10, 10, 11]
+```
+
+This pattern — `map(lambda x: ..., things)` — is so common that the list-comprehension form (`[... for x in things]`) was added partly to replace it. Either is fine. They produce the same result; pick the one that reads clearly in context.
+
+## Mapping over a list of records
+
+A practical DH example: extract one field out of every record in a list of dictionaries.
+
+```python
+correspondents = [
+    {"name": "Voltaire",  "letters": 21000},
+    {"name": "Émilie",    "letters":   430},
+    {"name": "Diderot",   "letters":  3500},
+]
+
+names = list(map(lambda c: c["name"], correspondents))
+print(names)
+# ['Voltaire', 'Émilie', 'Diderot']
+```
+
+The list-comprehension equivalent is `[c["name"] for c in correspondents]` — the same logic, easier on the eye in most cases. The lesson here is that `map` is one good way to do the job, not the only way.
+
+## Mapping over multiple iterables
+
+If you pass `map` more than one iterable, it walks them in lockstep — exactly like `zip` — and calls the function with one argument from each:
+
+```python
+firsts = ["Voltaire", "Émilie", "Diderot"]
+years =  [1694,        1706,     1713]
+
+labels = list(map(lambda name, year: f"{name} (b. {year})", firsts, years))
+print(labels)
+# ['Voltaire (b. 1694)', 'Émilie (b. 1706)', 'Diderot (b. 1713)']
+```
+
+Like `zip`, `map` stops at the shortest iterable.
+
+## A few honest gotchas
+
+A handful of things to remember:
+
+- **`map` returns an iterator, not a list.** If you `print(map(len, lines))`, you'll see something like `<map object at 0x...>`, which is rarely what you wanted. Wrap in `list(...)` to materialise the values.
+- **Iterators are single-use.** Walking the same `map` object twice gives you values the first time and nothing the second time.
+- **Don't call the function inside `map`.** `map(count_words(), lines)` is wrong — `count_words()` calls the function with no arguments and tries to map the *result* over `lines`. You want `map(count_words, lines)`, no parentheses.
+- **List comprehensions are usually more idiomatic in modern Python.** `[len(line) for line in lines]` reads more clearly than `list(map(len, lines))` for most readers. `map` shines when you already have a named function and you want the symmetry of writing it as `map(my_function, things)`.
+
+## Try it yourself
+
+1. Use `map` with a lambda to lowercase every name in `["Voltaire", "Émilie", "Diderot"]`. Compare against the equivalent list comprehension.
+2. Given the `correspondents` list above, use `map` to produce a list of just the letter counts.
+3. Combine `map` and `zip` (mentally — `map` does it for you with multiple iterables): given `names = ["Voltaire", "Émilie", "Diderot"]` and `letters = [21000, 430, 3500]`, produce a list of strings like `"Voltaire wrote 21000 letters"`.
+
+## Where to next
+
+[Lesson 39: The Filter Function](/course/lesson-39-the-filter-function/) — the same shape as `map`, but instead of transforming items it keeps only the ones where a predicate is true.
+
+## Running the code
+
+Save any snippet from this lesson to a file — say `try.py` — and run it from your project folder:
+
+```bash
+uv run try.py
+```
+
+`uv run` uses the project's Python and dependencies automatically; no virtualenv to activate. If you haven't set the project up yet, [Lesson 01](/course/lesson-01-introduction-to-python-for-dh/) walks through it.

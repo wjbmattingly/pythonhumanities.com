@@ -1,0 +1,44 @@
+---
+title: "Welcome to Intermediate Python"
+lessonNumber: 32
+part: 8
+partTitle: "Iteration Tools"
+description: "You've cleared the basics. Here's what changes: smaller, sharper tools for the patterns you've already been writing the long way."
+sourceUrl: "https://intermediate-python.pythonhumanities.com/intro.html"
+videoId: ""
+---
+
+If you've worked through the first thirty-one lessons, you already have everything you strictly need to do digital humanities work in Python. You can read files, loop over collections, write functions, parse text, hit APIs, and store the results. None of what comes next is essential in that sense.
+
+What changes from here is the *quality* of the code you write. The same loop you'd build with `for` and a counter and an `if` and a growing list, an experienced Python programmer writes in a single line — not because they're showing off, but because Python gives you compact, well-named primitives for the patterns that come up over and over. Once you know them, you reach for them by reflex, and your scripts get shorter, clearer, and easier to come back to in six months.
+
+The next nine lessons are split into two short parts. **Part 8 — Iteration Tools** covers the helpers Python ships for walking through sequences: `enumerate`, `zip`, comprehensions, and generators. Each one replaces a small pile of bookkeeping code you've already been writing by hand. **Part 9 — Functional Python** is about treating functions themselves as values you pass around: `lambda`, `map`, `filter`, and the `Counter` class from `collections`. The functional tools and the iteration tools are designed to compose with each other — `map` over a `zip`, filter the result, count what's left.
+
+## Why this matters for DH work
+
+The kind of question a humanist asks Python tends to come out the same shape: walk through a corpus, transform each item, keep the ones that match a criterion, summarise what's left. A loop with a counter, a list to grow, and an `if` will always work. But once your dataset is the full Voltaire correspondence, or every issue of a journal across fifty years, or every page of a manuscript collection, two things start to bite:
+
+1. **Memory.** Building one giant list of every transformed item is fine until it isn't. Generators let you process records one at a time without ever holding the whole sequence in RAM.
+2. **Readability.** Five lines of `for` / `if` / `append` say "I'm collecting matching items." A comprehension or a `filter(...)` call says the same thing in one line that anyone fluent in Python will read at a glance.
+
+Both parts pay back the time you spend on them within a project or two.
+
+## What to expect
+
+These lessons are shorter than the ones you've been working through. Each one is a single tool, a few examples, and a couple of warnings about where the tool *doesn't* fit. You don't have to memorise the syntax — keep the lessons open and refer back to them. You'll know each tool well after you use it three or four times in real code.
+
+The examples reuse the cast of correspondents you've seen elsewhere — Voltaire, Émilie, Diderot, Rousseau — alongside a few short literary passages. Wherever a piece of code is small enough to type in, type it in. Reading code and writing code use different muscles, and these tools are the kind you only really learn by typing.
+
+## Try it yourself
+
+Before you start the next lesson, take five minutes and open one of your own scripts from earlier in the course. Find a `for` loop that does any of the following:
+
+1. Tracks an index manually with a counter variable.
+2. Builds a new list by appending items inside an `if`.
+3. Walks two lists in parallel.
+
+Don't fix anything yet. Just notice the shape. Each of those is exactly the kind of pattern you'll learn to write in one line over the next nine lessons.
+
+## Where to next
+
+Start with [Lesson 33: The Enumerate Function](/course/lesson-33-the-enumerate-function/) — the smallest of the new tools, and the one that replaces a pattern you've almost certainly written by hand already.

@@ -1,0 +1,136 @@
+---
+title: "The Filter Function"
+lessonNumber: 39
+part: 9
+partTitle: "Functional Python"
+description: "Keep only the items in a sequence that pass a test — the same shape as map, but for selection rather than transformation."
+sourceUrl: "https://intermediate-python.pythonhumanities.com/notebooks/05-filter.html"
+videoId: ""
+---
+
+`filter` is the sibling of `map`. The shape is identical — a function and an iterable — but the job is different. Instead of transforming each item, `filter` keeps only the items where the function returns `True`.
+
+The syntax:
+
+```python
+filter(function, iterable)
+```
+
+The function is a **predicate** — it takes one item and returns a boolean. `filter` calls it once per item and yields only those for which the answer is `True`. The result is an iterator; wrap it in `list(...)` if you want the values all at once.
+
+## A first example
+
+Filtering lines of "The Raven" — keep only those that begin with the word `"While"`:
+
+```python
+lines = [
+    "Once upon a midnight dreary, while I pondered, weak and weary,",
+    "Over many a quaint and curious volume of forgotten lore—",
+    "While I nodded, nearly napping, suddenly there came a tapping,",
+    "As of some one gently rapping, rapping at my chamber door.",
+]
+
+def starts_with_while(line):
+    return line.startswith("While")
+
+filtered_lines = filter(starts_with_while, lines)
+print(list(filtered_lines))
+# ['While I nodded, nearly napping, suddenly there came a tapping,']
+```
+
+The predicate `starts_with_while` returns `True` or `False`. `filter` keeps the line for which it's `True` and drops the others.
+
+## Filter with a lambda
+
+For a one-line predicate, a [lambda](/course/lesson-37-lambda-functions/) is the natural fit:
+
+```python
+filtered_lines = filter(lambda line: "rapping" in line, lines)
+print(list(filtered_lines))
+# ['As of some one gently rapping, rapping at my chamber door.']
+```
+
+Read it as: "keep each `line` where `"rapping" in line` is `True`." This is the form you'll see most often in the wild — `filter(lambda x: ..., things)`.
+
+## Filtering records
+
+The most common DH use of `filter` (or its list-comprehension cousin): walk a list of records, keep only the ones meeting a criterion.
+
+```python
+correspondents = [
+    {"name": "Voltaire",  "letters": 21000},
+    {"name": "Émilie",    "letters":   430},
+    {"name": "Diderot",   "letters":  3500},
+    {"name": "Rousseau",  "letters":  6800},
+]
+
+prolific = filter(lambda c: c["letters"] > 1000, correspondents)
+print(list(prolific))
+# [{'name': 'Voltaire', 'letters': 21000},
+#  {'name': 'Diderot', 'letters': 3500},
+#  {'name': 'Rousseau', 'letters': 6800}]
+```
+
+Pair `filter` with `map` (or chain comprehensions) and you have the shape of a great many DH scripts: load records → filter to the ones that matter → transform each one → collect the result.
+
+## Passing `None` as the function
+
+A small but useful trick: `filter(None, iterable)` keeps only the items that are *truthy* — non-empty strings, non-zero numbers, non-empty lists, and so on. It's the cleanest way to drop blanks and zeros from a list:
+
+```python
+raw = ["Voltaire", "", "Émilie", None, "Diderot", ""]
+clean = list(filter(None, raw))
+print(clean)
+# ['Voltaire', 'Émilie', 'Diderot']
+```
+
+Useful right after a `split` or a CSV read, where empty strings tend to creep in.
+
+## A few honest gotchas
+
+A handful of things to remember:
+
+- **`filter` returns an iterator, not a list.** Same as `map`: print it and you'll see `<filter object at 0x...>`. Wrap in `list(...)` to see the values.
+- **Iterators are single-use.** Once you've walked through, that's it.
+- **Don't call the predicate.** `filter(starts_with_while(), lines)` is wrong. Pass the function name, no parentheses: `filter(starts_with_while, lines)`.
+- **A list comprehension with `if` does the same job.** `[c for c in correspondents if c["letters"] > 1000]` is the modern equivalent of the lambda example above. They're interchangeable; pick what reads better in context.
+- **The predicate must return a boolean (or something truthy/falsy).** It must not have side effects — don't put `print` inside it expecting to see something useful.
+
+## Combining filter and map
+
+The two compose naturally. Filter the records, then transform each one — for instance, get the names of the prolific correspondents:
+
+```python
+prolific = filter(lambda c: c["letters"] > 1000, correspondents)
+names = list(map(lambda c: c["name"], prolific))
+print(names)
+# ['Voltaire', 'Diderot', 'Rousseau']
+```
+
+The list comprehension version is even shorter:
+
+```python
+names = [c["name"] for c in correspondents if c["letters"] > 1000]
+```
+
+Both are good. `map`/`filter` make the steps explicit, which sometimes helps when the logic is more complicated; the comprehension is more compact when it isn't.
+
+## Try it yourself
+
+1. From the `correspondents` list above, use `filter` with a lambda to keep only those with names containing a non-ASCII character (`name.isascii()` is `False`).
+2. Given a list of strings (some empty), use `filter(None, ...)` to drop the empties, then use `map` to lowercase what remains.
+3. Write a predicate function `is_long_letter(record)` that returns `True` when `record["letters"] > 5000`, and use it with `filter` rather than a lambda. Note when the named-function form reads better than the lambda form.
+
+## Where to next
+
+[Lesson 40: Counter from Collections](/course/lesson-40-counter-from-collections/) — the last new tool, and one you'll wire up to almost everything you've learned in Parts 8 and 9.
+
+## Running the code
+
+Save any snippet from this lesson to a file — say `try.py` — and run it from your project folder:
+
+```bash
+uv run try.py
+```
+
+`uv run` uses the project's Python and dependencies automatically; no virtualenv to activate. If you haven't set the project up yet, [Lesson 01](/course/lesson-01-introduction-to-python-for-dh/) walks through it.

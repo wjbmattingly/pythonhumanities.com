@@ -1,0 +1,144 @@
+---
+title: "Comprehension with Sequences"
+lessonNumber: 35
+part: 8
+partTitle: "Iteration Tools"
+description: "List, set, and dict comprehensions collapse a three-line loop into one readable line — the most-used Python idiom you'll write."
+sourceUrl: "https://intermediate-python.pythonhumanities.com/notebooks/08-comprehension.html"
+videoId: ""
+---
+
+A **comprehension** is the most compact way Python gives you to build a collection from another collection. You've already seen them in passing — every time a previous lesson wrote `[c["name"] for c in correspondents]`, that was a list comprehension. This is the lesson that gives the pattern its proper introduction, and adds two close cousins: set comprehensions and dictionary comprehensions.
+
+The shape is always the same: an expression, a `for`, an iterable, optionally an `if`. Brackets decide what kind of collection you build.
+
+## List comprehensions
+
+Square brackets, an expression in front, a `for ... in ...` loop behind:
+
+```python
+[expression for item in iterable]
+```
+
+A worked example with the cast of *The Hobbit*:
+
+```python
+characters = ["Bilbo", "Gandalf", "Thorin", "Balin", "Dwalin", "Kili", "Fili"]
+
+lower_case_characters = [name.lower() for name in characters]
+print(lower_case_characters)
+# ['bilbo', 'gandalf', 'thorin', 'balin', 'dwalin', 'kili', 'fili']
+```
+
+That single line replaces:
+
+```python
+lower_case_characters = []
+for name in characters:
+    lower_case_characters.append(name.lower())
+```
+
+Both are correct. The comprehension is what experienced Python programmers reach for first because it puts the *what* (`name.lower()`) and the *where it comes from* (`for name in characters`) on one line, and you can read it left to right almost as English.
+
+## Filtering with `if`
+
+Add an `if` clause at the end and the comprehension becomes a filter as well as a transformation:
+
+```python
+characters = ["Bilbo", "Gandalf", "Thorin", "Balin", "Dwalin", "Kili", "Fili"]
+
+long_names = [name for name in characters if len(name) > 5]
+print(long_names)
+# ['Gandalf', 'Thorin', 'Dwalin']
+```
+
+Read it as: "give me each `name` from `characters`, where the length of `name` is greater than five." The `if` always goes at the end.
+
+You can combine the expression and the filter — keep names longer than five characters, lowercased:
+
+```python
+[name.lower() for name in characters if len(name) > 5]
+# ['gandalf', 'thorin', 'dwalin']
+```
+
+## Conditional expressions inside
+
+The `if` at the end is a *filter* — items that fail the test are dropped from the result. If you want every item but with a different value depending on a condition, use an `if`/`else` *expression* in the front of the comprehension:
+
+```python
+characters = ["Bilbo", "Gandalf", "Thorin", "Balin", "Dwalin", "Kili", "Fili"]
+
+category = ["hobbit" if name == "Bilbo" else "non-hobbit" for name in characters]
+print(category)
+# ['hobbit', 'non-hobbit', 'non-hobbit', 'non-hobbit', 'non-hobbit', 'non-hobbit', 'non-hobbit']
+```
+
+The two patterns look similar but mean different things:
+
+- `[x for x in items if cond]` — keep only the items where `cond` is true.
+- `[a if cond else b for x in items]` — keep every item, but use `a` or `b` depending on `cond`.
+
+You can combine them, but think twice before you do — it gets dense fast.
+
+## Set comprehensions
+
+Curly braces with no key:value pair give you a set. Sets have no duplicates and no order. They're perfect for "what are the *unique* values?":
+
+```python
+characters = ["Bilbo", "Gandalf", "Thorin", "Balin", "Dwalin", "Kili", "Fili"]
+
+name_lengths = {len(name) for name in characters}
+print(name_lengths)
+# {4, 5, 6, 7}
+```
+
+Eight characters in the input, four distinct lengths in the output — duplicates collapsed automatically.
+
+## Dictionary comprehensions
+
+Curly braces with `key: value` give you a dictionary:
+
+```python
+{key_expression: value_expression for item in iterable}
+```
+
+A direct application: build a lookup from each name to its length.
+
+```python
+characters = ["Bilbo", "Gandalf", "Thorin", "Balin", "Dwalin", "Kili", "Fili"]
+
+name_length_dict = {name: len(name) for name in characters}
+print(name_length_dict)
+# {'Bilbo': 5, 'Gandalf': 7, 'Thorin': 6, 'Balin': 5, 'Dwalin': 6, 'Kili': 4, 'Fili': 4}
+```
+
+This pattern shows up constantly in DH work — you have a list of records and you need a dictionary keyed by some field. Combined with `zip`, it's how you turn parallel lists into proper lookup tables.
+
+## A few honest gotchas
+
+A handful of things to keep in mind:
+
+- **One line of logic, not five.** Comprehensions are for transformations that fit on one readable line. If you find yourself wanting to nest two `for`s and an `if/else` in a comprehension, write the explicit loop instead — your future self will thank you.
+- **No `print` inside.** A comprehension is an expression. You can't put statements like `print` or `if x: do_something` in it. If you need to do anything other than build a collection, use a regular `for` loop.
+- **Don't use a list comprehension for side effects.** `[print(x) for x in items]` "works" but it builds a list of `None` values for no reason. Use a `for` loop.
+- **Memory.** A list comprehension builds the entire result in memory. If you only need to walk the result once, the next lesson — generators — does the same thing without the storage cost.
+
+## Try it yourself
+
+1. Given `years = [1694, 1706, 1713, 1712]`, use a list comprehension to produce the centuries (`[16, 17, 17, 17]`). (Hint: integer division by 100, plus one if you want human centuries.)
+2. From a list of correspondents, build a dictionary mapping name to whether it has any non-ASCII characters in it. Use a dict comprehension and `name.isascii()`.
+3. Take a paragraph of text, split it into words, and use a set comprehension to get the unique word lengths that appear.
+
+## Where to next
+
+[Lesson 36: Generators](/course/lesson-36-generators/) introduces a memory-friendly cousin of the list comprehension — useful the moment your data outgrows your RAM.
+
+## Running the code
+
+Save any snippet from this lesson to a file — say `try.py` — and run it from your project folder:
+
+```bash
+uv run try.py
+```
+
+`uv run` uses the project's Python and dependencies automatically; no virtualenv to activate. If you haven't set the project up yet, [Lesson 01](/course/lesson-01-introduction-to-python-for-dh/) walks through it.

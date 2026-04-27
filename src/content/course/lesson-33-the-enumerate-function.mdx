@@ -1,0 +1,138 @@
+---
+title: "The Enumerate Function"
+lessonNumber: 33
+part: 8
+partTitle: "Iteration Tools"
+description: "When you need both the item and its position, enumerate hands you both at once — no manual counter, no off-by-one bug."
+sourceUrl: "https://intermediate-python.pythonhumanities.com/notebooks/01-enumerate.html"
+videoId: "Ek49cGiAOwo"
+---
+
+`enumerate` is the smallest, gentlest entry into the iteration tools. It does one job: when you loop over a sequence, it hands you both the item and its position at the same time.
+
+The pattern it replaces is one you've almost certainly written:
+
+```python
+correspondents = ["Voltaire", "Émilie", "Diderot"]
+
+i = 0
+for name in correspondents:
+    print(i, name)
+    i += 1
+```
+
+That works. It's also three opportunities to make a mistake: forgetting to initialise `i`, forgetting to increment it, or incrementing it in the wrong place. `enumerate` exists so you don't have to.
+
+## The basic syntax
+
+```python
+enumerate(sequence, start=0)
+```
+
+Two arguments. The **sequence** is anything you can loop over — a list, a tuple, a string, a file, a generator. The **start** is optional and defaults to `0`.
+
+What you get back is an iterator that yields `(index, item)` pairs. In a `for` loop, you unpack the pair into two names:
+
+```python
+text = "William"
+
+for index, character in enumerate(text):
+    print(index, character)
+```
+
+```
+0 W
+1 i
+2 l
+3 l
+4 i
+5 a
+6 m
+```
+
+That's the whole feature. Everywhere you were tracking a counter by hand, replace it with `enumerate`.
+
+## Starting the count somewhere else
+
+Programmers count from zero. Humans usually don't. When you're producing output for a person to read, `start=1` is the kindest thing you can do:
+
+```python
+text = "William"
+
+for index, character in enumerate(text, start=1):
+    print(index, character)
+```
+
+You can pass any starting integer. If you're processing the second batch of a dataset and want the indices to continue from where the previous batch left off, pass `start=len(previous_batch)`.
+
+## Finding positions in a sequence
+
+The most common DH use of `enumerate`: walk through a sequence, find every position where some condition holds, collect those positions. The classic example is locating every occurrence of a character or token:
+
+```python
+text = "William"
+target = "l"
+
+positions = []
+
+for index, character in enumerate(text):
+    if character == target:
+        positions.append(index)
+
+print(f"The character '{target}' is found at positions: {positions}")
+# The character 'l' is found at positions: [2, 3]
+```
+
+The same shape works on words in a tokenised letter, lines in a file, or records in a list of dictionaries. Anywhere you need "where in the sequence is this thing?", `enumerate` is the tool.
+
+## Enumerate with a list of records
+
+`enumerate` doesn't care what's inside the sequence. If you're walking a list of dictionaries, you still get an integer index alongside each record:
+
+```python
+correspondents = [
+    {"name": "Voltaire",  "letters": 21000},
+    {"name": "Émilie",    "letters":   430},
+    {"name": "Diderot",   "letters":  3500},
+]
+
+for i, person in enumerate(correspondents, start=1):
+    print(f"{i}. {person['name']} — {person['letters']} letters")
+```
+
+```
+1. Voltaire — 21000 letters
+2. Émilie — 430 letters
+3. Diderot — 3500 letters
+```
+
+That little numbered output is what tables and reports are made of.
+
+## A few honest gotchas
+
+A handful of things to keep in mind:
+
+- **The index is the position in *this* iteration, not the original list.** If you `enumerate` over a filtered or sliced sequence, the indices restart at 0 (or whatever you passed as `start`). They aren't preserved from the underlying list.
+- **`enumerate` returns an iterator, not a list.** That's fine for a `for` loop. If you need to look at the pairs without iterating — say, to print them as a debug aid — wrap the call in `list()`: `list(enumerate(text))`.
+- **You can't index into the result.** `enumerate(text)[0]` doesn't work. If you find yourself wanting that, you probably want a list comprehension instead.
+- **It's not a search.** `enumerate` doesn't find anything for you; you still need the `if` inside the loop. It just means you don't have to track the position by hand.
+
+## Try it yourself
+
+1. Take the string `"the quick brown fox"` and use `enumerate` to print every position where the letter `"o"` appears.
+2. Given a list of correspondent names, print a numbered list starting at 1, in the format `"1. Voltaire"`.
+3. Modify the previous exercise so that you skip any name beginning with `"D"` — the numbering should still increment for the names you do print. (Hint: don't use the `enumerate` index for the numbering.)
+
+## Where to next
+
+[Lesson 34: The Zip Function](/course/lesson-34-the-zip-function/) walks two or more sequences in lockstep — the natural next step after walking one sequence with its index.
+
+## Running the code
+
+Save any snippet from this lesson to a file — say `try.py` — and run it from your project folder:
+
+```bash
+uv run try.py
+```
+
+`uv run` uses the project's Python and dependencies automatically; no virtualenv to activate. If you haven't set the project up yet, [Lesson 01](/course/lesson-01-introduction-to-python-for-dh/) walks through it.

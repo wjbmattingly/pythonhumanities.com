@@ -1,0 +1,128 @@
+---
+title: "Generators"
+lessonNumber: 36
+part: 8
+partTitle: "Iteration Tools"
+description: "Generators produce values one at a time without ever holding the full sequence in memory — the difference between processing a corpus and crashing on it."
+sourceUrl: "https://intermediate-python.pythonhumanities.com/notebooks/06-generators.html"
+videoId: ""
+---
+
+A **generator** is a special kind of iterator that produces values on the fly, one at a time, instead of building a list in memory and handing it back all at once. It's the tool that turns "I can't load this corpus" into "I can stream this corpus."
+
+For most of the lessons so far, the difference hasn't mattered. A list of three correspondents fits in memory a million times over. But the moment you're working with the full Voltaire correspondence, every page of a manuscript collection, or any text larger than a few hundred megabytes, the question stops being "can I write the loop?" and becomes "can I get the data through the loop without running out of RAM?" Generators are the answer.
+
+## The `yield` keyword
+
+A generator function looks almost exactly like a regular function — `def`, parameters, an indented body — except that instead of `return`, it uses `yield`:
+
+```python
+def word_generator(text):
+    for word in text.split():
+        yield word
+```
+
+That single keyword changes everything. Calling `word_generator("...")` doesn't execute the body. It returns a generator object — a paused computation. Each time you ask the generator for its next value (via a `for` loop or `next()`), the body runs until it hits a `yield`, hands you the value, and then *pauses again* exactly where it left off. The local variables, the position in the loop, all preserved.
+
+```python
+gen = word_generator("Voltaire wrote many letters")
+
+for word in gen:
+    print(word)
+```
+
+```
+Voltaire
+wrote
+many
+letters
+```
+
+From the outside, it looks like any other iterable. Inside, no list of words is ever built — each one is produced, used, and discarded.
+
+## Why this matters: streaming a file
+
+Here's the canonical example. You want to walk through every line of a large book without loading the whole thing into memory:
+
+```python
+def read_book_line_by_line(file_path):
+    with open(file_path, 'r', encoding='utf-8') as file:
+        for line in file:
+            yield line
+```
+
+Used like any other iterable:
+
+```python
+for line in read_book_line_by_line("hamlet.txt"):
+    if "to be" in line.lower():
+        print(line.strip())
+```
+
+If `hamlet.txt` is two megabytes, fine — you'd hardly notice the difference. If it were two gigabytes, the generator approach uses essentially no memory regardless. The function only ever holds one line at a time.
+
+(Worth noting: Python's file objects are already iterables that yield lines one at a time, so for this exact case you don't strictly need to wrap them. The wrapping pays off when you want to add filtering, normalisation, or several files chained together — putting that logic inside the generator means callers see one clean stream.)
+
+## Driving a generator with `next()`
+
+Sometimes you don't want a `for` loop — you want to ask for one value at a time and do something different between calls. The `next()` builtin pulls the next value from a generator:
+
+```python
+def word_generator(text):
+    for word in text.split():
+        yield word
+
+gen = word_generator("Voltaire wrote many letters")
+
+print(next(gen))   # 'Voltaire'
+print(next(gen))   # 'wrote'
+print(next(gen))   # 'many'
+print(next(gen))   # 'letters'
+# next(gen) one more time would raise StopIteration
+```
+
+When the generator runs out, `next()` raises `StopIteration`. A `for` loop catches that automatically; if you're calling `next()` by hand, either know how many you need or wrap the call in `try/except`.
+
+## Generator expressions
+
+You don't always need a `def`. Python has a one-line form — a generator expression — which is exactly a list comprehension with parentheses instead of square brackets:
+
+```python
+text = "Voltaire wrote many letters and so did Émilie"
+
+word_lengths = (len(w) for w in text.split())
+
+for length in word_lengths:
+    print(length)
+```
+
+The difference between `[len(w) for w in text.split()]` and `(len(w) for w in text.split())` is exactly one character — and the difference in behaviour is that the first builds a list, the second yields values lazily. For "build it, walk it once, throw it away," generator expressions are usually the right choice.
+
+## A few honest gotchas
+
+A handful of things you'll trip over once and then remember forever:
+
+- **A generator is single-pass.** Once you've iterated through it, it's exhausted — looping again gives you nothing. If you need the values more than once, either re-create the generator or `list(...)` it.
+- **You can't index into a generator.** `gen[0]` doesn't work, and `len(gen)` doesn't either. If you find yourself wanting either, you probably want a list.
+- **Generators don't run their code until you iterate.** A `print` at the top of a generator function won't fire when you call the function — it fires the first time you ask for a value. This trips up beginners; if you're debugging a generator and nothing happens, check that you're actually iterating it.
+- **They're harder to test than regular functions.** A regular function returns a value you can compare against. A generator returns a generator object, and you usually need to wrap it in `list(...)` first to inspect what it produces.
+
+## Try it yourself
+
+1. Write a generator function `every_other(seq)` that yields every second item from `seq`. Test it on `["Voltaire", "Émilie", "Diderot", "Rousseau"]`.
+2. Use a generator expression to produce the lengths of words in `"Once upon a midnight dreary"`. Sum the result with `sum(...)` — note that `sum` accepts a generator directly.
+3. Write a generator that opens a text file and yields only the lines that aren't blank. Run it on any text file and count how many non-blank lines it produces.
+
+## Where to next
+
+[Lesson 37: Lambda Functions](/course/lesson-37-lambda-functions/) opens Part 9 — a small set of tools for treating functions themselves as values you pass around.
+
+## Running the code
+
+Save any snippet from this lesson to a file — say `try.py` — and run it from your project folder:
+
+```bash
+uv run try.py
+```
+
+`uv run` uses the project's Python and dependencies automatically; no virtualenv to activate. If you haven't set the project up yet, [Lesson 01](/course/lesson-01-introduction-to-python-for-dh/) walks through it.
