@@ -29,8 +29,6 @@ jobs:
           cache-dependency-path: package-lock.json
 
       - name: Install and build
-        env:
-          BASE_PATH: /pythonhumanities.com
         run: |
           npm ci
           npm run build
